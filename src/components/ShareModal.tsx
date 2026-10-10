@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import { X, Copy, Check, ExternalLink, Globe, Shield, Sparkles, Smartphone, Laptop } from 'lucide-react';
+import { copyTextToClipboard } from '../utils/clipboard';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -24,10 +25,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose }) => {
     ? window.location.href
     : deployedUrl;
 
-  const copyToClipboard = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 2000);
+  const copyToClipboard = async (text: string, key: string) => {
+    const ok = await copyTextToClipboard(text);
+    if (ok) {
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
+    }
   };
 
   return (

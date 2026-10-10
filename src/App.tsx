@@ -15,6 +15,7 @@ import { ShareModal } from './components/ShareModal';
 import { BadgesMilestonesModal } from './components/BadgesMilestonesModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { ArchitectureSynthesisStudio } from './components/ArchitectureSynthesisStudio';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { soundFX } from './utils/audio';
 import { Eye, Search, Sliders, Trophy, BookOpen, ExternalLink, ChevronUp } from 'lucide-react';
 
@@ -38,23 +39,57 @@ export default function App() {
     }
   }, [hideScrollbars]);
 
-  // Global keyboard shortcuts (Ctrl+K for search, Esc/F for nav toggle)
+  // Global keyboard shortcuts (Ctrl+K for search, 1-6 for views, Esc/F for nav toggle, ? for glossary)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      const isInputFocused =
+        activeTag === 'input' ||
+        activeTag === 'textarea' ||
+        (document.activeElement as HTMLElement)?.isContentEditable;
+
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setIsSearchOpen((prev) => !prev);
-      } else if (e.key === 'Escape') {
-        if (isSearchOpen) {
-          setIsSearchOpen(false);
-        } else if (isGlossaryOpen) {
-          setIsGlossaryOpen(false);
-        } else if (isShareOpen) {
-          setIsShareOpen(false);
-        } else if (isBadgesOpen) {
-          setIsBadgesOpen(false);
-        } else if (isNavHidden) {
-          setIsNavHidden(false);
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        if (isSearchOpen) setIsSearchOpen(false);
+        else if (isGlossaryOpen) setIsGlossaryOpen(false);
+        else if (isShareOpen) setIsShareOpen(false);
+        else if (isBadgesOpen) setIsBadgesOpen(false);
+        else if (isNavHidden) setIsNavHidden(false);
+        return;
+      }
+
+      // Quick hotkeys when not typing
+      if (!isInputFocused && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (e.key === '1') {
+          setActiveView('home');
+          soundFX.playTap();
+        } else if (e.key === '2') {
+          setActiveView('atlas');
+          soundFX.playTap();
+        } else if (e.key === '3') {
+          setActiveView('labs');
+          soundFX.playTap();
+        } else if (e.key === '4') {
+          setActiveView('taxonomy');
+          soundFX.playTap();
+        } else if (e.key === '5') {
+          setActiveView('synthesis');
+          soundFX.playTap();
+        } else if (e.key === '6') {
+          setActiveView('code');
+          soundFX.playTap();
+        } else if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+          e.preventDefault();
+          setIsGlossaryOpen((prev) => !prev);
+          soundFX.playTap();
+        } else if (e.key === 'f' || e.key === 'F') {
+          setIsNavHidden((prev) => !prev);
+          soundFX.playTap();
         }
       }
     };
@@ -146,36 +181,38 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-6">
-        {/* View Switcher Content */}
-        {activeView === 'home' && (
-          <HomePage
-            onSelectView={(v) => {
-              setActiveView(v);
-              soundFX.playTap();
-            }}
-            onSelectLab={handleOpenLab}
-            onOpenGlossary={() => setIsGlossaryOpen(true)}
-            onOpenBadges={() => setIsBadgesOpen(true)}
-          />
-        )}
+        <ErrorBoundary key={activeView} onReset={() => setActiveView('home')}>
+          {/* View Switcher Content */}
+          {activeView === 'home' && (
+            <HomePage
+              onSelectView={(v) => {
+                setActiveView(v);
+                soundFX.playTap();
+              }}
+              onSelectLab={handleOpenLab}
+              onOpenGlossary={() => setIsGlossaryOpen(true)}
+              onOpenBadges={() => setIsBadgesOpen(true)}
+            />
+          )}
 
-        {activeView === 'atlas' && <TreeAtlas onOpenLab={handleOpenLab} />}
+          {activeView === 'atlas' && <TreeAtlas onOpenLab={handleOpenLab} />}
 
-        {activeView === 'labs' && (
-          <ProjectLabsHub
-            activeLabId={activeLabId}
-            onSelectLab={(id) => {
-              setActiveLabId(id);
-              soundFX.playTap();
-            }}
-          />
-        )}
+          {activeView === 'labs' && (
+            <ProjectLabsHub
+              activeLabId={activeLabId}
+              onSelectLab={(id) => {
+                setActiveLabId(id);
+                soundFX.playTap();
+              }}
+            />
+          )}
 
-        {activeView === 'taxonomy' && <TaxonomyMatrix />}
+          {activeView === 'taxonomy' && <TaxonomyMatrix />}
 
-        {activeView === 'synthesis' && <ArchitectureSynthesisStudio />}
+          {activeView === 'synthesis' && <ArchitectureSynthesisStudio />}
 
-        {activeView === 'code' && <CodeWorkshop />}
+          {activeView === 'code' && <CodeWorkshop />}
+        </ErrorBoundary>
       </main>
 
       {/* Floating Glossary Modal */}

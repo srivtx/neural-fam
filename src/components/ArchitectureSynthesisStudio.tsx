@@ -331,8 +331,8 @@ print(f"Successfully processed tensor: {output.shape} -> Verified ${synthesis.co
       {/* Hero Header */}
       <div className="relative rounded-3xl p-6 sm:p-8 overflow-hidden border border-slate-200 dark:border-white/10 bg-gradient-to-br from-emerald-500/10 via-transparent to-sky-500/5 dark:bg-[#0c1220] shadow-sm">
         <div className="max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/70 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
-            <Compass className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono uppercase tracking-wider">
+            <Compass className="w-4 h-4" />
             <span>Beyond Memorization · Architecture Synthesis Studio</span>
           </div>
 

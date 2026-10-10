@@ -156,14 +156,14 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
                   }`}
                 >
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${badgeClass}`}>
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">
                         {node.familyName}
                       </span>
                       {node.labAvailable && (
-                        <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
+                        <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
                           <Cpu className="w-3 h-3" />
-                          <span>Lab Available</span>
+                          <span>Interactive Lab</span>
                         </span>
                       )}
                     </div>

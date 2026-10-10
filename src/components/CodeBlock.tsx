@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Copy, Check, Play, Terminal } from 'lucide-react';
 import { soundFX } from '../utils/audio';
+import { copyTextToClipboard } from '../utils/clipboard';
 
 interface CodeBlockProps {
   code: string;
@@ -26,11 +27,13 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
 }) => {
   const [copied, setCopied] = useState<boolean>(false);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    soundFX.playTap();
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    const ok = await copyTextToClipboard(code);
+    if (ok) {
+      setCopied(true);
+      soundFX.playTap();
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const handleRun = () => {

@@ -13,6 +13,7 @@ import { SsmMambaLab } from './labs/SsmMambaLab';
 import { GnnLab } from './labs/GnnLab';
 import { GenerativeLab } from './labs/GenerativeLab';
 import { SpecializedLab } from './labs/SpecializedLab';
+import { ErrorBoundary } from './ErrorBoundary';
 
 interface ProjectLabsHubProps {
   activeLabId: string;
@@ -65,18 +66,23 @@ export const ProjectLabsHub: React.FC<ProjectLabsHubProps> = ({
         })}
       </div>
 
-      {/* Render the Active Lab Component */}
-      <div className="transition-all">
-        {activeLabId === 'perceptron' && <SingleNeuronLab />}
-        {activeLabId === 'mlp' && <MlpLab />}
-        {activeLabId === 'cnn_resnet' && <CnnResNetLab />}
-        {activeLabId === 'rnn_lstm' && <RnnLstmLaboratory />}
-        {activeLabId === 'transformer' && <TransformerAttentionLab />}
-        {activeLabId === 'ssm_mamba' && <SsmMambaLab />}
-        {activeLabId === 'gnn' && <GnnLab />}
-        {activeLabId === 'generative' && <GenerativeLab />}
-        {activeLabId === 'specialized' && <SpecializedLab />}
-      </div>
+      {/* Render the Active Lab Component with Error Boundary Protection */}
+      <ErrorBoundary
+        key={activeLabId}
+        fallbackTitle={`Interactive Lab: ${labList.find((l) => l.id === activeLabId)?.title || 'Neural Laboratory'}`}
+      >
+        <div className="transition-all">
+          {activeLabId === 'perceptron' && <SingleNeuronLab />}
+          {activeLabId === 'mlp' && <MlpLab />}
+          {activeLabId === 'cnn_resnet' && <CnnResNetLab />}
+          {activeLabId === 'rnn_lstm' && <RnnLstmLaboratory />}
+          {activeLabId === 'transformer' && <TransformerAttentionLab />}
+          {activeLabId === 'ssm_mamba' && <SsmMambaLab />}
+          {activeLabId === 'gnn' && <GnnLab />}
+          {activeLabId === 'generative' && <GenerativeLab />}
+          {activeLabId === 'specialized' && <SpecializedLab />}
+        </div>
+      </ErrorBoundary>
     </div>
   );
 };
