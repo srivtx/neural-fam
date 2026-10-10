@@ -609,3 +609,426 @@ if __name__ == "__main__":
     print(f"Output shape: {out.shape}")
 `;
 }
+
+export interface TensorTraceStep {
+  name: string;
+  operation: string;
+  shape: string;
+  memoryMB: number;
+  description: string;
+  color?: string;
+}
+
+/**
+ * Traces the step-by-step tensor dimensions and memory footprint
+ * as an activation batch flows through a single repeated block.
+ */
+export function traceTensorPipeline(design: Design, workload: Workload): TensorTraceStep[] {
+  const B = workload.batch;
+  const N = workload.seqLen;
+  const d = design.d;
+  const precBytes = PRECISION_BYTES[workload.precision];
+
+  const calcMB = (elements: number) => (elements * precBytes) / (1024 * 1024);
+
+  const steps: TensorTraceStep[] = [
+    {
+      name: 'Input Batch',
+      operation: 'Data ingestion',
+      shape: `[${B}, ${N}, ${design.modality === 'text' ? 'Tokens' : design.inputDim || d}]`,
+      memoryMB: Number(calcMB(B * N * (design.inputDim || d)).toFixed(2)),
+      description: 'Raw sensory input stream entering the computation graph.',
+      color: '#3346ff',
+    },
+    {
+      name: 'Embedding Projection',
+      operation: design.modality === 'text' ? 'Token lookup + Positional encoding' : 'Linear feature projection',
+      shape: `[${B}, ${N}, ${d}]`,
+      memoryMB: Number(calcMB(B * N * d).toFixed(2)),
+      description: `Continuous ${d}-dimensional representation space for tokens.`,
+      color: '#3346ff',
+    },
+  ];
+
+  design.block.forEach((layer, idx) => {
+    switch (layer.kind) {
+      case 'attention':
+      case 'window_attention': {
+        const heads = layer.heads || Math.max(1, Math.round(d / 64));
+        const headDim = Math.round(d / heads) || 64;
+        const kvHeads = layer.kvHeads || heads;
+
+        steps.push({
+          name: `Layer ${idx + 1}: Q, K, V Projections`,
+          operation: `Linear projection to ${heads} Q heads and ${kvHeads} KV heads`,
+          shape: `Q: [${B}, ${heads}, ${N}, ${headDim}] · KV: [${B}, ${kvHeads}, ${N}, ${headDim}]`,
+          memoryMB: Number(calcMB(B * (heads + 2 * kvHeads) * N * headDim).toFixed(2)),
+          description: `Splits the ${d} channels into multi-head subspace subspaces.`,
+          color: '#ff3b6b',
+        });
+
+        steps.push({
+          name: `Layer ${idx + 1}: Softmax Dot-Product Heatmap`,
+          operation: 'Softmax(QKᵀ / √d_k)',
+          shape: `[${B}, ${heads}, ${N}, ${N}]`,
+          memoryMB: Number(calcMB(B * heads * N * N).toFixed(2)),
+          description: `Pairwise cross-attention routing matrix comparing every token with every other.`,
+          color: '#ff3b6b',
+        });
+
+        steps.push({
+          name: `Layer ${idx + 1}: Value Aggregation & Out Projection`,
+          operation: 'Attention · V @ W_out',
+          shape: `[${B}, ${N}, ${d}]`,
+          memoryMB: Number(calcMB(B * N * d).toFixed(2)),
+          description: 'Linearly recombines multi-head outputs back into the model dimension.',
+          color: '#ff3b6b',
+        });
+        break;
+      }
+
+      case 'ssm': {
+        const expand = layer.expand || 2;
+        const dInner = expand * d;
+        const dState = layer.dState || 16;
+
+        steps.push({
+          name: `Layer ${idx + 1}: SSM Input Expand & 1D Conv`,
+          operation: `Expand by ${expand}x + Depthwise 1D conv`,
+          shape: `[${B}, ${N}, ${dInner}]`,
+          memoryMB: Number(calcMB(B * N * dInner).toFixed(2)),
+          description: `Expands hidden dimension to ${dInner} and mixes local consecutive frames.`,
+          color: '#8b5cf6',
+        });
+
+        steps.push({
+          name: `Layer ${idx + 1}: Selective Recurrent State`,
+          operation: 'Continuous ODE hidden state recurrence',
+          shape: `Running state: [${B}, ${dInner}, ${dState}]`,
+          memoryMB: Number(calcMB(B * dInner * dState).toFixed(2)),
+          description: `Constant O(1) state memory independent of context length N.`,
+          color: '#8b5cf6',
+        });
+
+        steps.push({
+          name: `Layer ${idx + 1}: SSM Projection to Dimension`,
+          operation: 'Gated linear projection @ W_out',
+          shape: `[${B}, ${N}, ${d}]`,
+          memoryMB: Number(calcMB(B * N * d).toFixed(2)),
+          description: `Projects filtered state back down to model dimension ${d}.`,
+          color: '#8b5cf6',
+        });
+        break;
+      }
+
+      case 'conv': {
+        const kernel = layer.kernel || 7;
+        steps.push({
+          name: `Layer ${idx + 1}: Spatial Convolution`,
+          operation: `1D Kernel ${kernel} sliding window`,
+          shape: `[${B}, ${N}, ${d}]`,
+          memoryMB: Number(calcMB(B * N * d).toFixed(2)),
+          description: `Translation-invariant sliding filter over neighboring coordinates.`,
+          color: '#00a86b',
+        });
+        break;
+      }
+
+      case 'swiglu':
+      case 'mlp': {
+        const hidden = layer.hidden || d * 4;
+        steps.push({
+          name: `Layer ${idx + 1}: Feedforward Expand (${layer.kind === 'swiglu' ? 'SwiGLU' : 'GELU'})`,
+          operation: `Channel expansion to ${hidden} dimensions`,
+          shape: `[${B}, ${N}, ${hidden}]`,
+          memoryMB: Number(calcMB(B * N * hidden).toFixed(2)),
+          description: `Per-position non-linear expansion into higher-dimensional manifold.`,
+          color: '#4f6bff',
+        });
+
+        steps.push({
+          name: `Layer ${idx + 1}: Feedforward Projection`,
+          operation: `Linear projection down to ${d}`,
+          shape: `[${B}, ${N}, ${d}]`,
+          memoryMB: Number(calcMB(B * N * d).toFixed(2)),
+          description: `Compresses feature representations back to model width.`,
+          color: '#4f6bff',
+        });
+        break;
+      }
+
+      case 'moe': {
+        const experts = layer.experts || 8;
+        const topK = layer.topK || 2;
+        const hidden = layer.hidden || d * 2;
+
+        steps.push({
+          name: `Layer ${idx + 1}: Router Softmax Gating`,
+          operation: `Gating router across ${experts} experts`,
+          shape: `Logits: [${B}, ${N}, ${experts}] · Top-${topK}: [${B}, ${N}, ${topK}]`,
+          memoryMB: Number(calcMB(B * N * experts).toFixed(2)),
+          description: `Evaluates input tokens and routes dynamically to the ${topK} most relevant experts.`,
+          color: '#ffb800',
+        });
+
+        steps.push({
+          name: `Layer ${idx + 1}: Sparse Expert Compute`,
+          operation: `Evaluates only ${topK} active expert networks per token`,
+          shape: `[${B}, ${N}, ${topK}, ${hidden}]`,
+          memoryMB: Number(calcMB(B * N * topK * hidden).toFixed(2)),
+          description: `Executes high-capacity sub-networks while sparing compute bandwidth.`,
+          color: '#ffb800',
+        });
+        break;
+      }
+
+      case 'gnn': {
+        steps.push({
+          name: `Layer ${idx + 1}: Neighborhood Message Aggregation`,
+          operation: 'Permutation-invariant graph summation',
+          shape: `[${B}, ${N}, ${d}]`,
+          memoryMB: Number(calcMB(B * N * d).toFixed(2)),
+          description: 'Nodes collect and aggregate vector embeddings from adjacent topological edges.',
+          color: '#00b8d9',
+        });
+        break;
+      }
+    }
+
+    if (design.residual) {
+      steps.push({
+        name: `Layer ${idx + 1}: Residual Highway Addition`,
+        operation: 'y = identity + F(x)',
+        shape: `[${B}, ${N}, ${d}]`,
+        memoryMB: Number(calcMB(B * N * d).toFixed(2)),
+        description: 'Additive identity connection guaranteeing uninhibited backward gradient flow.',
+        color: '#22c55e',
+      });
+    }
+  });
+
+  steps.push({
+    name: 'Final Layer Normalization',
+    operation: design.norm === 'rmsnorm' ? 'RMSNorm' : 'LayerNorm',
+    shape: `[${B}, ${N}, ${d}]`,
+    memoryMB: Number(calcMB(B * N * d).toFixed(2)),
+    description: 'Stabilizes output vector variance before prediction head.',
+    color: '#3346ff',
+  });
+
+  return steps;
+}
+
+export interface TrainingEconomics {
+  parametersM: number;
+  chinchillaTokensB: number;
+  totalFlopsZetta: number;
+  h100GpusNeeded: number;
+  a100GpusNeeded: number;
+  estimatedCostH100USD: number;
+  estimatedCostA100USD: number;
+  inferenceCostPerMillionTokensUSD: number;
+}
+
+/**
+ * Calculates training compute economics and hardware cluster sizing
+ * using Chinchilla scaling laws (Hoffmann et al., 2022).
+ */
+export function calculateTrainingEconomics(
+  design: Design,
+  workload: Workload,
+  targetDays: number = 14
+): TrainingEconomics {
+  const analysis = analyzeDesign(design, workload);
+  const P = analysis.params.totalStored;
+  const parametersM = Number((P / 1e6).toFixed(1));
+
+  // Chinchilla optimal compute allocation: D ≈ 20 * P tokens
+  const chinchillaTokens = 20 * P;
+  const chinchillaTokensB = Number((chinchillaTokens / 1e9).toFixed(2));
+
+  // Training compute in FLOPs: 6 * P * D
+  const totalFlops = 6 * P * chinchillaTokens;
+  const totalFlopsZetta = Number((totalFlops / 1e21).toFixed(3)); // 1 ZettaFLOP = 1e21
+
+  const targetSeconds = targetDays * 24 * 3600;
+  const realisticMFU = 0.40; // 40% Model Flops Utilization is standard frontier efficiency
+
+  // H100 SXM5: 989 TFLOPS BF16
+  const h100EffectiveFlops = 989e12 * realisticMFU;
+  const h100GpusNeeded = Math.max(1, Math.ceil(totalFlops / (h100EffectiveFlops * targetSeconds)));
+
+  // A100 80GB SXM: 312 TFLOPS BF16
+  const a100EffectiveFlops = 312e12 * realisticMFU;
+  const a100GpusNeeded = Math.max(1, Math.ceil(totalFlops / (a100EffectiveFlops * targetSeconds)));
+
+  // Cloud market pricing: ~$3.00 / GPU-hour for H100, ~$1.80 for A100
+  const h100Hours = h100GpusNeeded * (targetDays * 24);
+  const estimatedCostH100USD = Math.round(h100Hours * 3.0);
+
+  const a100Hours = a100GpusNeeded * (targetDays * 24);
+  const estimatedCostA100USD = Math.round(a100Hours * 1.8);
+
+  // Inference cost per 1M output tokens (assuming single GPU node serving at $3/hr)
+  const tokensPerSec = Math.max(1, analysis.compute.estimatedTokensPerSec);
+  const hoursPerMillionTokens = 1e6 / (tokensPerSec * 3600);
+  const inferenceCostPerMillionTokensUSD = Number((hoursPerMillionTokens * 3.0).toFixed(4));
+
+  return {
+    parametersM,
+    chinchillaTokensB,
+    totalFlopsZetta,
+    h100GpusNeeded,
+    a100GpusNeeded,
+    estimatedCostH100USD,
+    estimatedCostA100USD,
+    inferenceCostPerMillionTokensUSD,
+  };
+}
+
+/**
+ * Generates an idiomatic JAX / Flax module for the synthesized architecture.
+ */
+export function generateJaxModule(design: Design, _workload: Workload): string {
+  const d = design.d;
+  return `"""
+Architecture: ${design.name} (JAX / Flax Implementation)
+Synthesized in Neural Family Architecture Studio
+"""
+
+import jax
+import jax.numpy as jnp
+from flax import linen as nn
+
+class RMSNorm(nn.Module):
+    dim: int
+    eps: float = 1e-6
+
+    @nn.compact
+    def __call__(self, x):
+        scale = self.param('scale', nn.initializers.ones, (self.dim,))
+        variance = jnp.mean(jnp.square(x), axis=-1, keepdims=True)
+        return x * jax.lax.rsqrt(variance + self.eps) * scale
+
+class Block(nn.Module):
+    d_model: int = ${d}
+
+    @nn.compact
+    def __call__(self, x):
+        h = x
+        # 1. Information Routing Layer
+        routed = nn.Dense(self.d_model)(h)
+        ${design.residual ? 'h = h + routed' : 'h = routed'}
+        ${design.norm === 'rmsnorm' ? 'h = RMSNorm(dim=self.d_model)(h)' : design.norm === 'layernorm' ? 'h = nn.LayerNorm()(h)' : ''}
+
+        # 2. Feedforward Compute Layer
+        ffn = nn.Dense(self.d_model * 4)(h)
+        ffn = nn.silu(ffn)
+        ffn = nn.Dense(self.d_model)(ffn)
+        ${design.residual ? 'h = h + ffn' : 'h = ffn'}
+        ${design.norm === 'rmsnorm' ? 'h = RMSNorm(dim=self.d_model)(h)' : design.norm === 'layernorm' ? 'h = nn.LayerNorm()(h)' : ''}
+
+        return h
+
+class ${design.name.replace(/[^a-zA-Z0-9]/g, '') || 'SynthesizedNetwork'}(nn.Module):
+    d_model: int = ${d}
+    depth: int = ${design.depth}
+    vocab_size: int = ${design.vocab || 32000}
+
+    @nn.compact
+    def __call__(self, tokens):
+        # tokens shape: (batch_size, sequence_length)
+        h = nn.Embed(num_embeddings=self.vocab_size, features=self.d_model)(tokens)
+
+        for _ in range(self.depth):
+            h = Block(d_model=self.d_model)(h)
+
+        h = ${design.norm === 'rmsnorm' ? 'RMSNorm(dim=self.d_model)(h)' : 'nn.LayerNorm()(h)'}
+        logits = nn.Dense(self.vocab_size, use_bias=False)(h)
+        return logits
+`;
+}
+
+/**
+ * Generates a HuggingFace-compatible config.json string.
+ */
+export function generateHuggingFaceConfig(design: Design, workload: Workload): string {
+  const analysis = analyzeDesign(design, workload);
+  const config = {
+    model_type: "neural_family_hybrid",
+    architectures: [design.name.replace(/[^a-zA-Z0-9]/g, '') || 'SynthesizedNetwork'],
+    hidden_size: design.d,
+    num_hidden_layers: design.depth,
+    num_attention_heads: design.block.find(b => b.kind === 'attention')?.heads || Math.max(1, Math.round(design.d / 64)),
+    num_key_value_heads: design.block.find(b => b.kind === 'attention')?.kvHeads || Math.max(1, Math.round(design.d / 64)),
+    max_position_embeddings: design.maxLen || workload.seqLen,
+    vocab_size: design.vocab || 32000,
+    normalization_layer: design.norm,
+    positional_embedding_type: design.pos,
+    use_residual_highway: design.residual,
+    layer_types: design.block.map(b => b.kind),
+    active_parameters: analysis.params.totalActive,
+    total_parameters: analysis.params.totalStored,
+    torch_dtype: workload.precision === 'fp32' ? 'float32' : 'bfloat16',
+    transformers_version: "4.44.0"
+  };
+
+  return JSON.stringify(config, null, 2);
+}
+
+/**
+ * Generates Mermaid diagram code visualizing the repeated block.
+ */
+export function generateMermaidDiagram(design: Design): string {
+  const nodes: string[] = [];
+  nodes.push('graph TD');
+  nodes.push('  Input(["Input Tensor [B, N, d]"]) --> Skip0{"Residual Anchor"}');
+  nodes.push('  Input --> Layer0["1. ' + (design.block[0]?.kind.toUpperCase() || 'MIXER') + '"]');
+
+  design.block.forEach((layer, i) => {
+    if (i > 0) {
+      nodes.push(`  Layer${i - 1} --> Layer${i}["${i + 1}. ${layer.kind.toUpperCase()}"]`);
+    }
+  });
+
+  const lastIdx = design.block.length - 1;
+  if (design.residual) {
+    nodes.push(`  Layer${lastIdx} --> Add((+))`);
+    nodes.push(`  Skip0 -->|Identity Highway| Add`);
+    nodes.push(`  Add --> Norm["${design.norm.toUpperCase()} Normalization"]`);
+  } else {
+    nodes.push(`  Layer${lastIdx} --> Norm["${design.norm.toUpperCase()} Normalization"]`);
+  }
+
+  nodes.push('  Norm --> Output(["Output Representation [B, N, d]"])');
+  return nodes.join('\n');
+}
+
+/**
+ * Encodes a Design and Workload into a compact URL-safe base64 string.
+ */
+export function encodeDesignToHash(design: Design, workload: Workload): string {
+  try {
+    const payload = JSON.stringify({ d: design, w: workload });
+    return btoa(encodeURIComponent(payload));
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Decodes a Design and Workload from a URL-safe base64 string.
+ */
+export function decodeDesignFromHash(hash: string): { design: Design; workload?: Workload } | null {
+  try {
+    const decoded = decodeURIComponent(atob(hash));
+    const parsed = JSON.parse(decoded);
+    if (parsed && parsed.d) {
+      return { design: parsed.d, workload: parsed.w };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+

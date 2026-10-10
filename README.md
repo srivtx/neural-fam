@@ -90,11 +90,14 @@ Every neural network architecture answers three engineering questions:
 
 The studio allows you to design custom hybrid architectures and test them against realistic hardware workloads:
 
-- **Configurable Primitives:** Stack any combination of MHA, Grouped-Query Attention (GQA), Sliding Window, Mamba SSM, 1D Convolutions, SwiGLU, and MoE.
+- **Head-to-Head Battle (Compare Mode):** Compare any two architectures side-by-side (e.g. MHA Transformer vs. Hybrid SSM/Jamba) across sequence lengths from $512$ to $131,072$ tokens. Computes the analytical memory crossover point where quadratic attention exceeds linear SSM state overhead.
+- **Configurable Primitives:** Stack any combination of MHA, Grouped-Query Attention (GQA), Sliding Window Attention, Mamba SSM, 1D Convolutions, SwiGLU, and Mixture of Experts (MoE).
 - **Hardware Targets:** Verify memory feasibility against NVIDIA H100 (80GB), A100 (80GB), RTX 4090 (24GB), T4 (16GB), Laptop GPUs (8GB), or Microcontrollers (512KB).
-- **Live Memory Profiler:** Real-time breakdown of model weights, KV-cache footprint across sequence lengths from $256$ to $131,072$ tokens, and activation buffers.
+- **Live Memory Profiler:** Real-time breakdown of model weights, KV-cache footprint across sequence lengths, and activation buffers.
 - **Roofline Feasibility Engine:** Evaluates arithmetic intensity ($\text{FLOPs} / \text{Byte}$) against GPU memory bandwidth to identify memory-bound vs. compute-bound regimes.
-- **Executable Blueprint Export:** Generates clean, type-annotated PyTorch modules ready for training or fine-tuning.
+- **Scaling Laws & Training Economics:** Compute Chinchilla-optimal token requirements ($D \approx 20P$), total pre-training FLOPs ($6PD$), required H100 cluster sizing for a 14-day run, and estimated cloud training budget in USD.
+- **Multi-Framework Code Export:** Generates executable PyTorch modules, JAX/Flax architectures, HuggingFace `config.json` definitions, and Mermaid dataflow diagrams.
+- **Shareable URL Blueprints:** Architecture designs are encoded directly into the URL hash for zero-backend team sharing.
 
 ---
 
@@ -106,10 +109,10 @@ The studio allows you to design custom hybrid architectures and test them agains
 | **1** | **MLP & XOR Space Warping** | $h = \text{ReLU}(W_1 x + b_1)$ | Non-linear geometric surface deformation separating XOR |
 | **2** | **CNN & ResNet Highways** | $y = x + F(x)$ | Interactive $3\times3$ filter convolution and residual gradient flow |
 | **3** | **RNN & LSTM Memory** | $C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t$ | Sequence timeline with dynamic forget and input gate valves |
-| **4** | **Transformers & Attention** | $\text{Softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$ | Interactive attention matrix heatmap and token routing |
+| **4** | **Transformers & Attention** | $\text{Softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$ | Winograd schema coreference selector, multi-head projection, $N \times N$ heatmap, and Shannon entropy |
 | **5** | **State-Space Models & Mamba** | $h_{t+1} = \bar{A}h_t + \bar{B}x_t$ | Continuous discretization and input-dependent selective filtering |
 | **6** | **Graph Neural Networks** | $h_v^{(k)} = \text{AGG}\left(\{h_u : u \in \mathcal{N}(v)\}\right)$ | Relational message passing and over-smoothing depth stress test |
-| **7** | **Diffusion & Generative VAE** | $q(x_t \mid x_{t-1}), \; p_\theta(x_{t-1} \mid x_t)$ | Forward noise injection and reverse thermodynamic denoising |
+| **7** | **Diffusion & Generative Models** | $q(x_t \mid x_{t-1}), \; p_\theta(x_{t-1} \mid x_t)$ | Cosine/linear variance schedule scrubber, animated trajectory, and Tweedie reconstruction $\hat{x}_0$ |
 | **8** | **Neural ODEs & Continuous Systems** | $\frac{dh(t)}{dt} = f(h, t, \theta)$ | Continuous vector field trajectories with adaptive Euler steps |
 
 ---
