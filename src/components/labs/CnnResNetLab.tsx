@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { HelpCircle, Code2, Play, CheckCircle2, Sliders, ShieldCheck, Award } from 'lucide-react';
+import { HelpCircle, Code2, Sliders, ShieldCheck, Award } from 'lucide-react';
 import { CheckpointQuiz } from '../CheckpointQuiz';
 import { CodeBlock } from '../CodeBlock';
 import { LAB_QUIZZES } from '../../data/labQuizzes';
@@ -95,103 +95,78 @@ export const CnnResNetLab: React.FC = () => {
 
   const currentCalc = calcBreakdown();
 
+  // The identity path carries the input pixel at the centre of the receptive field.
+  const skipInput = sampleImage[activeCell.r + 1][activeCell.c + 1];
+
   const cnnArchitectures = [
-    { name: 'LeNet-5 (1989)', idea: 'Early convolutional architecture for handwritten digit recognition', impact: 'Pioneered Conv + Pool + FC topology' },
-    { name: 'AlexNet (2012)', idea: 'Deep 8-layer CNN trained on GPUs with ReLU and Dropout', impact: 'Won ImageNet by massive margin, sparked deep learning boom' },
-    { name: 'VGG (2014)', idea: 'Repeated small 3x3 convolution filters stacked deep (16-19 layers)', impact: 'Showed simple consistent filter size beats large filters' },
-    { name: 'Inception (2014)', idea: 'Multi-scale parallel convolution paths (1x1, 3x3, 5x5) concatenated', impact: 'Extremely parameter efficient feature extraction' },
-    { name: 'ResNet (2015)', idea: 'Residual identity skip connections: y = x + F(x)', impact: 'Enabled 152+ layers without vanishing gradients' },
-    { name: 'DenseNet (2017)', idea: 'Concatenates feature maps from ALL preceding layers', impact: 'Maximum feature reuse and direct gradient flow' },
-    { name: 'MobileNet (2017)', idea: 'Depthwise separable convolutions', impact: 'Brought real-time vision to phones and edge hardware' },
-    { name: 'ConvNeXt (2022)', idea: 'Modernized CNN adopting Transformer design choices (7x7, inverted bottleneck)', impact: 'Proved CNNs remain competitive with Vision Transformers' },
+    { name: 'LeNet-5 (1998)', idea: 'Small convolutional network for reading handwritten digits', impact: 'Set the conv → pool → fully connected pattern' },
+    { name: 'AlexNet (2012)', idea: '8-layer CNN trained on GPUs, with ReLU and dropout', impact: 'Won ImageNet 2012 by a wide margin and started the deep learning wave' },
+    { name: 'VGG (2014)', idea: 'Stacks of small 3×3 convolutions, 16–19 layers deep', impact: 'Showed that depth with small filters beats a few large filters' },
+    { name: 'Inception (2014)', idea: 'Parallel 1×1, 3×3 and 5×5 convolutions, concatenated', impact: 'Captured several scales with far fewer parameters than VGG' },
+    { name: 'ResNet (2015)', idea: 'Identity skip connections: y = x + F(x)', impact: 'Made 152-layer networks trainable without the accuracy loss seen in deep plain nets' },
+    { name: 'DenseNet (2017)', idea: 'Each layer receives the feature maps of all earlier layers in its block', impact: 'Heavy feature reuse and short gradient paths' },
+    { name: 'MobileNet (2017)', idea: 'Depthwise separable convolutions', impact: 'Made real-time vision practical on phones and edge devices' },
+    { name: 'ConvNeXt (2022)', idea: 'A CNN updated with Transformer-era design choices (7×7 kernels, inverted bottleneck)', impact: 'Showed CNNs can still match Vision Transformers' },
   ];
 
   const runConvolutionTest = () => {
     markTestRun('cnn_resnet');
     markLabCompleted('cnn_resnet');
     const lines = [
-      '[CNN & ResNet Verification Test]',
+      '[CNN & ResNet check]',
       `Kernel: ${selectedKernel} (3x3)`,
-      `Input Dimension: 6x6 -> Output Feature Map: 4x4 (No padding, Stride 1)`,
-      `Cell (${activeCell.r}, ${activeCell.c}) -> Dot Product: ${currentCalc.sum}`,
-      `Residual Skip Mode: ${residualEnabled ? 'y = x + F(x) (ACTIVE IDENTITY BYPASS)' : 'y = F(x) (PLAIN STACK)'}`,
-      `Gradient Highway: ${residualEnabled ? 'dy/dx = 1 + dF/dx (Unbroken signal!)' : 'dy/dx = dF/dx (Decays over depth)'}`,
-      'STATUS: PASS (Valid spatial transformation & residual identity verified)',
-      '✓ Level 2 Progress Recorded!',
+      `Input 6x6 -> feature map 4x4 (no padding, stride 1)`,
+      `Cell (${activeCell.r}, ${activeCell.c}) -> dot product: ${currentCalc.sum}`,
+      `Block: ${residualEnabled ? 'y = x + F(x) (residual)' : 'y = F(x) (plain)'}`,
+      `Gradient: ${residualEnabled ? 'dy/dx = 1 + dF/dx (direct path back)' : 'dy/dx = dF/dx (can shrink with depth)'}`,
+      'STATUS: PASS (convolution and residual sum verified)',
+      'Level 2 progress saved.',
     ];
     setCodeOutput(lines.join('\n'));
   };
 
+  const tabClass = (active: boolean) =>
+    `flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+      active
+        ? 'bg-brand-600 text-white font-semibold'
+        : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+    }`;
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-ink-200 dark:border-white/10">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-            Level 2 · Spatial Structure & Residual Highways
+          <span className="text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+            Level 2 · Spatial structure and skip connections
           </span>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            CNNs & Residual Networks (ResNet)
+          <h2 className="font-display tracking-tight text-xl font-bold text-ink-900 dark:text-white mt-0.5">
+            CNNs and residual networks
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
-            Sliding localized filters over 2D pixels, and unlocking 100+ layer depth with the legendary identity skip: $y = x + F(x)$.
+          <p className="text-sm text-ink-600 dark:text-ink-400 mt-1 max-w-2xl">
+            Small filters slide across an image to find local patterns. Adding the input back to each block's output, <code className="font-mono">y = x + F(x)</code>, is what lets networks grow past 100 layers.
           </p>
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg">
-          <button
-            onClick={() => setSubTab('visual')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-              subTab === 'visual'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            Visual Kernel Lab
+        <div className="flex flex-wrap items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg">
+          <button onClick={() => setSubTab('visual')} className={tabClass(subTab === 'visual')}>
+            Kernel lab
           </button>
-          <button
-            onClick={() => setSubTab('table')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-              subTab === 'table'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            Architecture Lineage
+          <button onClick={() => setSubTab('table')} className={tabClass(subTab === 'table')}>
+            Lineage
           </button>
-          <button
-            onClick={() => setSubTab('code')}
-            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-              subTab === 'code'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
+          <button onClick={() => setSubTab('code')} className={tabClass(subTab === 'code')}>
             <Code2 className="w-3.5 h-3.5" />
-            <span>Code Scratchpad</span>
+            <span>Code</span>
           </button>
-          <button
-            onClick={() => setSubTab('analogy')}
-            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-              subTab === 'analogy'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
+          <button onClick={() => setSubTab('analogy')} className={tabClass(subTab === 'analogy')}>
             <HelpCircle className="w-3.5 h-3.5" />
-            <span>Express Lane Analogy</span>
+            <span>Analogy</span>
           </button>
-          <button
-            onClick={() => setSubTab('quiz')}
-            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-              subTab === 'quiz'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
+          <button onClick={() => setSubTab('quiz')} className={tabClass(subTab === 'quiz')}>
             <Award className="w-3.5 h-3.5" />
-            <span>Checkpoint Quiz</span>
+            <span>Quiz</span>
           </button>
         </div>
       </div>
@@ -199,19 +174,19 @@ export const CnnResNetLab: React.FC = () => {
       {subTab === 'visual' && (
         <div className="space-y-6">
           {/* Top Controls Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 shadow-xs transition-colors">
-            <div className="flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">Select 3×3 Filter:</span>
-              <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 shadow-xs transition-colors">
+            <div className="flex flex-wrap items-center gap-2">
+              <Sliders className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+              <span className="text-xs font-semibold text-ink-800 dark:text-ink-200">3×3 filter:</span>
+              <div className="flex flex-wrap items-center gap-1">
                 {(['edge_h', 'edge_v', 'sharpen', 'blur'] as const).map((kKey) => (
                   <button
                     key={kKey}
                     onClick={() => setSelectedKernel(kKey)}
                     className={`px-2.5 py-1 text-xs rounded border transition-colors cursor-pointer uppercase ${
                       selectedKernel === kKey
-                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 font-semibold'
-                        : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/15 text-brand-800 dark:text-brand-300 font-semibold'
+                        : 'border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
                     }`}
                   >
                     {kKey.replace('_', ' ')}
@@ -221,18 +196,18 @@ export const CnnResNetLab: React.FC = () => {
             </div>
 
             {/* Residual Toggle */}
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">Residual Highway:</span>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-xs text-ink-700 dark:text-ink-300 font-medium">Skip connection:</span>
               <button
                 onClick={() => setResidualEnabled(!residualEnabled)}
                 className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${
                   residualEnabled
-                    ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-bold shadow-xs'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-brand-50 dark:bg-brand-500/20 border-brand-500 text-brand-800 dark:text-brand-300 font-bold shadow-xs'
+                    : 'bg-surface dark:bg-ink-900 border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
                 }`}
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>{residualEnabled ? 'y = x + F(x) ON' : 'Plain Stack (No Skip)'}</span>
+                <span>{residualEnabled ? 'On: y = x + F(x)' : 'Off: y = F(x)'}</span>
               </button>
             </div>
           </div>
@@ -240,13 +215,13 @@ export const CnnResNetLab: React.FC = () => {
           {/* Interactive Grids */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Input Grid (6x6) with sliding 3x3 highlight */}
-            <div className="lg:col-span-5 bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-5 space-y-3 shadow-xs transition-colors">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-800 dark:text-slate-200">Input Image (6×6)</span>
-                <span className="text-slate-500 dark:text-slate-400">Green box = 3×3 receptive field</span>
+            <div className="lg:col-span-5 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-3 shadow-xs transition-colors">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span className="font-semibold text-ink-800 dark:text-ink-200">Input image (6×6)</span>
+                <span className="text-ink-500 dark:text-ink-400">Highlighted: 3×3 receptive field</span>
               </div>
 
-              <div className="grid grid-cols-6 gap-1 p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200/60 dark:border-white/5 max-w-[280px] mx-auto">
+              <div className="grid grid-cols-6 gap-1 p-3 bg-ink-50 dark:bg-ink-950 rounded-lg border border-ink-200/60 dark:border-white/5 w-full max-w-[280px] mx-auto">
                 {sampleImage.map((row, r) =>
                   row.map((val, c) => {
                     const inReceptiveField =
@@ -260,10 +235,10 @@ export const CnnResNetLab: React.FC = () => {
                         key={`${r}-${c}`}
                         className={`aspect-square flex items-center justify-center text-xs font-mono rounded transition-colors ${
                           inReceptiveField
-                            ? 'bg-emerald-100 dark:bg-emerald-500/30 border border-emerald-500 text-emerald-900 dark:text-emerald-200 font-bold'
+                            ? 'bg-brand-100 dark:bg-brand-500/30 border border-brand-500 text-brand-900 dark:text-brand-200 font-bold'
                             : val === 1
-                            ? 'bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white font-semibold'
-                            : 'bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-600 border border-slate-100 dark:border-transparent'
+                            ? 'bg-ink-300 dark:bg-ink-700 text-ink-900 dark:text-white font-semibold'
+                            : 'bg-surface dark:bg-ink-900 text-ink-400 dark:text-ink-600 border border-ink-100 dark:border-transparent'
                         }`}
                       >
                         {val}
@@ -273,23 +248,23 @@ export const CnnResNetLab: React.FC = () => {
                 )}
               </div>
 
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 text-center">
-                Click any cell on the Feature Map to move this 3×3 receptive field!
+              <p className="text-[11px] text-ink-500 dark:text-ink-400 text-center">
+                Click a cell in the output to move the receptive field.
               </p>
             </div>
 
             {/* Kernel Matrix (3x3) */}
-            <div className="lg:col-span-3 bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-5 space-y-3 shadow-xs transition-colors">
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block text-center">
-                Active 3×3 Kernel
+            <div className="lg:col-span-3 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-3 shadow-xs transition-colors">
+              <span className="text-xs font-semibold text-ink-800 dark:text-ink-200 block text-center">
+                Kernel (3×3)
               </span>
 
-              <div className="grid grid-cols-3 gap-1 p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200/60 dark:border-white/5 max-w-[180px] mx-auto">
+              <div className="grid grid-cols-3 gap-1 p-3 bg-ink-50 dark:bg-ink-950 rounded-lg border border-ink-200/60 dark:border-white/5 w-full max-w-[180px] mx-auto">
                 {kernel.map((row, kr) =>
                   row.map((kval, kc) => (
                     <div
                       key={`${kr}-${kc}`}
-                      className="aspect-square flex items-center justify-center text-xs font-mono rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-emerald-700 dark:text-emerald-400 font-bold shadow-2xs"
+                      className="aspect-square flex items-center justify-center text-xs font-mono rounded bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 text-brand-700 dark:text-brand-400 font-bold shadow-2xs"
                     >
                       {kval}
                     </div>
@@ -297,19 +272,19 @@ export const CnnResNetLab: React.FC = () => {
                 )}
               </div>
 
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 text-center font-mono">
-                Weights shared across every position!
+              <p className="text-[11px] text-ink-500 dark:text-ink-400 text-center">
+                The same nine weights are used at every position.
               </p>
             </div>
 
             {/* Feature Map (4x4) */}
-            <div className="lg:col-span-4 bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-5 space-y-3 shadow-xs transition-colors">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-800 dark:text-slate-200">Convolved Output (4×4)</span>
-                <span className="text-emerald-700 dark:text-emerald-400 font-semibold">Active: ({activeCell.r}, {activeCell.c})</span>
+            <div className="lg:col-span-4 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-3 shadow-xs transition-colors">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span className="font-semibold text-ink-800 dark:text-ink-200">Output feature map (4×4)</span>
+                <span className="text-brand-700 dark:text-brand-400 font-semibold">Selected: ({activeCell.r}, {activeCell.c})</span>
               </div>
 
-              <div className="grid grid-cols-4 gap-1.5 p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200/60 dark:border-white/5 max-w-[220px] mx-auto">
+              <div className="grid grid-cols-4 gap-1.5 p-3 bg-ink-50 dark:bg-ink-950 rounded-lg border border-ink-200/60 dark:border-white/5 w-full max-w-[220px] mx-auto">
                 {featureMap.map((row, r) =>
                   row.map((val, c) => {
                     const isSelected = activeCell.r === r && activeCell.c === c;
@@ -319,10 +294,10 @@ export const CnnResNetLab: React.FC = () => {
                         onClick={() => setActiveCell({ r, c })}
                         className={`aspect-square flex items-center justify-center text-xs font-mono rounded transition-colors cursor-pointer ${
                           isSelected
-                            ? 'bg-emerald-600 text-white font-bold border-2 border-emerald-700 dark:border-white shadow-xs'
+                            ? 'bg-brand-600 text-white font-bold border-2 border-brand-700 dark:border-white shadow-xs'
                             : Math.abs(val) > 1
-                            ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30'
-                            : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/5'
+                            ? 'bg-brand-50 dark:bg-brand-500/20 text-brand-800 dark:text-brand-300 border border-brand-200 dark:border-brand-500/30'
+                            : 'bg-surface dark:bg-ink-900 text-ink-600 dark:text-ink-400 border border-ink-200 dark:border-white/5'
                         }`}
                       >
                         {val}
@@ -333,16 +308,16 @@ export const CnnResNetLab: React.FC = () => {
               </div>
 
               {/* Math breakdown */}
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/80 rounded-lg border border-slate-200/60 dark:border-white/5 font-mono text-xs text-slate-700 dark:text-slate-300 space-y-1">
-                <div className="text-emerald-700 dark:text-emerald-400 font-semibold text-[11px]">
-                  Feature Value at ({activeCell.r}, {activeCell.c}):
+              <div className="p-3 bg-ink-50 dark:bg-ink-950/80 rounded-lg border border-ink-200/60 dark:border-white/5 font-mono text-xs text-ink-700 dark:text-ink-300 space-y-1 break-words">
+                <div className="text-brand-700 dark:text-brand-400 font-semibold text-[11px]">
+                  F(x) at ({activeCell.r}, {activeCell.c}):
                 </div>
-                <div className="text-xs text-slate-900 dark:text-slate-200 font-bold">
-                  Value = {currentCalc.sum}
+                <div className="text-xs text-ink-900 dark:text-ink-200 font-bold">
+                  F(x) = {currentCalc.sum}
                 </div>
                 {residualEnabled && (
-                  <div className="text-[11px] text-emerald-700 dark:text-emerald-300 pt-1 border-t border-slate-200 dark:border-white/10 font-semibold">
-                    + Identity Skip = {(currentCalc.sum + 1.0).toFixed(2)} (Signal intact)
+                  <div className="text-[11px] text-brand-700 dark:text-brand-300 pt-1 border-t border-ink-200 dark:border-white/10 font-semibold">
+                    y = x + F(x) = {skipInput} + {currentCalc.sum} = {(currentCalc.sum + skipInput).toFixed(2)}
                   </div>
                 )}
               </div>
@@ -350,20 +325,20 @@ export const CnnResNetLab: React.FC = () => {
           </div>
 
           {/* Prompt To Concept Check */}
-          <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-500/20 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="p-4 bg-brand-50 dark:bg-brand-950/20 border border-brand-200 dark:border-brand-500/20 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
             <div>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                Understood CNNs & Residual Skip Connections?
+              <h4 className="text-xs font-bold text-ink-900 dark:text-white">
+                Ready to check your understanding?
               </h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                Test your understanding with the Level 2 Concept Checkpoint quiz.
+              <p className="text-[11px] text-ink-600 dark:text-ink-400">
+                A short quiz on convolutions and skip connections.
               </p>
             </div>
             <button
               onClick={() => setSubTab('quiz')}
-              className="px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors cursor-pointer shadow-xs shrink-0"
+              className="px-3.5 py-1.5 text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 rounded-lg transition-colors cursor-pointer shadow-xs shrink-0"
             >
-              Take Concept Check
+              Take the quiz
             </button>
           </div>
         </div>
@@ -371,31 +346,31 @@ export const CnnResNetLab: React.FC = () => {
 
       {/* Tab 2: Architecture Lineage Table */}
       {subTab === 'table' && (
-        <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-xs">
-          <div className="p-4 border-b border-slate-100 dark:border-white/10">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">CNN Evolutionary Milestone Table</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Notice that ResNet and DenseNet are structural mechanisms applied onto CNNs, not mutually exclusive categories.
+        <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 overflow-hidden shadow-xs">
+          <div className="p-4 border-b border-ink-100 dark:border-white/10">
+            <h3 className="font-display tracking-tight text-sm font-bold text-ink-900 dark:text-white">Key CNN architectures</h3>
+            <p className="text-xs text-ink-500 dark:text-ink-400">
+              ResNet and DenseNet are ways of wiring a CNN, not separate kinds of network.
             </p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-100 dark:border-white/10">
+              <thead className="bg-ink-50 dark:bg-ink-950 text-ink-500 dark:text-ink-400 font-semibold border-b border-ink-100 dark:border-white/10">
                 <tr>
                   <th className="py-3 px-4">Architecture</th>
-                  <th className="py-3 px-4">Core Mechanism</th>
-                  <th className="py-3 px-4">Significance</th>
+                  <th className="py-3 px-4">Core idea</th>
+                  <th className="py-3 px-4">Why it mattered</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-300">
+              <tbody className="divide-y divide-ink-100 dark:divide-white/5 text-ink-700 dark:text-ink-300">
                 {cnnArchitectures.map((arch) => (
-                  <tr key={arch.name} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                    <td className="py-3 px-4 font-mono font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                  <tr key={arch.name} className="hover:bg-ink-50 dark:hover:bg-ink-900/50 transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-brand-700 dark:text-brand-400 whitespace-nowrap">
                       {arch.name}
                     </td>
                     <td className="py-3 px-4">{arch.idea}</td>
-                    <td className="py-3 px-4 text-slate-500 dark:text-slate-400">{arch.impact}</td>
+                    <td className="py-3 px-4 text-ink-500 dark:text-ink-400">{arch.impact}</td>
                   </tr>
                 ))}
               </tbody>
@@ -408,31 +383,31 @@ export const CnnResNetLab: React.FC = () => {
       {subTab === 'code' && (
         <div className="space-y-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">2D Convolution & Residual Block</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Notice how the residual function simply adds the identity tensor <code>x</code> back to the result.
+            <h3 className="font-display tracking-tight text-base font-bold text-ink-900 dark:text-white">A residual block</h3>
+            <p className="text-xs text-ink-500 dark:text-ink-400">
+              The block computes F(x), then adds the unchanged input <code>x</code> back.
             </p>
           </div>
 
           <CodeBlock
-            code={`// 1. A Residual Block in pure TypeScript: y = x + F(x)
+            code={`// A residual block in TypeScript: y = x + F(x)
 function residualBlock(x: number[], weights: number[][]): number[] {
-  // Compute F(x) through a standard 2-layer sub-network
+  // F(x): a small stack of conv layers
   const F_x = computeConvLayers(x, weights);
 
-  // The Residual Skip: Add original identity x directly!
+  // Skip connection: add the original input back
   const y = x.map((val, i) => val + F_x[i]);
   return y;
 }
 
-// Why it saves deep networks during backpropagation:
-// By the chain rule: dy/dx = d(x + F(x))/dx = 1 + dF/dx
-// Even if dF/dx shrinks toward zero, the '1' guarantees 
-// gradients can flow all the way back to layer 1 intact!`}
+// Why this helps backpropagation:
+// dy/dx = d(x + F(x))/dx = 1 + dF/dx
+// Even when dF/dx is close to zero, the 1 gives the
+// gradient a direct path back to earlier layers.`}
             language="TypeScript"
             filename="resnet_block_forward.ts"
             onRun={runConvolutionTest}
-            runLabel="Run Convolution Test"
+            runLabel="Run check"
             output={codeOutput}
           />
         </div>
@@ -440,20 +415,20 @@ function residualBlock(x: number[], weights: number[][]): number[] {
 
       {/* Analogy Tab */}
       {subTab === 'analogy' && (
-        <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-6 space-y-4 shadow-xs">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">The Express Lane Analogy</h3>
-          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            Imagine a game of telephone with 100 people in a line. Person 1 whispers a message to Person 2, who whispers to Person 3, all the way to Person 100.
+        <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-6 space-y-4 shadow-xs">
+          <h3 className="font-display tracking-tight text-base font-bold text-ink-900 dark:text-white">An analogy: the postcard</h3>
+          <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+            Picture a game of telephone with 100 people in a line. Each person whispers the message to the next.
           </p>
-          <div className="p-4 bg-slate-50 dark:bg-slate-900/80 rounded-lg border border-slate-200 dark:border-white/5 space-y-2 text-xs text-slate-600 dark:text-slate-300">
+          <div className="p-4 bg-ink-50 dark:bg-ink-900/80 rounded-lg border border-ink-200 dark:border-white/5 space-y-2 text-xs text-ink-600 dark:text-ink-300">
             <p>
-              <strong className="text-red-600 dark:text-red-400 font-semibold">Without Residuals (Plain Deep Net):</strong> By person 20, the whisper has faded into inaudible mumbling. The signal completely vanishes.
+              <strong className="text-rose-600 dark:text-rose-400 font-semibold">Plain deep network:</strong> by person 20 the message has turned into mumbling. The signal is lost.
             </p>
             <p>
-              <strong className="text-emerald-700 dark:text-emerald-400 font-semibold">With ResNet (Identity Highway):</strong> Person 1 writes down the original message on a postcard and slides it down an express conveyor belt straight to Person 100!
+              <strong className="text-green-700 dark:text-green-400 font-semibold">Residual network:</strong> person 1 also writes the message on a postcard that is passed straight down the line.
             </p>
-            <p className="text-emerald-800 dark:text-emerald-300 font-medium">
-              The people in the middle only have to whisper minor corrections (F(x)). If their corrections are useless ($F(x) \approx 0$), the original postcard ($x$) still arrives intact! That’s why ResNet could effortlessly scale to 152 layers while previous networks choked at 20.
+            <p className="text-ink-800 dark:text-ink-200 font-medium">
+              Everyone in between only adds small corrections, F(x). If their corrections are useless (F(x) ≈ 0), the postcard, x, still arrives intact. This is why ResNet trained well at 152 layers, while plain networks started getting worse beyond about 20.
             </p>
           </div>
         </div>

@@ -7,7 +7,7 @@ import { QuizQuestion } from '../components/CheckpointQuiz';
 
 export const LAB_QUIZZES: Record<string, { title: string; questions: QuizQuestion[] }> = {
   perceptron: {
-    title: 'Level 0 Mastery: Single Neuron & Linear Separation',
+    title: 'Level 0: Single neuron and linear separation',
     questions: [
       {
         question: 'In the equation y = σ(w₁x₁ + w₂x₂ + b), what does the bias (b) physically control?',
@@ -33,7 +33,7 @@ export const LAB_QUIZZES: Record<string, { title: string; questions: QuizQuestio
   },
 
   mlp: {
-    title: 'Level 1 Mastery: Multilayer Perceptron & Space Warping',
+    title: 'Level 1: Multilayer perceptron and nonlinear separation',
     questions: [
       {
         question: 'How do hidden layers in an MLP resolve the XOR failure?',
@@ -59,7 +59,7 @@ export const LAB_QUIZZES: Record<string, { title: string; questions: QuizQuestio
   },
 
   cnn_resnet: {
-    title: 'Level 2 Mastery: CNNs & Residual Identity Highways',
+    title: 'Level 2: Convolutional networks and residual connections',
     questions: [
       {
         question: 'Why are 2D convolutions translation-invariant on image grids?',
@@ -85,7 +85,7 @@ export const LAB_QUIZZES: Record<string, { title: string; questions: QuizQuestio
   },
 
   rnn_lstm: {
-    title: 'Level 3 Mastery: Recurrent Loops & LSTM Memory Valves',
+    title: 'Level 3: Recurrent loops and LSTM gating',
     questions: [
       {
         question: 'What is the primary function of the LSTM Forget Gate (f_t)?',
@@ -111,7 +111,7 @@ export const LAB_QUIZZES: Record<string, { title: string; questions: QuizQuestio
   },
 
   transformer: {
-    title: 'Level 4 Mastery: Scaled Dot-Product Attention & Masking',
+    title: 'Level 4: Scaled dot-product attention and masking',
     questions: [
       {
         question: 'What is the purpose of dividing the dot product Q·Kᵀ by √d_k in self-attention?',
@@ -137,7 +137,7 @@ export const LAB_QUIZZES: Record<string, { title: string; questions: QuizQuestio
   },
 
   ssm_mamba: {
-    title: 'Level 5 Mastery: State-Space Models & Bounded States',
+    title: 'Level 5: State-space models and bounded states',
     questions: [
       {
         question: 'What allows Mamba to scale linearly O(N) with context length while maintaining strong reasoning?',
@@ -163,7 +163,7 @@ export const LAB_QUIZZES: Record<string, { title: string; questions: QuizQuestio
   },
 
   gnn: {
-    title: 'Level 6 Mastery: Graph Message Passing & Permutation Invariance',
+    title: 'Level 6: Graph message passing and permutation invariance',
     questions: [
       {
         question: 'What does permutation invariance mean for a Graph Neural Network?',
@@ -189,7 +189,7 @@ export const LAB_QUIZZES: Record<string, { title: string; questions: QuizQuestio
   },
 
   generative: {
-    title: 'Level 7 Mastery: Diffusion Noise Dynamics & U-Nets',
+    title: 'Level 7: Diffusion noise dynamics and U-Nets',
     questions: [
       {
         question: 'What does the neural network inside a diffusion model actually predict?',
@@ -215,7 +215,7 @@ export const LAB_QUIZZES: Record<string, { title: string; questions: QuizQuestio
   },
 
   specialized: {
-    title: 'Level 8 Mastery: Neural ODEs & Continuous Depth',
+    title: 'Level 8: Neural ODEs and continuous depth',
     questions: [
       {
         question: 'How do Neural ODEs fundamentally redefine network depth?',

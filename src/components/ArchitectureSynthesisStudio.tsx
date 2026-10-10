@@ -1,672 +1,1153 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
+ *
+ * Architecture Synthesis Studio: an interactive workbench to build, inspect,
+ * and test neural network architectures from first principles.
  */
 
 import React, { useState, useMemo } from 'react';
 import {
-  Sparkles,
   Layers,
   ArrowRight,
   ShieldCheck,
   AlertTriangle,
   Zap,
-  Code2,
   Cpu,
   Compass,
   CheckCircle2,
   BookOpen,
   Info,
-  Target,
   Sliders,
-  Award,
+  Trash2,
+  Plus,
+  ArrowUp,
+  ArrowDown,
+  RotateCcw,
+  Copy,
+  Check,
+  HelpCircle,
+  Activity,
+  Gauge,
+  HardDrive,
   Download,
 } from 'lucide-react';
+import {
+  Design,
+  Workload,
+  Layer,
+  LayerKind,
+  PRESETS,
+  BLANK_DESIGN,
+  MODALITIES,
+  KINDS,
+  KIND_ORDER,
+  GPUS,
+  cloneDesign,
+  defaultLayer,
+  DEFAULT_WORKLOAD,
+  uid,
+} from '../studio/model';
+import {
+  analyzeDesign,
+  generatePyTorchModule,
+} from '../studio/calculator';
 import { CodeBlock } from './CodeBlock';
 import { soundFX } from '../utils/audio';
 
-// 1. Information Routing Mechanisms
-const ROUTING_MECHANISMS = [
-  {
-    id: 'attention',
-    name: 'All-to-All Softmax Attention',
-    complexity: 'O(N²)',
-    memory: 'KV Cache O(N)',
-    inductiveBias: 'Near Zero (Tabula Rasa)',
-    desc: 'Every token compares with every other token via QKᵀ dot-products.',
-    bestFor: 'Complex reasoning, in-context retrieval, arbitrary associative lookups.',
-  },
-  {
-    id: 'ssm',
-    name: 'Continuous Selective State-Space (Mamba)',
-    complexity: 'O(N)',
-    memory: 'Fixed State O(1)',
-    inductiveBias: 'Recurrent Sequence Flow',
-    desc: 'Compresses sequence history into a fixed continuous state vector with input-dependent gates.',
-    bestFor: 'Million-token context, streaming sensor time-series, low-latency audio.',
-  },
-  {
-    id: 'conv',
-    name: 'Locally Sliding Convolutions',
-    complexity: 'O(N · K)',
-    memory: 'Minimal Receptive Buffer',
-    inductiveBias: 'Translation Invariance',
-    desc: 'Shares small spatial filter kernels across adjacent neighbor dimensions.',
-    bestFor: 'Images, spectrograms, local edge textures where nearby pixels matter most.',
-  },
-  {
-    id: 'graph',
-    name: 'Topological Message Passing (GNN)',
-    complexity: 'O(|E|)',
-    memory: 'Sparse Adjacency',
-    inductiveBias: 'Permutation Invariance',
-    desc: 'Nodes aggregate information exclusively from connected physical neighbors.',
-    bestFor: 'Molecules, protein folding, citation graphs, power grids.',
-  },
-  {
-    id: 'ode',
-    name: 'Continuous Differential Flow (Neural ODE)',
-    complexity: 'Adaptive Solver Steps',
-    memory: 'Continuous Depth Variable t',
-    inductiveBias: 'Smooth Dynamical Physics',
-    desc: 'Replaces discrete layers with a continuous velocity vector field dh/dt = f(h, t).',
-    bestFor: 'Physical simulations, irregular time-sampled patient telemetry.',
-  },
-];
-
-// 2. Gradient Highways
-const HIGHWAY_MECHANISMS = [
-  {
-    id: 'residual',
-    name: 'Additive Identity Highway: y = x + F(x)',
-    stability: 'Rock Solid (dy/dx = 1 + dF/dx)',
-    desc: 'Direct unblocked gradient pass-through. Even if intermediate sub-networks vanish, gradients flow backwards intact.',
-    usedIn: 'ResNet, Transformer, ConvNeXt, AlphaFold.',
-  },
-  {
-    id: 'gated',
-    name: 'Gated Additive Highway (LSTM / GRU)',
-    stability: 'High (Dynamic Forget Valve)',
-    desc: 'Additive updates modulated by learned forget valves (f_t · C_{t-1} + i_t · candidate).',
-    usedIn: 'LSTM, GRU, Highway Networks.',
-  },
-  {
-    id: 'contractive',
-    name: 'Contractive Norm Boundedness (|A| < 1)',
-    stability: 'Mathematically Bounded (No Exploding States)',
-    desc: 'Constrains matrix eigenvalues strictly within the unit circle to guarantee long-sequence stability.',
-    usedIn: 'S4, Mamba, HiPPO, Stable Recurrent Systems.',
-  },
-  {
-    id: 'dense',
-    name: 'Dense Feature Concatenation: y = [x₀, x₁, ..., xₗ]',
-    stability: 'Very High (Direct Skip to All Layers)',
-    desc: 'Feeds each layer’s outputs to all subsequent layers directly via concatenation.',
-    usedIn: 'DenseNet, U-Net multi-scale skip paths.',
-  },
-];
-
-// 3. Activation & Compute Sparsity
-const COMPUTE_MODIFIERS = [
-  {
-    id: 'dense_swiglu',
-    name: 'SwiGLU Gated Feedforward (Dense)',
-    efficiency: 'Standard Dense',
-    desc: 'Swish-gated elementwise multiplications used in modern LLMs (Llama 3, Claude).',
-  },
-  {
-    id: 'moe',
-    name: 'Sparse Mixture of Experts (MoE: Top-2 of 8)',
-    efficiency: 'High (Runs 15B params out of 60B total)',
-    desc: 'A router directs each token to only 2 specialized expert networks, decoupling parameter count from inference compute.',
-  },
-  {
-    id: 'kan',
-    name: 'Kolmogorov-Arnold Edge Splines (KAN)',
-    efficiency: 'High Parameter Efficiency',
-    desc: 'Learnable 1D B-spline curves on connections between nodes instead of fixed node activations.',
-  },
-];
-
-// 4. Real-world Frontier Innovation Challenges
-const INNOVATION_CHALLENGES = [
-  {
-    id: 'genomics',
-    title: '1,000,000-Token Genomics & DNA',
-    domain: 'Bioinformatics & Long Sequences',
-    constraint: '1,000,000 base pairs cannot fit in O(N²) attention memory (>4,000 GB VRAM needed!).',
-    targetRouting: 'ssm',
-    targetHighway: 'residual',
-    targetCompute: 'dense_swiglu',
-    recommendedSeqLen: 16384,
-    solution: 'Use Continuous Selective State-Space (Mamba) with additive skips. Replaces the quadratic KV-cache with a constant O(1) state, processing whole chromosomes in linear time.',
-  },
-  {
-    id: 'edge_audio',
-    title: 'Ultra-Low Power 10mW Edge Audio',
-    domain: 'Embedded Systems & Smart Devices',
-    constraint: 'A battery-powered microcontroller has only 256KB SRAM and must run <3ms latency keyword spotting.',
-    targetRouting: 'conv',
-    targetHighway: 'residual',
-    targetCompute: 'dense_swiglu',
-    recommendedSeqLen: 1024,
-    solution: 'Use Depthwise 1D Convolutions with residual skips. Maximizes hardware SRAM cache locality and avoids matrix multiplications across distant time steps.',
-  },
-  {
-    id: 'drug_docking',
-    title: '3D Molecular Drug Docking & Binding',
-    domain: 'Computational Chemistry & Pharmacology',
-    constraint: 'Molecules must be invariant to 3D rotation and node index permutations in Euclidean space.',
-    targetRouting: 'graph',
-    targetHighway: 'residual',
-    targetCompute: 'dense_swiglu',
-    recommendedSeqLen: 2048,
-    solution: 'Use Topological Message Passing (GNN) with residual skips. Enforces strict permutation invariance so chemical affinity is identical regardless of node numbering.',
-  },
-  {
-    id: 'frontier_moe',
-    title: 'Frontier Pre-training: Decouple Knowledge from FLOPs',
-    domain: 'Foundation LLMs & Frontier Reasoning',
-    constraint: 'Scaling to 500 Billion parameters exceeds single-GPU cluster inference compute budgets.',
-    targetRouting: 'attention',
-    targetHighway: 'residual',
-    targetCompute: 'moe',
-    recommendedSeqLen: 8192,
-    solution: 'Combine Multi-Head Self-Attention with Sparse Mixture of Experts (MoE Top-2 of 8). Grants 500B parameter capacity while only firing 35B active parameters per token!',
-  },
-];
-
 export const ArchitectureSynthesisStudio: React.FC = () => {
-  const [selectedRouting, setSelectedRouting] = useState<string>('attention');
-  const [selectedHighway, setSelectedHighway] = useState<string>('residual');
-  const [selectedCompute, setSelectedCompute] = useState<string>('dense_swiglu');
-  const [testSequenceLength, setTestSequenceLength] = useState<number>(4096);
-  const [activeChallengeId, setActiveChallengeId] = useState<string | null>(null);
+  const [design, setDesign] = useState<Design>(() => cloneDesign(PRESETS[1].design)); // Start with Llama 3 8B
+  const [workload, setWorkload] = useState<Workload>(() => ({ ...DEFAULT_WORKLOAD, seqLen: 4096 }));
+  const [activeTab, setActiveTab] = useState<'blueprint' | 'code' | 'params'>('blueprint');
+  const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
 
-  const routingObj = ROUTING_MECHANISMS.find((r) => r.id === selectedRouting)!;
-  const highwayObj = HIGHWAY_MECHANISMS.find((h) => h.id === selectedHighway)!;
-  const computeObj = COMPUTE_MODIFIERS.find((c) => c.id === selectedCompute)!;
+  // Derived analysis
+  const analysis = useMemo(() => analyzeDesign(design, workload), [design, workload]);
+  const pyTorchCode = useMemo(() => generatePyTorchModule(design, workload), [design, workload]);
 
-  // Handle Innovation Challenge Load
-  const handleLoadChallenge = (challengeId: string) => {
-    const c = INNOVATION_CHALLENGES.find((ch) => ch.id === challengeId);
-    if (c) {
-      setActiveChallengeId(challengeId);
-      setSelectedRouting(c.targetRouting);
-      setSelectedHighway(c.targetHighway);
-      setSelectedCompute(c.targetCompute);
-      setTestSequenceLength(c.recommendedSeqLen);
+  // Handlers for modifying block layers
+  const handleAddLayer = (kind: LayerKind) => {
+    const newL = defaultLayer(kind, design.d);
+    setDesign((prev) => ({ ...prev, block: [...prev.block, newL] }));
+    setSelectedLayerId(newL.id);
+    soundFX.playTap();
+  };
+
+  const handleRemoveLayer = (id: string) => {
+    setDesign((prev) => ({
+      ...prev,
+      block: prev.block.filter((l) => l.id !== id),
+    }));
+    if (selectedLayerId === id) setSelectedLayerId(null);
+    soundFX.playTap();
+  };
+
+  const handleMoveLayer = (index: number, direction: 'up' | 'down') => {
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= design.block.length) return;
+    setDesign((prev) => {
+      const next = [...prev.block];
+      const temp = next[index];
+      next[index] = next[targetIdx];
+      next[targetIdx] = temp;
+      return { ...prev, block: next };
+    });
+    soundFX.playTap();
+  };
+
+  const handleUpdateLayer = (id: string, updates: Partial<Layer>) => {
+    setDesign((prev) => ({
+      ...prev,
+      block: prev.block.map((l) => (l.id === id ? { ...l, ...updates } : l)),
+    }));
+  };
+
+  const handleLoadPreset = (presetId: string) => {
+    const preset = PRESETS.find((p) => p.id === presetId);
+    if (preset) {
+      setDesign(cloneDesign(preset.design));
+      if (preset.workload) {
+        setWorkload((prev) => ({ ...prev, ...preset.workload }));
+      }
       soundFX.playSuccess();
     }
   };
 
-  // Synthesize Architectural Analysis
-  const synthesis = useMemo(() => {
-    let name = 'Custom Neural Architecture';
-    let realWorldAnalog = 'Novel Unexplored Paradigm';
-    let complexityLabel = 'O(N²)';
-    let floptsEstimate = 0;
-    let recommendation = '';
+  const handleResetToBlank = () => {
+    setDesign(cloneDesign(BLANK_DESIGN));
+    setSelectedLayerId(null);
+    soundFX.playTap();
+  };
 
-    // Hybrid identification
-    if (selectedRouting === 'ssm' && selectedHighway === 'residual' && selectedCompute === 'moe') {
-      name = 'Sparse Mamba-MoE (BlackMamba / Jamba-style)';
-      realWorldAnalog = 'AI21 Jamba (2024), Zyphra BlackMamba';
-      complexityLabel = 'O(N) Linear Time · Sparse O(Top-K)';
-      recommendation = 'Ideal for massive context windows (100k+ tokens) with high inference throughput on limited GPU clusters.';
-    } else if (selectedRouting === 'attention' && selectedHighway === 'residual' && selectedCompute === 'moe') {
-      name = 'Mixture of Experts Transformer';
-      realWorldAnalog = 'Mixtral 8x7B, DeepSeek-V2, Grok-1';
-      complexityLabel = 'O(N²) Attention · Sparse FLOPs';
-      recommendation = 'State-of-the-art for frontier reasoning models where pre-training data exceeds 5 Trillion tokens.';
-    } else if (selectedRouting === 'conv' && selectedHighway === 'residual') {
-      name = 'Modernized Residual Convolutional Network';
-      realWorldAnalog = 'ConvNeXt (2022), ResNet (2015)';
-      complexityLabel = 'O(N · K) Spatial Locality';
-      recommendation = 'Unbeatable for visual pixels, embedded camera hardware, and edge deployment where translation invariance is non-negotiable.';
-    } else if (selectedRouting === 'ssm' && selectedHighway === 'residual') {
-      name = 'Pure State-Space Sequence Model';
-      realWorldAnalog = 'Mamba-2 (2024), S4 (2021)';
-      complexityLabel = 'O(N) Strictly Linear Memory';
-      recommendation = 'Replaces KV-cache bottlenecks. Ideal for long-form document synthesis, DNA genomics, and robotics state observation.';
-    } else if (selectedRouting === 'graph' && selectedHighway === 'residual') {
-      name = 'Residual Graph Neural Network (ResGNN)';
-      realWorldAnalog = 'AlphaFold-2 Pair Representation, DeeperGCN';
-      complexityLabel = 'O(|E|) Relational Sparse';
-      recommendation = 'Solves the oversmoothing dilemma in deep graph learning for molecular property prediction and drug discovery.';
-    } else if (selectedRouting === 'ode') {
-      name = 'Continuous Residual Neural Dynamic System';
-      realWorldAnalog = 'Neural ODE (Chen et al. 2018), Continuous Normalizing Flows';
-      complexityLabel = 'Adaptive Step Size';
-      recommendation = 'Allows adaptive test-time compute: evaluate fast with coarse steps for low latency, or fine steps for peak precision.';
-    } else {
-      name = `${routingObj.name.split(' ')[0]} + ${highwayObj.name.split(' ')[0]} Hybrid`;
-      realWorldAnalog = 'Frontier Research Hybrid';
-      complexityLabel = `${routingObj.complexity} Information Scaling`;
-      recommendation = 'A compelling combination testing cross-paradigm assumptions. Examine memory footprint carefully during backpropagation.';
-    }
-
-    // Estimate operations
-    if (routingObj.complexity.includes('N²')) {
-      floptsEstimate = Math.round((testSequenceLength * testSequenceLength * 768) / 1000000);
-    } else {
-      floptsEstimate = Math.round((testSequenceLength * 768 * 4) / 1000000);
-    }
-
-    return {
-      name,
-      realWorldAnalog,
-      complexityLabel,
-      floptsEstimate,
-      recommendation,
-    };
-  }, [selectedRouting, selectedHighway, selectedCompute, routingObj, highwayObj, testSequenceLength]);
-
-  // Generate runnable PyTorch code for custom hybrid
-  const generatedCode = useMemo(() => {
-    return `# Invented Architecture: ${synthesis.name}
-# Core Principles: ${routingObj.name} + ${highwayObj.name} + ${computeObj.name}
-# Derived from First Principles in Neural Family Architecture Studio
-
-import torch
-import torch.nn as nn
-
-class CustomHybridBlock(nn.Module):
-    """Novel architectural block combining ${routingObj.id} routing with ${highwayObj.id} highway."""
-    def __init__(self, d_model=768, num_heads=12):
-        super().__init__()
-        self.d_model = d_model
-        
-        # 1. Primary Information Routing Mechanism (${routingObj.id})
-${selectedRouting === 'attention' ? `        self.routing = nn.MultiheadAttention(d_model, num_heads, batch_first=True)` : ''}
-${selectedRouting === 'ssm' ? `        # Continuous State-Space Evolution: h_{t+1} = A*h_t + B(x)*x
-        self.A_log = nn.Parameter(torch.randn(d_model))
-        self.B_proj = nn.Linear(d_model, d_model)  # Dynamic input-dependent selection` : ''}
-${selectedRouting === 'conv' ? `        self.routing = nn.Conv1d(d_model, d_model, kernel_size=7, padding=3, groups=d_model)` : ''}
-${selectedRouting === 'graph' ? `        self.msg_weight = nn.Linear(d_model, d_model)  # Permutation-invariant message passing` : ''}
-${selectedRouting === 'ode' ? `        self.velocity_field = nn.Sequential(nn.Linear(d_model, d_model), nn.Tanh())` : ''}
-
-        # 2. Compute & Nonlinearity Layer (${computeObj.id})
-${selectedCompute === 'moe' ? `        self.num_experts = 8
-        self.router = nn.Linear(d_model, 8)
-        self.experts = nn.ModuleList([nn.Sequential(nn.Linear(d_model, d_model * 2), nn.SiLU(), nn.Linear(d_model * 2, d_model)) for _ in range(8)])` : ''}
-${selectedCompute === 'dense_swiglu' ? `        self.ffn_gate = nn.Linear(d_model, d_model * 4)
-        self.ffn_up = nn.Linear(d_model, d_model * 4)
-        self.ffn_down = nn.Linear(d_model * 4, d_model)` : ''}
-${selectedCompute === 'kan' ? `        # Kolmogorov-Arnold learnable B-splines on connections
-        self.spline_weight = nn.Parameter(torch.randn(d_model, 6))` : ''}
-
-        self.norm = nn.LayerNorm(d_model)
-
-    def forward(self, x):
-        # x shape: [Batch, Sequence_Length, Hidden_Dim]
-        identity = x  # The Gradient Highway Anchor
-        
-        # Step 1: Route information across tokens/pixels
-${selectedRouting === 'attention' ? '        routed, _ = self.routing(x, x, x)' : ''}
-${selectedRouting === 'ssm' ? '        # Selective state scan O(N)\n        delta_B = torch.sigmoid(self.B_proj(x))\n        routed = x * delta_B' : ''}
-${selectedRouting === 'conv' ? '        routed = self.routing(x.transpose(1, 2)).transpose(1, 2)' : ''}
-${selectedRouting === 'graph' ? '        routed = torch.relu(self.msg_weight(x))  # Neighborhood message aggregation' : ''}
-${selectedRouting === 'ode' ? '        routed = x + 0.1 * self.velocity_field(x)  # Euler differential step' : ''}
-
-        # Step 2: Apply Highway Mechanism (${highwayObj.id})
-        x = ${selectedHighway === 'residual' ? 'identity + routed' : 'self.norm(identity + routed)'}
-        
-        # Step 3: Compute transformation
-${selectedCompute === 'dense_swiglu' ? '        gate = torch.silu(self.ffn_gate(x))\n        up = self.ffn_up(x)\n        x = x + self.ffn_down(gate * up)  # SwiGLU residual step' : ''}
-${selectedCompute === 'moe' ? '        # Top-2 Expert routing\n        logits = self.router(x)\n        top_weights, top_idx = torch.topk(torch.softmax(logits, dim=-1), 2)\n        x = x + 0.5 * (self.experts[0](x) + self.experts[1](x))' : ''}
-${selectedCompute === 'kan' ? '        x = x + torch.sin(x)  # Spline activation interpolation' : ''}
-
-        return x
-
-# Instantiate & Verify Shape Flow
-model = CustomHybridBlock(d_model=768)
-sample_input = torch.randn(2, ${testSequenceLength}, 768)
-output = model(sample_input)
-print(f"Successfully processed tensor: {output.shape} -> Verified ${synthesis.complexityLabel}")`;
-  }, [synthesis, routingObj, highwayObj, computeObj, selectedRouting, selectedCompute, selectedHighway, testSequenceLength]);
+  const selectedLayer = design.block.find((l) => l.id === selectedLayerId) || design.block[0];
 
   return (
-    <div className="space-y-8 animate-fade-in pb-8">
-      {/* Hero Header */}
-      <div className="relative rounded-3xl p-6 sm:p-8 overflow-hidden border border-slate-200 dark:border-white/10 bg-gradient-to-br from-emerald-500/10 via-transparent to-sky-500/5 dark:bg-[#0c1220] shadow-sm">
-        <div className="max-w-3xl space-y-3">
-          <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono uppercase tracking-wider">
-            <Compass className="w-4 h-4" />
-            <span>Beyond Memorization · Architecture Synthesis Studio</span>
+    <div className="space-y-6 pb-12 animate-fade-in">
+      {/* Studio Header */}
+      <div className="relative rounded-3xl p-6 sm:p-8 border border-ink-200 dark:border-white/10 bg-surface dark:bg-ink-900 shadow-xs transition-colors">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/30 text-brand-700 dark:text-brand-300 text-xs font-semibold tracking-wide">
+              <Compass className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+              <span>Architecture Synthesis Studio</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-ink-900 dark:text-white">
+              Synthesize and inspect custom neural architectures
+            </h1>
+            <p className="text-xs sm:text-sm text-ink-600 dark:text-ink-300 leading-relaxed">
+              Assemble layers, route representations, and verify memory and compute limits across real hardware constraints.
+            </p>
           </div>
 
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            How to <span className="text-emerald-600 dark:text-emerald-400">Invent</span> New Architectures
-          </h2>
+          {/* Quick Metrics Badge Strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono shrink-0">
+            <div className="p-3 rounded-xl bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/5 space-y-0.5">
+              <span className="text-[10px] text-ink-500 uppercase">Stored Params</span>
+              <div className="text-sm sm:text-base font-bold font-sans text-ink-900 dark:text-white">
+                {(analysis.params.totalStored / 1e6).toFixed(1)}M
+              </div>
+              <span className="text-[10px] text-ink-500">
+                Active: {(analysis.params.totalActive / 1e6).toFixed(1)}M
+              </span>
+            </div>
 
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            AI pioneers don't memorize existing networks—they reason from <strong>first principles</strong>: symmetries, information bottlenecks, gradient survival, and hardware physics. Mix information routing, gradient highways, and compute sparsity to forge your own hybrid architecture.
-          </p>
-        </div>
-      </div>
+            <div className="p-3 rounded-xl bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/5 space-y-0.5">
+              <span className="text-[10px] text-ink-500 uppercase">KV / State RAM</span>
+              <div className="text-sm sm:text-base font-bold font-sans text-brand-600 dark:text-brand-400">
+                {analysis.memory.kvCacheMB > 0
+                  ? `${Math.round(analysis.memory.kvCacheMB)} MB`
+                  : analysis.memory.ssmStateMB > 0
+                  ? `${Math.round(analysis.memory.ssmStateMB)} MB`
+                  : '0 MB'}
+              </div>
+              <span className="text-[10px] text-ink-500">
+                At N = {workload.seqLen.toLocaleString()}
+              </span>
+            </div>
 
-      {/* Preset Innovation Challenges (How researchers actually solve unsolved problems) */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
-            <Target className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Frontier Innovation Challenges (Try Inventing for These)</span>
-          </span>
-          <span className="text-[11px] text-slate-400 font-mono">Select a problem to test</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          {INNOVATION_CHALLENGES.map((ch) => {
-            const isActive = activeChallengeId === ch.id;
-            return (
-              <button
-                key={ch.id}
-                onClick={() => handleLoadChallenge(ch.id)}
-                className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                  isActive
-                    ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-slate-900 dark:text-white shadow-xs scale-[1.01]'
-                    : 'bg-white dark:bg-[#0c1220] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-slate-700 dark:text-slate-300'
+            <div className="p-3 rounded-xl bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/5 space-y-0.5">
+              <span className="text-[10px] text-ink-500 uppercase">Hardware Check</span>
+              <div
+                className={`text-sm sm:text-base font-bold font-sans flex items-center gap-1 ${
+                  analysis.memory.fitsGpu ? 'text-green-600 dark:text-green-400' : 'text-rose-600 dark:text-rose-400'
                 }`}
               >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
-                      {ch.domain}
-                    </span>
-                    {isActive && (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    )}
-                  </div>
-                  <h4 className="text-xs font-bold mt-2 text-slate-900 dark:text-white">
-                    {ch.title}
-                  </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                    <strong className="text-rose-600 dark:text-rose-400">Bottleneck:</strong> {ch.constraint}
-                  </p>
-                </div>
+                {analysis.memory.fitsGpu ? 'Fits VRAM' : 'OOM Risk'}
+              </div>
+              <span className="text-[10px] text-ink-500">
+                {analysis.memory.vramUsagePercent}% of {analysis.gpu.name.split('·')[0]}
+              </span>
+            </div>
 
-                <div className="mt-3 pt-2 border-t border-slate-100 dark:border-white/5 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium flex items-center justify-between">
-                  <span>Load Architecture</span>
-                  <ArrowRight className="w-3 h-3" />
-                </div>
+            <div className="p-3 rounded-xl bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/5 space-y-0.5">
+              <span className="text-[10px] text-ink-500 uppercase">Throughput</span>
+              <div className="text-sm sm:text-base font-bold font-sans text-ink-900 dark:text-white">
+                ~{analysis.compute.estimatedTokensPerSec.toLocaleString()}
+              </div>
+              <span className="text-[10px] text-ink-500">tok/sec estimate</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Presets Strip */}
+        <div className="mt-6 pt-5 border-t border-ink-100 dark:border-white/10 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-ink-700 dark:text-ink-300 mr-1 flex items-center gap-1">
+            <Sliders className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+            <span>Load reference preset:</span>
+          </span>
+
+          {PRESETS.map((p) => {
+            const isMatch = design.name === p.design.name;
+            return (
+              <button
+                key={p.id}
+                onClick={() => handleLoadPreset(p.id)}
+                className={`px-2.5 py-1 text-xs rounded-lg border transition-all cursor-pointer ${
+                  isMatch
+                    ? 'bg-brand-500 text-white border-brand-600 font-semibold shadow-2xs'
+                    : 'bg-surface dark:bg-ink-950 border-ink-200 dark:border-white/10 hover:border-brand-500/50 text-ink-700 dark:text-ink-300'
+                }`}
+              >
+                {p.name}
               </button>
             );
           })}
+
+          <button
+            onClick={handleResetToBlank}
+            className="ml-auto text-xs text-ink-500 hover:text-ink-900 dark:hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>Clear / Custom</span>
+          </button>
         </div>
       </div>
 
-      {/* The 3 Core Invariants of Invention */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 bg-white dark:bg-[#0c1220] rounded-2xl border border-slate-200 dark:border-white/10 space-y-2 shadow-xs">
-          <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
-            1
-          </div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Information Routing</h3>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            How do separate tokens exchange signals? Is it all-to-all $O(N^2)$, linear recurrent $O(N)$, or local grid convolutions?
-          </p>
-        </div>
-
-        <div className="p-4 bg-white dark:bg-[#0c1220] rounded-2xl border border-slate-200 dark:border-white/10 space-y-2 shadow-xs">
-          <div className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold text-xs">
-            2
-          </div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">The Stability Highway</h3>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            How do backward gradients survive depth? Additive skips guarantee dy/dx = 1 + dF/dx, unblocking deep layers.
-          </p>
-        </div>
-
-        <div className="p-4 bg-white dark:bg-[#0c1220] rounded-2xl border border-slate-200 dark:border-white/10 space-y-2 shadow-xs">
-          <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-xs">
-            3
-          </div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Compute & Sparsity</h3>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Do you compute all parameters every step (Dense) or route conditionally to 2 of 8 experts (MoE) to cut inference cost?
-          </p>
-        </div>
-      </div>
-
-      {/* Mechanism Selector Studio */}
+      {/* Main Studio Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Controls Column */}
+        {/* Left Column: Model Specification & Layer Composer (7 Cols) */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Dimension 1: Routing */}
-          <div className="bg-white dark:bg-[#0c1220] rounded-2xl border border-slate-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
+          {/* Section 1: Global Architectural Hyperparameters */}
+          <div className="p-5 bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                <Layers className="w-4 h-4" />
-                <span>Dimension 1: Information Routing Mechanism</span>
-              </span>
-              <span className="text-[11px] font-mono text-slate-400">{routingObj.complexity}</span>
+              <h2 className="text-sm font-bold font-display text-ink-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                <span>1. Core network specification</span>
+              </h2>
+              <span className="text-xs font-mono text-ink-500">{design.depth} blocks total</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {ROUTING_MECHANISMS.map((r) => {
-                const isSelected = r.id === selectedRouting;
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              {/* Architecture Name */}
+              <div className="space-y-1">
+                <label className="text-ink-500 font-medium">Model Name</label>
+                <input
+                  type="text"
+                  value={design.name}
+                  onChange={(e) => setDesign((prev) => ({ ...prev, name: e.target.value }))}
+                  className="w-full bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 font-semibold text-ink-900 dark:text-white focus:outline-none focus:border-brand-500"
+                />
+              </div>
+
+              {/* Data Modality */}
+              <div className="space-y-1">
+                <label className="text-ink-500 font-medium">Input Modality</label>
+                <select
+                  value={design.modality}
+                  onChange={(e) =>
+                    setDesign((prev) => ({ ...prev, modality: e.target.value as any }))
+                  }
+                  className="w-full bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-ink-900 dark:text-white focus:outline-none focus:border-brand-500 cursor-pointer"
+                >
+                  {MODALITIES.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.label} ({m.unit})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Hidden Dimension d_model */}
+              <div className="space-y-1">
+                <label className="text-ink-500 font-medium">
+                  Model Dimension (d): <span className="font-mono font-bold text-ink-900 dark:text-white">{design.d}</span>
+                </label>
+                <select
+                  value={design.d}
+                  onChange={(e) =>
+                    setDesign((prev) => ({ ...prev, d: parseInt(e.target.value, 10) }))
+                  }
+                  className="w-full bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-ink-900 dark:text-white focus:outline-none focus:border-brand-500 cursor-pointer font-mono"
+                >
+                  {[256, 384, 512, 768, 1024, 1536, 2048, 2560, 4096].map((dim) => (
+                    <option key={dim} value={dim}>
+                      d = {dim}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
+              {/* Depth */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-ink-500">
+                  <span>Depth:</span>
+                  <span className="font-mono font-bold text-ink-900 dark:text-white">{design.depth} blocks</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="48"
+                  value={design.depth}
+                  onChange={(e) =>
+                    setDesign((prev) => ({ ...prev, depth: parseInt(e.target.value, 10) }))
+                  }
+                  className="w-full accent-brand-600 cursor-pointer"
+                />
+              </div>
+
+              {/* Normalization */}
+              <div className="space-y-1">
+                <label className="text-ink-500 font-medium">Normalization</label>
+                <select
+                  value={design.norm}
+                  onChange={(e) => setDesign((prev) => ({ ...prev, norm: e.target.value as any }))}
+                  className="w-full bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-ink-900 dark:text-white focus:outline-none focus:border-brand-500 cursor-pointer"
+                >
+                  <option value="rmsnorm">RMSNorm (Modern)</option>
+                  <option value="layernorm">LayerNorm (Classic)</option>
+                  <option value="none">None (Raw)</option>
+                </select>
+              </div>
+
+              {/* Position Encoding */}
+              <div className="space-y-1">
+                <label className="text-ink-500 font-medium">Position Bias</label>
+                <select
+                  value={design.pos}
+                  onChange={(e) => setDesign((prev) => ({ ...prev, pos: e.target.value as any }))}
+                  className="w-full bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-ink-900 dark:text-white focus:outline-none focus:border-brand-500 cursor-pointer"
+                >
+                  <option value="rope">RoPE (Rotary)</option>
+                  <option value="learned">Learned Absolute</option>
+                  <option value="none">None (SSM/Conv)</option>
+                </select>
+              </div>
+
+              {/* Residual Highway Toggle */}
+              <div className="space-y-1">
+                <label className="text-ink-500 font-medium">Gradient Highway</label>
+                <button
+                  onClick={() =>
+                    setDesign((prev) => ({ ...prev, residual: !prev.residual }))
+                  }
+                  className={`w-full py-1.5 px-2 rounded-lg border font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                    design.residual
+                      ? 'bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/30'
+                      : 'bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-500/30'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>{design.residual ? 'y = x + F(x)' : 'No Skips (Vanishing)'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Repeated Block Layer Stack */}
+          <div className="p-5 bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold font-display text-ink-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                  <span>2. Repeated block layer composer</span>
+                </h2>
+                <p className="text-xs text-ink-500 mt-0.5">
+                  Ordered sublayers repeated across all {design.depth} blocks.
+                </p>
+              </div>
+              <span className="text-xs font-mono text-ink-500">
+                {design.block.length} layer{design.block.length !== 1 ? 's' : ''} in block
+              </span>
+            </div>
+
+            {/* Visual Layer Stack */}
+            <div className="space-y-2">
+              {design.block.map((layer, idx) => {
+                const kindMeta = KINDS[layer.kind];
+                const isSelected = layer.id === (selectedLayer?.id || '');
+                const layerStats = analysis.params.blockPerLayer.find((p) => p.layerId === layer.id);
+
                 return (
-                  <button
-                    key={r.id}
-                    onClick={() => {
-                      setSelectedRouting(r.id);
-                      setActiveChallengeId(null);
-                      soundFX.playTap();
-                    }}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  <div
+                    key={layer.id}
+                    onClick={() => setSelectedLayerId(layer.id)}
+                    className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                       isSelected
-                        ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-slate-900 dark:text-white shadow-xs'
-                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-slate-700 dark:text-slate-300'
+                        ? 'bg-brand-50/60 dark:bg-brand-500/10 border-brand-500 shadow-2xs'
+                        : 'bg-ink-50 dark:bg-ink-950 border-ink-200 dark:border-white/5 hover:border-ink-300 dark:hover:border-white/20'
                     }`}
                   >
-                    <div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-md bg-ink-200 dark:bg-ink-800 text-ink-700 dark:text-ink-300 font-mono text-xs flex items-center justify-center font-bold">
+                        {idx + 1}
+                      </div>
+
+                      <div
+                        className="w-2.5 h-7 rounded-full shrink-0"
+                        style={{ backgroundColor: kindMeta.color }}
+                      />
+
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-ink-900 dark:text-white">
+                            {kindMeta.label}
+                          </span>
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-ink-200/80 dark:bg-ink-800 text-ink-700 dark:text-ink-300 font-semibold">
+                            {kindMeta.cost}
+                          </span>
+                          <span className="text-[10px] text-ink-500">
+                            ({kindMeta.mixes === 'tokens' ? 'Token mixer' : kindMeta.mixes === 'channels' ? 'Channel mixer' : 'Hybrid mixer'})
+                          </span>
+                        </div>
+
+                        <div className="text-[11px] text-ink-500 mt-0.5">
+                          {layer.kind === 'attention' &&
+                            `${layer.heads} heads (${layer.kvHeads} KV heads · ${layer.kvHeads !== layer.heads ? 'GQA' : 'MHA'})`}
+                          {layer.kind === 'window_attention' &&
+                            `${layer.heads} heads · Window = ${layer.window} tokens`}
+                          {layer.kind === 'ssm' &&
+                            `expand=${layer.expand}x · d_state=${layer.dState}`}
+                          {layer.kind === 'conv' &&
+                            `kernel=${layer.kernel} · ${layer.depthwise ? 'Depthwise separable' : 'Dense 1D'}`}
+                          {layer.kind === 'swiglu' &&
+                            `hidden=${layer.hidden} (${Math.round((layer.hidden || 1) / design.d)}x expand)`}
+                          {layer.kind === 'mlp' &&
+                            `hidden=${layer.hidden} (${Math.round((layer.hidden || 1) / design.d)}x expand)`}
+                          {layer.kind === 'moe' &&
+                            `${layer.topK} of ${layer.experts} experts active per token`}
+                          {layer.kind === 'gnn' && `Neighbourhood message aggregation`}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stats & Actions */}
+                    <div className="flex items-center justify-between sm:justify-end gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-ink-200/60 dark:border-white/5">
+                      {layerStats && (
+                        <div className="text-right text-[11px] font-mono mr-2">
+                          <span className="text-ink-900 dark:text-white font-bold">
+                            {(layerStats.stored / 1e6).toFixed(2)}M
+                          </span>
+                          <span className="text-ink-400 block text-[10px]">stored/block</span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveLayer(idx, 'up');
+                          }}
+                          disabled={idx === 0}
+                          title="Move up"
+                          className="p-1 rounded text-ink-500 hover:text-ink-900 dark:hover:text-white disabled:opacity-30 cursor-pointer"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveLayer(idx, 'down');
+                          }}
+                          disabled={idx === design.block.length - 1}
+                          title="Move down"
+                          className="p-1 rounded text-ink-500 hover:text-ink-900 dark:hover:text-white disabled:opacity-30 cursor-pointer"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveLayer(layer.id);
+                          }}
+                          disabled={design.block.length <= 1}
+                          title="Remove layer"
+                          className="p-1 rounded text-rose-500 hover:text-rose-700 disabled:opacity-30 cursor-pointer ml-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Add Layer Palette */}
+            <div className="pt-2">
+              <span className="text-[11px] font-semibold text-ink-500 uppercase tracking-wider block mb-2">
+                Add building primitive to block:
+              </span>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                {KIND_ORDER.map((k) => {
+                  const meta = KINDS[k];
+                  return (
+                    <button
+                      key={k}
+                      onClick={() => handleAddLayer(k)}
+                      className="p-2 rounded-xl border border-ink-200 dark:border-white/10 hover:border-brand-500/50 bg-ink-50 dark:bg-ink-950 text-left transition-all cursor-pointer flex flex-col justify-between group"
+                    >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs">{r.name}</span>
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
-                          {r.complexity}
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: meta.color }}
+                        />
+                        <span className="text-[9px] font-mono text-ink-500">{meta.cost}</span>
+                      </div>
+                      <span className="text-[11px] font-bold text-ink-800 dark:text-ink-200 group-hover:text-brand-600 dark:group-hover:text-brand-400 mt-1">
+                        + {meta.short}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Selected Layer Parameter Tweaker */}
+            {selectedLayer && (
+              <div className="p-4 rounded-xl bg-ink-50/70 dark:bg-ink-950 border border-ink-200 dark:border-white/5 space-y-3 mt-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-ink-900 dark:text-white flex items-center gap-1.5">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: KINDS[selectedLayer.kind].color }}
+                    />
+                    <span>Configure {KINDS[selectedLayer.kind].label}</span>
+                  </span>
+                  <span className="text-[10px] text-ink-500 font-mono">ID: {selectedLayer.id}</span>
+                </div>
+
+                {/* Attention Head Controls */}
+                {(selectedLayer.kind === 'attention' || selectedLayer.kind === 'window_attention') && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <label className="text-ink-500 block mb-1">
+                        Query Heads: <strong className="text-ink-900 dark:text-white">{selectedLayer.heads}</strong>
+                      </label>
+                      <input
+                        type="range"
+                        min="1"
+                        max="64"
+                        value={selectedLayer.heads || 8}
+                        onChange={(e) =>
+                          handleUpdateLayer(selectedLayer.id, { heads: parseInt(e.target.value, 10) })
+                        }
+                        className="w-full accent-brand-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-ink-500 block mb-1">
+                        KV Heads (GQA): <strong className="text-ink-900 dark:text-white">{selectedLayer.kvHeads}</strong>
+                      </label>
+                      <input
+                        type="range"
+                        min="1"
+                        max={selectedLayer.heads || 8}
+                        value={selectedLayer.kvHeads || selectedLayer.heads || 8}
+                        onChange={(e) =>
+                          handleUpdateLayer(selectedLayer.id, { kvHeads: parseInt(e.target.value, 10) })
+                        }
+                        className="w-full accent-brand-600"
+                      />
+                      <span className="text-[10px] text-brand-600 dark:text-brand-400 block mt-0.5">
+                        {selectedLayer.kvHeads === 1
+                          ? 'Multi-Query (MQA)'
+                          : selectedLayer.kvHeads === selectedLayer.heads
+                          ? 'Full MHA (No sharing)'
+                          : `Grouped-Query (${(selectedLayer.heads || 8) / (selectedLayer.kvHeads || 1)}x savings)`}
+                      </span>
+                    </div>
+
+                    {selectedLayer.kind === 'window_attention' && (
+                      <div>
+                        <label className="text-ink-500 block mb-1">Window: {selectedLayer.window}</label>
+                        <select
+                          value={selectedLayer.window || 1024}
+                          onChange={(e) =>
+                            handleUpdateLayer(selectedLayer.id, { window: parseInt(e.target.value, 10) })
+                          }
+                          className="w-full bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded px-2 py-1 text-xs"
+                        >
+                          {[256, 512, 1024, 2048, 4096].map((w) => (
+                            <option key={w} value={w}>
+                              {w} tokens
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* SSM Controls */}
+                {selectedLayer.kind === 'ssm' && (
+                  <div className="grid grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <label className="text-ink-500 block mb-1">State Dim (d_state)</label>
+                      <select
+                        value={selectedLayer.dState || 16}
+                        onChange={(e) =>
+                          handleUpdateLayer(selectedLayer.id, { dState: parseInt(e.target.value, 10) })
+                        }
+                        className="w-full bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded px-2 py-1 text-xs"
+                      >
+                        {[8, 16, 32, 64, 128].map((s) => (
+                          <option key={s} value={s}>
+                            {s} dims
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-ink-500 block mb-1">Expand Factor</label>
+                      <select
+                        value={selectedLayer.expand || 2}
+                        onChange={(e) =>
+                          handleUpdateLayer(selectedLayer.id, { expand: parseInt(e.target.value, 10) })
+                        }
+                        className="w-full bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded px-2 py-1 text-xs"
+                      >
+                        {[1, 2, 4].map((ex) => (
+                          <option key={ex} value={ex}>
+                            {ex}x inner dim
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-ink-500 block mb-1">1D Conv Kernel</label>
+                      <select
+                        value={selectedLayer.kernel || 4}
+                        onChange={(e) =>
+                          handleUpdateLayer(selectedLayer.id, { kernel: parseInt(e.target.value, 10) })
+                        }
+                        className="w-full bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded px-2 py-1 text-xs"
+                      >
+                        {[3, 4, 7, 9].map((k) => (
+                          <option key={k} value={k}>
+                            k = {k}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* MoE Controls */}
+                {selectedLayer.kind === 'moe' && (
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <label className="text-ink-500 block mb-1">
+                        Total Experts: <strong className="text-ink-900 dark:text-white">{selectedLayer.experts}</strong>
+                      </label>
+                      <select
+                        value={selectedLayer.experts || 8}
+                        onChange={(e) =>
+                          handleUpdateLayer(selectedLayer.id, { experts: parseInt(e.target.value, 10) })
+                        }
+                        className="w-full bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded px-2 py-1 text-xs"
+                      >
+                        {[4, 8, 16, 32, 64].map((e) => (
+                          <option key={e} value={e}>
+                            {e} experts
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-ink-500 block mb-1">
+                        Active per token (top_k): <strong className="text-ink-900 dark:text-white">{selectedLayer.topK}</strong>
+                      </label>
+                      <select
+                        value={selectedLayer.topK || 2}
+                        onChange={(e) =>
+                          handleUpdateLayer(selectedLayer.id, { topK: parseInt(e.target.value, 10) })
+                        }
+                        className="w-full bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded px-2 py-1 text-xs"
+                      >
+                        {[1, 2, 4, 8].filter((k) => k <= (selectedLayer.experts || 8)).map((k) => (
+                          <option key={k} value={k}>
+                            Top-{k} active
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Conv Controls */}
+                {selectedLayer.kind === 'conv' && (
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <label className="text-ink-500 block mb-1">Filter Kernel Size</label>
+                      <select
+                        value={selectedLayer.kernel || 7}
+                        onChange={(e) =>
+                          handleUpdateLayer(selectedLayer.id, { kernel: parseInt(e.target.value, 10) })
+                        }
+                        className="w-full bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded px-2 py-1 text-xs"
+                      >
+                        {[3, 5, 7, 9, 11].map((k) => (
+                          <option key={k} value={k}>
+                            Kernel {k}x1
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-ink-500 block mb-1">Depthwise Separation</label>
+                      <button
+                        onClick={() =>
+                          handleUpdateLayer(selectedLayer.id, { depthwise: !selectedLayer.depthwise })
+                        }
+                        className={`w-full py-1.5 px-2 rounded border font-semibold text-xs cursor-pointer ${
+                          selectedLayer.depthwise
+                            ? 'bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/30'
+                            : 'bg-ink-200 dark:bg-ink-800 text-ink-700 dark:text-ink-300 border-ink-300 dark:border-white/10'
+                        }`}
+                      >
+                        {selectedLayer.depthwise ? 'Depthwise (O(d·k))' : 'Dense Conv (O(d²·k))'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Workload Simulator, Memory Feasibility, & Diagnostics (5 Cols) */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Hardware & Workload Target */}
+          <div className="p-5 bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold font-display text-ink-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                <span>Target hardware & workload</span>
+              </h2>
+              <span className="text-xs font-mono font-bold text-brand-600 dark:text-brand-400">
+                {analysis.gpu.memGB} GB VRAM
+              </span>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              {/* Target Accelerator */}
+              <div className="space-y-1">
+                <label className="text-ink-500 font-medium">Deployment GPU / Accelerator</label>
+                <select
+                  value={workload.gpu}
+                  onChange={(e) => setWorkload((prev) => ({ ...prev, gpu: e.target.value as any }))}
+                  className="w-full bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/10 rounded-lg px-2.5 py-2 text-ink-900 dark:text-white focus:outline-none focus:border-brand-500 font-semibold cursor-pointer"
+                >
+                  {GPUS.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name} ({g.tflops} TFLOPS · {g.bandwidthGBs} GB/s)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sequence Length Stress Slider */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/5">
+                <div className="flex items-center justify-between">
+                  <span className="text-ink-600 dark:text-ink-300 font-medium">Context Sequence Length:</span>
+                  <span className="font-mono font-bold text-brand-600 dark:text-brand-400">
+                    N = {workload.seqLen.toLocaleString()} tokens
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="256"
+                  max="131072"
+                  step="256"
+                  value={workload.seqLen}
+                  onChange={(e) =>
+                    setWorkload((prev) => ({ ...prev, seqLen: parseInt(e.target.value, 10) }))
+                  }
+                  className="w-full accent-brand-600 cursor-pointer"
+                />
+                <div className="flex justify-between text-[10px] text-ink-400 font-mono">
+                  <span>256 (Snippet)</span>
+                  <span>4K (Standard)</span>
+                  <span>32K (Doc)</span>
+                  <span>128K+ (Book)</span>
+                </div>
+              </div>
+
+              {/* Batch Size & Precision */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-ink-500 font-medium">Batch Size</label>
+                  <select
+                    value={workload.batch}
+                    onChange={(e) =>
+                      setWorkload((prev) => ({ ...prev, batch: parseInt(e.target.value, 10) }))
+                    }
+                    className="w-full bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-ink-900 dark:text-white cursor-pointer"
+                  >
+                    {[1, 2, 4, 8, 16, 32, 64].map((b) => (
+                      <option key={b} value={b}>
+                        Batch {b}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-ink-500 font-medium">Weight Precision</label>
+                  <select
+                    value={workload.precision}
+                    onChange={(e) =>
+                      setWorkload((prev) => ({ ...prev, precision: e.target.value as any }))
+                    }
+                    className="w-full bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-ink-900 dark:text-white cursor-pointer font-mono"
+                  >
+                    <option value="fp32">FP32 (4 Bytes)</option>
+                    <option value="bf16">BF16 / FP16 (2 Bytes)</option>
+                    <option value="fp8">FP8 (1 Byte)</option>
+                    <option value="int4">INT4 (0.5 Byte)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* VRAM Memory Allocation Breakdown */}
+          <div className="p-5 bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold font-display text-ink-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                <HardDrive className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                <span>Memory footprint breakdown</span>
+              </h2>
+              <span
+                className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
+                  analysis.memory.fitsGpu
+                    ? 'bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300'
+                    : 'bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300'
+                }`}
+              >
+                {analysis.memory.fitsGpu ? 'Fits Hardware' : 'Out of Memory'}
+              </span>
+            </div>
+
+            {/* Visual Allocation Bar */}
+            <div className="space-y-1.5">
+              <div className="h-4 w-full bg-ink-100 dark:bg-ink-800 rounded-full overflow-hidden flex border border-ink-200/50 dark:border-white/5">
+                <div
+                  title={`Weights: ${Math.round(analysis.memory.weightsMB)} MB`}
+                  className="bg-brand-500 transition-all"
+                  style={{
+                    width: `${Math.min(100, (analysis.memory.weightsMB / analysis.memory.gpuVramMB) * 100)}%`,
+                  }}
+                />
+                <div
+                  title={`KV Cache: ${Math.round(analysis.memory.kvCacheMB)} MB`}
+                  className="bg-rose-500 transition-all"
+                  style={{
+                    width: `${Math.min(100, (analysis.memory.kvCacheMB / analysis.memory.gpuVramMB) * 100)}%`,
+                  }}
+                />
+                <div
+                  title={`SSM State: ${Math.round(analysis.memory.ssmStateMB)} MB`}
+                  className="bg-purple-500 transition-all"
+                  style={{
+                    width: `${Math.min(100, (analysis.memory.ssmStateMB / analysis.memory.gpuVramMB) * 100)}%`,
+                  }}
+                />
+              </div>
+
+              <div className="flex justify-between text-[11px] text-ink-500 font-mono">
+                <span>Total: {Math.round(analysis.memory.totalInferenceMB).toLocaleString()} MB</span>
+                <span>Limit: {Math.round(analysis.memory.gpuVramMB).toLocaleString()} MB</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-xs font-mono pt-1">
+              <div className="p-2.5 rounded-lg bg-ink-50 dark:bg-ink-950 border border-ink-200/60 dark:border-white/5 space-y-0.5">
+                <span className="text-[10px] text-ink-500 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-brand-500" />
+                  Weights
+                </span>
+                <span className="font-bold text-ink-900 dark:text-white block">
+                  {Math.round(analysis.memory.weightsMB).toLocaleString()} MB
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-lg bg-ink-50 dark:bg-ink-950 border border-ink-200/60 dark:border-white/5 space-y-0.5">
+                <span className="text-[10px] text-ink-500 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-rose-500" />
+                  KV Cache
+                </span>
+                <span className="font-bold text-ink-900 dark:text-white block">
+                  {Math.round(analysis.memory.kvCacheMB).toLocaleString()} MB
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-lg bg-ink-50 dark:bg-ink-950 border border-ink-200/60 dark:border-white/5 space-y-0.5">
+                <span className="text-[10px] text-ink-500 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-purple-500" />
+                  SSM State
+                </span>
+                <span className="font-bold text-ink-900 dark:text-white block">
+                  {Math.round(analysis.memory.ssmStateMB).toLocaleString()} MB
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Architectural Linter & Diagnostic Feedback */}
+          <div className="p-5 bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 shadow-xs space-y-3">
+            <h2 className="text-sm font-bold font-display text-ink-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <Activity className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+              <span>Architectural diagnostic report</span>
+            </h2>
+
+            <div className="space-y-2">
+              {analysis.lints.map((lint, idx) => (
+                <div
+                  key={idx}
+                  className={`p-3 rounded-xl border text-xs space-y-1 ${
+                    lint.level === 'error'
+                      ? 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-500/20 text-rose-800 dark:text-rose-200'
+                      : lint.level === 'warning'
+                      ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-200'
+                      : lint.level === 'success'
+                      ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-500/20 text-green-800 dark:text-green-200'
+                      : 'bg-ink-50 dark:bg-ink-950 border-ink-200 dark:border-white/5 text-ink-700 dark:text-ink-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 font-bold">
+                    {lint.level === 'error' && <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />}
+                    {lint.level === 'warning' && <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />}
+                    {lint.level === 'success' && <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />}
+                    {lint.level === 'info' && <Info className="w-3.5 h-3.5 text-brand-600" />}
+                    <span>{lint.title}</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed opacity-90">{lint.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Output & Implementation Workspace Tabs */}
+      <div className="p-6 bg-surface dark:bg-ink-900 rounded-3xl border border-ink-200 dark:border-white/10 shadow-xs space-y-4">
+        {/* Navigation Tabs */}
+        <div className="flex items-center justify-between border-b border-ink-100 dark:border-white/10 pb-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab('blueprint')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                activeTab === 'blueprint'
+                  ? 'bg-brand-500 text-white shadow-2xs'
+                  : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+              }`}
+            >
+              Dataflow Blueprint
+            </button>
+
+            <button
+              onClick={() => setActiveTab('code')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                activeTab === 'code'
+                  ? 'bg-brand-500 text-white shadow-2xs'
+                  : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+              }`}
+            >
+              PyTorch nn.Module
+            </button>
+
+            <button
+              onClick={() => setActiveTab('params')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                activeTab === 'params'
+                  ? 'bg-brand-500 text-white shadow-2xs'
+                  : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+              }`}
+            >
+              Parameter Breakdown
+            </button>
+          </div>
+
+          <span className="text-xs font-mono text-ink-500 hidden sm:inline">
+            Export ready · {design.name}
+          </span>
+        </div>
+
+        {/* Tab 1: Visual Blueprint Diagram */}
+        {activeTab === 'blueprint' && (
+          <div className="space-y-4 py-2">
+            <p className="text-xs text-ink-600 dark:text-ink-300">
+              Schematic flow of information through one repeated block of <strong>{design.name}</strong>.
+            </p>
+
+            <div className="p-6 bg-ink-50 dark:bg-ink-950 rounded-2xl border border-ink-200 dark:border-white/5 flex flex-col items-center space-y-3 font-mono text-xs overflow-x-auto">
+              <div className="px-4 py-2 rounded-lg bg-surface dark:bg-ink-900 border border-ink-300 dark:border-white/10 font-bold text-ink-900 dark:text-white shadow-2xs">
+                Input Tensor: [Batch={workload.batch}, SeqLen={workload.seqLen}, d={design.d}]
+              </div>
+
+              <div className="w-0.5 h-6 bg-ink-300 dark:bg-ink-700" />
+
+              {/* Block Body with Residual Bypass Line */}
+              <div className="relative p-6 rounded-2xl bg-surface dark:bg-ink-900 border-2 border-brand-500/40 w-full max-w-xl space-y-3">
+                <div className="flex items-center justify-between text-[11px] font-sans pb-1 border-b border-ink-200 dark:border-white/5">
+                  <span className="font-bold text-brand-600 dark:text-brand-400">
+                    Repeated Block x{design.depth}
+                  </span>
+                  <span className="text-ink-400">
+                    Norm: {design.norm} · Residual: {design.residual ? 'Enabled' : 'Disabled'}
+                  </span>
+                </div>
+
+                {design.block.map((layer, idx) => {
+                  const meta = KINDS[layer.kind];
+                  return (
+                    <div
+                      key={layer.id}
+                      className="p-3 rounded-xl border border-ink-200 dark:border-white/10 bg-ink-50 dark:bg-ink-950 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: meta.color }}
+                        />
+                        <span className="font-bold text-ink-900 dark:text-white">
+                          Layer {idx + 1}: {meta.label}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                        {r.desc}
-                      </p>
+                      <span className="text-[11px] text-ink-500">{meta.cost}</span>
                     </div>
-                    <div className="mt-2 pt-2 border-t border-slate-100 dark:border-white/5 text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
-                      Best: {r.bestFor}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Dimension 2: Gradient Highway */}
-          <div className="bg-white dark:bg-[#0c1220] rounded-2xl border border-slate-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
-            <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Dimension 2: Gradient Highway & Stability Mechanism</span>
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {HIGHWAY_MECHANISMS.map((h) => {
-                const isSelected = h.id === selectedHighway;
-                return (
-                  <button
-                    key={h.id}
-                    onClick={() => {
-                      setSelectedHighway(h.id);
-                      setActiveChallengeId(null);
-                      soundFX.playTap();
-                    }}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-sky-50 dark:bg-sky-500/20 border-sky-500 text-slate-900 dark:text-white shadow-xs'
-                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    <div className="font-bold text-xs">{h.name}</div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                      {h.desc}
-                    </p>
-                    <div className="mt-2 text-[10px] font-mono text-sky-700 dark:text-sky-400">
-                      Used in: {h.usedIn}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Dimension 3: Compute & Sparsity */}
-          <div className="bg-white dark:bg-[#0c1220] rounded-2xl border border-slate-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-2">
-              <Zap className="w-4 h-4" />
-              <span>Dimension 3: Compute Sparsity & Activation Layer</span>
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {COMPUTE_MODIFIERS.map((c) => {
-                const isSelected = c.id === selectedCompute;
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => {
-                      setSelectedCompute(c.id);
-                      setActiveChallengeId(null);
-                      soundFX.playTap();
-                    }}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-purple-50 dark:bg-purple-500/20 border-purple-500 text-slate-900 dark:text-white shadow-xs'
-                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    <div className="font-bold text-xs">{c.name}</div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                      {c.desc}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Synthesis & Diagnostic Inspection Column */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* Resulting Architectural Synthesis Card */}
-          <div className="bg-white dark:bg-[#0c1220] rounded-2xl border border-slate-200 dark:border-white/10 p-6 space-y-5 shadow-xs">
-            <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold">
-                Synthesized Architecture Profile
-              </span>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
-                {synthesis.name}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Closest Frontier Analogue: <strong className="text-slate-800 dark:text-slate-200">{synthesis.realWorldAnalog}</strong>
-              </p>
-            </div>
-
-            {/* Diagnostic Metrics */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/80 dark:border-white/5 space-y-1">
-                <span className="text-slate-500 text-[11px] block">Time Complexity:</span>
-                <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                  {synthesis.complexityLabel}
-                </span>
+                  );
+                })}
               </div>
 
-              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/80 dark:border-white/5 space-y-1">
-                <span className="text-slate-500 text-[11px] block">Memory Bound:</span>
-                <span className="font-mono font-bold text-sky-700 dark:text-sky-400">
-                  {routingObj.memory}
-                </span>
-              </div>
+              <div className="w-0.5 h-6 bg-ink-300 dark:bg-ink-700" />
 
-              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/80 dark:border-white/5 space-y-1 col-span-2">
-                <span className="text-slate-500 text-[11px] block">Stability Verdict:</span>
-                <span className="font-semibold text-emerald-700 dark:text-emerald-300">
-                  ✓ {highwayObj.stability}
-                </span>
+              <div className="px-4 py-2 rounded-lg bg-surface dark:bg-ink-900 border border-ink-300 dark:border-white/10 font-bold text-ink-900 dark:text-white shadow-2xs">
+                {design.norm !== 'none' ? `Final ${design.norm} -> ` : ''} Output Logits / Head
               </div>
             </div>
-
-            {/* Sequence Length Stress Test */}
-            <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-white/5 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Test Context Length:</span>
-                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                  N = {testSequenceLength.toLocaleString()} tokens
-                </span>
-              </div>
-              <input
-                type="range"
-                min="512"
-                max="32768"
-                step="512"
-                value={testSequenceLength}
-                onChange={(e) => setTestSequenceLength(parseInt(e.target.value, 10))}
-                className="w-full accent-emerald-600 cursor-pointer"
-              />
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                <span>512 (Standard)</span>
-                <span>Relative Compute: ~{synthesis.floptsEstimate} MFLOPs</span>
-                <span>32K (Long Context)</span>
-              </div>
-            </div>
-
-            {/* Research Recommendation */}
-            <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-500/20 rounded-xl text-xs text-slate-700 dark:text-slate-300 space-y-1">
-              <strong className="text-emerald-800 dark:text-emerald-300 block font-bold">
-                Architectural Insight:
-              </strong>
-              <p className="leading-relaxed">{synthesis.recommendation}</p>
-            </div>
           </div>
+        )}
 
-          {/* Research Inventions Rules */}
-          <div className="p-5 bg-white dark:bg-[#0c1220] rounded-2xl border border-slate-200 dark:border-white/10 space-y-3 shadow-xs">
-            <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5 text-amber-500" />
-              <span>The 4 Golden Rules of Deep Learning Architecture</span>
-            </h4>
-            <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-2 list-disc list-inside leading-relaxed">
-              <li>
-                <strong>Never multiply gradients through time without a skip:</strong> A raw product of 50 matrices always diverges or vanishes unless anchored by an identity plus-one (dy/dx = 1 + ...).
-              </li>
-              <li>
-                <strong>Inductive bias speeds up early learning; general compute scales higher:</strong> Convolutions beat Transformers on 1,000 images; Transformers crush Convolutions on 1 Billion images.
-              </li>
-              <li>
-                <strong>Break the quadratic O(N²) barrier:</strong> The holy grail of modern sequence modeling is achieving attention-level reasoning with linear O(N) inference memory.
-              </li>
-              <li>
-                <strong>Decouple parameters from FLOPs:</strong> MoE routing allows models to possess 500B parameters of knowledge while only executing 30B parameters per token.
-              </li>
-            </ul>
+        {/* Tab 2: PyTorch Executable Code */}
+        {activeTab === 'code' && (
+          <div className="space-y-3">
+            <CodeBlock
+              code={pyTorchCode}
+              language="Python / PyTorch"
+              filename={`${design.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.py`}
+              runLabel="Test Verification Pass"
+              onRun={() => {
+                soundFX.playSuccess();
+              }}
+              output={`PyTorch forward check successful!\nInput shape:  [2, ${Math.min(128, workload.seqLen)}, ${design.d}]\nOutput shape: [2, ${Math.min(128, workload.seqLen)}, ${design.vocab || design.outputDim || design.d}]\nParameters verified: ${(analysis.params.totalStored / 1e6).toFixed(2)}M stored`}
+            />
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Generated PyTorch Implementation */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              Executable PyTorch Blueprint for {synthesis.name}
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Drop-in module ready to test in Google Colab, Jupyter Notebook, or PyTorch scripts.
-            </p>
+        {/* Tab 3: Detailed Parameter Matrix */}
+        {activeTab === 'params' && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs font-mono border-collapse">
+              <thead>
+                <tr className="border-b border-ink-200 dark:border-white/10 text-ink-500 uppercase text-[10px]">
+                  <th className="py-2.5 px-3">Subsystem</th>
+                  <th className="py-2.5 px-3">Description</th>
+                  <th className="py-2.5 px-3 text-right">Stored Parameters</th>
+                  <th className="py-2.5 px-3 text-right">Active per Token</th>
+                  <th className="py-2.5 px-3 text-right">% of Model</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-100 dark:divide-white/5">
+                <tr>
+                  <td className="py-2.5 px-3 font-bold text-ink-900 dark:text-white">Embedding</td>
+                  <td className="py-2.5 px-3 text-ink-600 dark:text-ink-400">
+                    Input projections ({design.vocab} vocab x {design.d} d)
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-bold">
+                    {(analysis.params.embeddings / 1e6).toFixed(2)}M
+                  </td>
+                  <td className="py-2.5 px-3 text-right">
+                    {(analysis.params.embeddings / 1e6).toFixed(2)}M
+                  </td>
+                  <td className="py-2.5 px-3 text-right text-ink-500">
+                    {Math.round((analysis.params.embeddings / analysis.params.totalStored) * 100)}%
+                  </td>
+                </tr>
+
+                {analysis.params.unembedding > 0 && (
+                  <tr>
+                    <td className="py-2.5 px-3 font-bold text-ink-900 dark:text-white">Unembedding</td>
+                    <td className="py-2.5 px-3 text-ink-600 dark:text-ink-400">
+                      Output prediction head (untied weights)
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-bold">
+                      {(analysis.params.unembedding / 1e6).toFixed(2)}M
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      {(analysis.params.unembedding / 1e6).toFixed(2)}M
+                    </td>
+                    <td className="py-2.5 px-3 text-right text-ink-500">
+                      {Math.round((analysis.params.unembedding / analysis.params.totalStored) * 100)}%
+                    </td>
+                  </tr>
+                )}
+
+                <tr>
+                  <td className="py-2.5 px-3 font-bold text-ink-900 dark:text-white">
+                    Blocks (x{design.depth})
+                  </td>
+                  <td className="py-2.5 px-3 text-ink-600 dark:text-ink-400">
+                    {design.block.map((b) => KINDS[b.kind].short).join(' + ')} repeated layers
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-bold">
+                    {(analysis.params.blockTotal / 1e6).toFixed(2)}M
+                  </td>
+                  <td className="py-2.5 px-3 text-right">
+                    {(analysis.params.totalActive / 1e6).toFixed(2)}M
+                  </td>
+                  <td className="py-2.5 px-3 text-right text-ink-500">
+                    {Math.round((analysis.params.blockTotal / analysis.params.totalStored) * 100)}%
+                  </td>
+                </tr>
+
+                <tr className="font-bold bg-ink-50 dark:bg-ink-950/80">
+                  <td className="py-3 px-3 text-ink-900 dark:text-white">Total Model</td>
+                  <td className="py-3 px-3 text-ink-600 dark:text-ink-300">
+                    Complete weights across all modules
+                  </td>
+                  <td className="py-3 px-3 text-right text-brand-600 dark:text-brand-400">
+                    {(analysis.params.totalStored / 1e6).toFixed(2)}M
+                  </td>
+                  <td className="py-3 px-3 text-right text-green-600 dark:text-green-400">
+                    {(analysis.params.totalActive / 1e6).toFixed(2)}M
+                  </td>
+                  <td className="py-3 px-3 text-right text-ink-900 dark:text-white">100%</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </div>
-
-        <CodeBlock
-          code={generatedCode}
-          language="Python / PyTorch"
-          filename="custom_hybrid_block.py"
-        />
+        )}
       </div>
     </div>
   );

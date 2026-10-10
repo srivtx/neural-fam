@@ -47,7 +47,7 @@ export const SpecializedLab: React.FC = () => {
       'Continuous State Trajectory:',
       ...trajectory.map((pt) => `  Depth t = ${pt.t} -> State h(t) = ${pt.h}`),
       'STATUS: PASS (Adjoint sensitivity method valid for backpropagation through ODE solver)',
-      '✓ Level 8 Progress Recorded!',
+      '✓ Level 8 progress recorded.',
     ];
     setCodeOutput(lines.join('\n'));
   };
@@ -55,73 +55,73 @@ export const SpecializedLab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-ink-200 dark:border-white/10">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-            Level 8 · Specialized Frontiers & Continuous Depths
+          <span className="text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+            Level 8 · Continuous depth and specialized architectures
           </span>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            Neural ODEs, SNNs, KANs & Continuous Physics
+          <h2 className="text-xl font-bold font-display tracking-tight text-ink-900 dark:text-white mt-0.5">
+            Neural ODEs, SNNs, and KANs
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
+          <p className="text-sm text-ink-600 dark:text-ink-400 mt-1 max-w-2xl">
             Where discrete layers disappear into continuous differential vector fields, edge splines, and brain-like temporal spikes.
           </p>
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'visual'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            Neural ODE Solver
+            ODE integration
           </button>
           <button
             onClick={() => setSubTab('tax')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'tax'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            Frontier Catalog
+            Catalog
           </button>
           <button
             onClick={() => setSubTab('code')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'code'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <Code2 className="w-3.5 h-3.5" />
-            <span>Code Scratchpad</span>
+            <span>Code</span>
           </button>
           <button
             onClick={() => setSubTab('analogy')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'analogy'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <HelpCircle className="w-3.5 h-3.5" />
-            <span>Water Slide Analogy</span>
+            <span>Analogy</span>
           </button>
           <button
             onClick={() => setSubTab('quiz')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'quiz'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Concept Check</span>
+            <span>Concept check</span>
           </button>
         </div>
       </div>
@@ -129,11 +129,11 @@ export const SpecializedLab: React.FC = () => {
       {subTab === 'visual' && (
         <div className="space-y-6">
           {/* Controls Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 shadow-xs">
             <div className="flex items-center gap-3">
-              <Sliders className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-xs font-mono text-slate-700 dark:text-slate-300">
-                Integration Step Size (dt): <strong className="text-emerald-600 dark:text-emerald-400">{stepSizeDt.toFixed(2)}</strong>
+              <Sliders className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+              <span className="text-xs font-mono text-ink-700 dark:text-ink-300">
+                Integration Step Size (dt): <strong className="text-brand-600 dark:text-brand-400">{stepSizeDt.toFixed(2)}</strong>
               </span>
               <input
                 type="range"
@@ -142,13 +142,13 @@ export const SpecializedLab: React.FC = () => {
                 step="0.05"
                 value={stepSizeDt}
                 onChange={(e) => setStepSizeDt(parseFloat(e.target.value))}
-                className="w-28 accent-emerald-600 cursor-pointer"
+                className="w-28 accent-brand-600 cursor-pointer"
               />
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="text-xs font-mono text-slate-700 dark:text-slate-300">
-                Initial State h(0): <strong className="text-emerald-600 dark:text-emerald-400">{initialH0.toFixed(1)}</strong>
+              <span className="text-xs font-mono text-ink-700 dark:text-ink-300">
+                Initial State h(0): <strong className="text-brand-600 dark:text-brand-400">{initialH0.toFixed(1)}</strong>
               </span>
               <input
                 type="range"
@@ -157,15 +157,15 @@ export const SpecializedLab: React.FC = () => {
                 step="0.5"
                 value={initialH0}
                 onChange={(e) => setInitialH0(parseFloat(e.target.value))}
-                className="w-28 accent-emerald-600 cursor-pointer"
+                className="w-28 accent-brand-600 cursor-pointer"
               />
             </div>
           </div>
 
           {/* Continuous Integration Trajectory */}
-          <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span className="font-semibold text-slate-800 dark:text-slate-200">Continuous State Evolution:</span>
+          <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between text-xs text-ink-500 dark:text-ink-400">
+              <span className="font-semibold text-ink-800 dark:text-ink-200">Continuous State Evolution:</span>
               <span className="font-mono">dh/dt = f(h(t), t) = 1.0 - h(t)</span>
             </div>
 
@@ -173,38 +173,38 @@ export const SpecializedLab: React.FC = () => {
               {trajectory.map((pt, idx) => (
                 <div
                   key={idx}
-                  className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-white/5 text-center space-y-1"
+                  className="p-3 bg-ink-50 dark:bg-ink-900/60 rounded-lg border border-ink-200 dark:border-white/5 text-center space-y-1"
                 >
-                  <div className="text-[10px] font-mono text-slate-400">t = {pt.t}</div>
-                  <div className="text-base font-bold font-mono text-emerald-700 dark:text-emerald-300">{pt.h}</div>
-                  <div className="text-[9px] text-slate-500 font-mono">
+                  <div className="text-[10px] font-mono text-ink-400">t = {pt.t}</div>
+                  <div className="text-base font-bold font-mono text-brand-700 dark:text-brand-300">{pt.h}</div>
+                  <div className="text-[9px] text-ink-500 font-mono">
                     vel: {(1.0 - pt.h).toFixed(2)}
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="p-3 bg-slate-50 dark:bg-slate-900/80 rounded-lg border border-slate-200 dark:border-white/5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-              <strong>Continuous Depth Insight:</strong> In standard networks, you must choose 18, 50, or 101 layers before training. In Neural ODEs, network depth is a continuous time variable $t \in [0, T]$. You can test with a fast, coarse step size ($dt=0.3$) for low latency on mobile, or fine $dt=0.05$ for maximum accuracy on cloud servers—without re-training the network!
+            <div className="p-3 bg-ink-50 dark:bg-ink-900/80 rounded-lg border border-ink-200 dark:border-white/5 text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+              <strong>Continuous Depth Insight:</strong> In standard networks, you must choose 18, 50, or 101 layers before training. In Neural ODEs, network depth is a continuous time variable $t \in [0, T]$. You can test with a fast, coarse step size ($dt=0.3$) for low latency on mobile, or fine $dt=0.05$ for maximum accuracy on cloud servers—without re-training the network.
             </div>
           </div>
 
           {/* Quick Concept Check Prompt */}
-          <div className="p-4 bg-emerald-50/80 dark:bg-emerald-950/30 rounded-xl border border-emerald-300/80 dark:border-emerald-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="p-4 bg-brand-50/80 dark:bg-brand-950/30 rounded-xl border border-brand-300/80 dark:border-brand-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0">
                 <Award className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-white">Ready to verify Level 8 mastery?</h4>
-                <p className="text-xs text-slate-600 dark:text-slate-300">Test continuous depth, Kolmogorov-Arnold splines, and neuromorphic SNN concepts.</p>
+                <h4 className="text-sm font-bold text-ink-900 dark:text-white">Ready to test Level 8 concepts?</h4>
+                <p className="text-xs text-ink-600 dark:text-ink-300">Test continuous depth, Kolmogorov-Arnold splines, and neuromorphic SNN concepts.</p>
               </div>
             </div>
             <button
               onClick={() => setSubTab('quiz')}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors cursor-pointer shadow-xs shrink-0"
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 rounded-lg transition-colors cursor-pointer shadow-xs shrink-0"
             >
-              <span>Take Concept Check</span>
+              <span>Take concept check</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -213,29 +213,29 @@ export const SpecializedLab: React.FC = () => {
 
       {/* Frontier Catalog Tab */}
       {subTab === 'tax' && (
-        <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-6 space-y-4 shadow-xs">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">Specialized & Unconventional Architectures</h3>
-          <p className="text-xs text-slate-600 dark:text-slate-300">
+        <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-6 space-y-4 shadow-xs">
+          <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white">Specialized and unconventional architectures</h3>
+          <p className="text-xs text-ink-600 dark:text-ink-300">
             A reference breakdown of architectures that challenge conventional matrix multiplications:
           </p>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
+                <tr className="border-b border-ink-200 dark:border-white/10 text-ink-500 dark:text-ink-400">
                   <th className="py-2.5 px-4 font-semibold">Architecture</th>
                   <th className="py-2.5 px-4 font-semibold">Core Innovation</th>
                   <th className="py-2.5 px-4 font-semibold">What Makes It Distinct</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-ink-100 dark:divide-white/5">
                 {specializedFamilies.map((item) => (
-                  <tr key={item.name} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                    <td className="py-3 px-4 font-mono font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                  <tr key={item.name} className="hover:bg-ink-50 dark:hover:bg-ink-900/50 transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-brand-700 dark:text-brand-400 whitespace-nowrap">
                       {item.name}
                     </td>
-                    <td className="py-3 px-4 text-slate-900 dark:text-white font-semibold">{item.core}</td>
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{item.distinct}</td>
+                    <td className="py-3 px-4 text-ink-900 dark:text-white font-semibold">{item.core}</td>
+                    <td className="py-3 px-4 text-ink-600 dark:text-ink-400">{item.distinct}</td>
                   </tr>
                 ))}
               </tbody>
@@ -246,24 +246,24 @@ export const SpecializedLab: React.FC = () => {
 
       {/* Code Tab */}
       {subTab === 'code' && (
-        <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
+        <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Neural ODE Euler Integration Step</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white">Neural ODE Euler integration step</h3>
+              <p className="text-xs text-ink-500 dark:text-ink-400">
                 Formula: h_(t+dt) = h_t + dt · f(h_t, t, θ)
               </p>
             </div>
             <button
               onClick={runOdeTest}
-              className="flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors cursor-pointer shadow-xs"
+              className="flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-500 rounded-lg transition-colors cursor-pointer shadow-xs"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
-              <span>Simulate Continuous Solve</span>
+              <span>Run continuous solve</span>
             </button>
           </div>
 
-          <pre className="p-4 bg-slate-950 rounded-lg border border-slate-800 font-mono text-xs text-slate-300 overflow-x-auto leading-relaxed">
+          <pre className="p-4 bg-ink-950 rounded-lg border border-ink-800 font-mono text-xs text-ink-300 overflow-x-auto leading-relaxed">
 {`function neuralOdeEulerStep(h_t: number, dt: number, velocityField: (h: number) => number): number {
   // 1. Evaluate neural network to get instantaneous rate of change:
   const dh = velocityField(h_t);
@@ -274,12 +274,12 @@ export const SpecializedLab: React.FC = () => {
           </pre>
 
           {codeOutput && (
-            <div className="p-4 bg-slate-950 border border-emerald-500/30 rounded-lg space-y-1">
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+            <div className="p-4 bg-ink-950 border border-green-500/30 rounded-lg space-y-1">
+              <div className="flex items-center gap-2 text-xs font-semibold text-green-400">
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Integration Diagnostics</span>
+                <span>Integration diagnostics</span>
               </div>
-              <pre className="text-xs font-mono text-slate-300 whitespace-pre-wrap">{codeOutput}</pre>
+              <pre className="text-xs font-mono text-ink-300 whitespace-pre-wrap">{codeOutput}</pre>
             </div>
           )}
         </div>
@@ -287,14 +287,14 @@ export const SpecializedLab: React.FC = () => {
 
       {/* Analogy Tab */}
       {subTab === 'analogy' && (
-        <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-6 space-y-4 shadow-xs">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">The Water Slide Analogy</h3>
-          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+        <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-6 space-y-4 shadow-xs">
+          <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white">The water slide analogy</h3>
+          <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
             Standard neural networks are like a building with separate concrete floors: you take an elevator that stops at Floor 1, then Floor 2, then Floor 3.
           </p>
-          <div className="p-4 bg-slate-50 dark:bg-slate-900/80 rounded-lg border border-slate-200 dark:border-white/5 space-y-2 text-xs text-slate-600 dark:text-slate-300">
+          <div className="p-4 bg-ink-50 dark:bg-ink-900/80 rounded-lg border border-ink-200 dark:border-white/5 space-y-2 text-xs text-ink-600 dark:text-ink-300">
             <p>
-              <strong className="text-emerald-700 dark:text-emerald-400 font-semibold">A Neural ODE is a smooth continuous water slide.</strong> There are no discrete floors. You glide down smoothly, and a differential equation specifies the exact curve and speed at every single millimeter along your journey!
+              <strong className="text-brand-700 dark:text-brand-400 font-semibold">A Neural ODE is a smooth continuous water slide.</strong> There are no discrete floors. You glide down smoothly, and a differential equation specifies the exact curve and speed at every single millimeter along your journey.
             </p>
           </div>
         </div>

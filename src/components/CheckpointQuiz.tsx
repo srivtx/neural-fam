@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { CheckCircle2, XCircle, Sparkles, Check, RotateCcw } from 'lucide-react';
+import { CheckCircle2, XCircle, Check, RotateCcw } from 'lucide-react';
 import { markQuizSolved } from '../utils/progressStore';
 
 export interface QuizQuestion {
@@ -53,23 +53,23 @@ export const CheckpointQuiz: React.FC<CheckpointQuizProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-[#0c1220] rounded-2xl border border-slate-200 dark:border-white/10 p-6 space-y-6 shadow-sm">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
+    <div className="bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 p-4 sm:p-6 space-y-6 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-ink-100 dark:border-white/10">
         <div>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-mono">
-            Concept Checkpoint
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400 font-mono">
+            Check your understanding
           </span>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">{title}</h3>
+          <h3 className="font-display tracking-tight text-base font-bold text-ink-900 dark:text-white mt-0.5">{title}</h3>
         </div>
         {submitted && (
           <span
             className={`text-xs font-semibold px-3 py-1 rounded-full ${
               isPassed
-                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30'
-                : 'bg-red-50 text-red-700 dark:bg-red-500/20 dark:text-red-300 border border-red-200 dark:border-red-500/30'
+                ? 'bg-green-50 text-green-700 dark:bg-green-500/15 dark:text-green-300 border border-green-200 dark:border-green-500/30'
+                : 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30'
             }`}
           >
-            Score: {correctCount} / {questions.length}
+            {correctCount} of {questions.length} correct
           </span>
         )}
       </div>
@@ -80,40 +80,40 @@ export const CheckpointQuiz: React.FC<CheckpointQuizProps> = ({
           const isCorrect = userAns === q.correctIndex;
 
           return (
-            <div key={qIdx} className="space-y-3 p-4 bg-slate-50 dark:bg-slate-950/70 rounded-xl border border-slate-200/80 dark:border-white/5">
-              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200">
+            <div key={qIdx} className="space-y-3 p-3 sm:p-4 bg-ink-50 dark:bg-ink-950/70 rounded-xl border border-ink-200/80 dark:border-white/5">
+              <h4 className="text-sm font-semibold leading-snug text-ink-900 dark:text-ink-200">
                 {qIdx + 1}. {q.question}
               </h4>
 
               <div className="space-y-2">
                 {q.options.map((opt, oIdx) => {
                   const isOptionSelected = userAns === oIdx;
-                  let optStyle = 'border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20';
+                  let optStyle = 'border-ink-200 dark:border-white/10 bg-surface dark:bg-ink-900 text-ink-700 dark:text-ink-300 hover:border-ink-300 dark:hover:border-white/20';
 
                   if (submitted) {
                     if (oIdx === q.correctIndex) {
-                      optStyle = 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-300 font-semibold';
+                      optStyle = 'border-green-500 bg-green-50 text-green-900 dark:bg-green-500/15 dark:text-green-300 font-semibold';
                     } else if (isOptionSelected) {
-                      optStyle = 'border-red-400 bg-red-50 text-red-900 dark:bg-red-500/20 dark:text-red-300';
+                      optStyle = 'border-rose-400 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-300';
                     } else {
-                      optStyle = 'border-slate-100 dark:border-white/5 bg-slate-100/50 dark:bg-slate-900/40 text-slate-400 dark:text-slate-500';
+                      optStyle = 'border-ink-100 dark:border-white/5 bg-ink-100/50 dark:bg-ink-900/40 text-ink-400 dark:text-ink-500';
                     }
                   } else if (isOptionSelected) {
-                    optStyle = 'border-emerald-600 bg-emerald-50/50 text-emerald-950 dark:border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-300 font-semibold';
+                    optStyle = 'border-brand-600 bg-brand-50/50 text-brand-950 dark:border-brand-400 dark:bg-brand-500/20 dark:text-brand-300 font-semibold';
                   }
 
                   return (
                     <button
                       key={oIdx}
                       onClick={() => handleSelect(qIdx, oIdx)}
-                      className={`w-full text-left px-3.5 py-2.5 rounded-lg border text-xs transition-colors cursor-pointer flex items-center justify-between ${optStyle}`}
+                      className={`w-full text-left px-3.5 py-2.5 rounded-lg border text-xs transition-colors cursor-pointer flex items-center justify-between gap-3 ${optStyle}`}
                     >
                       <span>{opt}</span>
                       {submitted && oIdx === q.correctIndex && (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
                       )}
                       {submitted && isOptionSelected && !isCorrect && (
-                        <XCircle className="w-4 h-4 text-red-500 dark:text-red-400 shrink-0" />
+                        <XCircle className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0" />
                       )}
                     </button>
                   );
@@ -124,11 +124,11 @@ export const CheckpointQuiz: React.FC<CheckpointQuizProps> = ({
                 <div
                   className={`p-3 rounded-lg text-xs leading-relaxed ${
                     isCorrect
-                      ? 'bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-500/20'
-                      : 'bg-red-50 text-red-900 dark:bg-red-500/10 dark:text-red-200 border border-red-200 dark:border-red-500/20'
+                      ? 'bg-green-50 text-green-900 dark:bg-green-500/10 dark:text-green-200 border border-green-200 dark:border-green-500/20'
+                      : 'bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-200 border border-rose-200 dark:border-rose-500/20'
                   }`}
                 >
-                  <strong className="block mb-0.5">{isCorrect ? '✓ Concept Mastered' : '✗ Explanation:'}</strong>
+                  <strong className="block mb-0.5">{isCorrect ? 'Correct.' : 'Not quite.'}</strong>
                   {q.explanation}
                 </div>
               )}
@@ -137,28 +137,28 @@ export const CheckpointQuiz: React.FC<CheckpointQuizProps> = ({
         })}
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/10">
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-ink-100 dark:border-white/10">
         {!submitted ? (
           <button
             onClick={handleSubmit}
             disabled={!allAnswered}
-            className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+            className="px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-500 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           >
-            Check Answers
+            Check answers
           </button>
         ) : (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={handleRetry}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-ink-600 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white rounded-lg border border-ink-200 dark:border-white/10 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors cursor-pointer"
             >
               <RotateCcw className="w-3 h-3" />
-              <span>Retry Quiz</span>
+              <span>Try again</span>
             </button>
             {isPassed && (
-              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
+              <span className="text-xs text-green-700 dark:text-green-400 font-semibold flex items-center gap-1.5">
                 <Check className="w-4 h-4" />
-                <span>Concept Check Passed! Progress Recorded</span>
+                <span>All correct. Progress saved.</span>
               </span>
             )}
           </div>

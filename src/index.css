@@ -1,148 +1,254 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where([class~="dark"], [class~="dark"] *));
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ───────────────────────────────────────────────────────────
+   Design tokens
+   ink   – warm neutral (paper → charcoal)
+   brand – cobalt, the one UI accent
+   fam-* – one colour per architecture family, used for meaning
+   ─────────────────────────────────────────────────────────── */
+@theme {
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-ink-50: #faf8f3;
+  --color-ink-100: #f2eee5;
+  --color-ink-200: #e4ded1;
+  --color-ink-300: #cfc7b6;
+  --color-ink-400: #a39b8a;
+  --color-ink-500: #7a7364;
+  --color-ink-600: #5a5448;
+  --color-ink-700: #403b33;
+  --color-ink-800: #2a2722;
+  --color-ink-850: #211f1b;
+  --color-ink-900: #1a1815;
+  --color-ink-950: #110f0d;
+
+  --color-brand-50: #eef1ff;
+  --color-brand-100: #dfe4ff;
+  --color-brand-200: #c2cbff;
+  --color-brand-300: #98a6ff;
+  --color-brand-400: #6a79ff;
+  --color-brand-500: #4353ff;
+  --color-brand-600: #2f3bf0;
+  --color-brand-700: #252dc9;
+  --color-brand-800: #2228a0;
+  --color-brand-900: #20257e;
+  --color-brand-950: #13154a;
+
+  --color-paper: #f5f1e8;
+  --color-surface: #fffdf8;
+
+  --color-fam-dense: #3346ff;
+  --color-fam-conv: #00a86b;
+  --color-fam-seq: #ff8a00;
+  --color-fam-attn: #ff3b6b;
+  --color-fam-ssm: #8b5cf6;
+  --color-fam-graph: #00b8d9;
+  --color-fam-gen: #ffb800;
+  --color-fam-frontier: #84cc16;
+
+  --shadow-hard: 3px 3px 0 0 var(--color-ink-900);
+  --shadow-hard-lg: 6px 6px 0 0 var(--color-ink-900);
+
+  --animate-rise: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade-in: fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-slide-up: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-scale-up: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-marquee: marquee 40s linear infinite;
+}
 
 @layer base {
-  :root {
-    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
   }
 
   body {
     font-family: var(--font-sans);
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: var(--color-paper);
+    color: var(--color-ink-900);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'ss01', 'cv11';
   }
 
   .dark body {
-    background-color: #090d16;
-    color: #f8fafc;
+    background-color: var(--color-ink-950);
+    color: var(--color-ink-100);
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background: var(--color-fam-gen);
+    color: var(--color-ink-950);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  input[type='range'] {
+    accent-color: var(--color-brand-600);
+  }
+
+  kbd {
+    font-family: var(--font-mono);
   }
 }
 
-/* Hide scrollbar utility for sleek desktop immersion */
+/* Dotted graph-paper backdrop. Sits behind everything. */
+.paper-grid {
+  background-image: radial-gradient(circle at 1px 1px, rgb(26 24 21 / 0.09) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+.dark .paper-grid {
+  background-image: radial-gradient(circle at 1px 1px, rgb(250 248 243 / 0.06) 1px, transparent 0);
+}
+
+/* Subtle film grain to break up flat fills */
+.grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.25;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .35 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.dark .grain::after {
+  mix-blend-mode: screen;
+  opacity: 0.08;
+}
+
+/* Lift-on-hover card with a hard offset shadow */
+.lift {
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.lift:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-hard);
+}
+.dark .lift:hover {
+  box-shadow: 3px 3px 0 0 var(--color-ink-300);
+}
+.lift:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+
+/* Hand-drawn underline for headline accents */
+.scribble {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'><path d='M2 8 C 40 2, 80 11, 120 5 S 180 4, 198 7' fill='none' stroke='%23ff3b6b' stroke-width='3.5' stroke-linecap='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 0.32em;
+  padding-bottom: 0.08em;
+}
+
 .no-scrollbar {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
-
 .no-scrollbar::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  display: none;
 }
 
-/* Global scrollbar hiding mode when active */
-body.hide-scrollbars,
-body.hide-scrollbars * {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+/* Thin, quiet scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink-300) transparent;
 }
-
-body.hide-scrollbars::-webkit-scrollbar,
-body.hide-scrollbars *::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+.dark * {
+  scrollbar-color: var(--color-ink-700) transparent;
 }
-
-/* Subtle, distraction-free default scrollbar */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 8px;
+  height: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: var(--color-ink-300);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
-
 .dark ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: var(--color-ink-700);
+  background-clip: content-box;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
-}
-
-/* Buttery smooth animations & keyframes */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes scaleUp {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
 }
-
-@keyframes pulseGlow {
-  0%, 100% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.02);
-  }
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
-
-/* Synapse pulsing glow animations */
 @keyframes synapse-flow {
-  0% {
-    stroke-dashoffset: 24;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
 }
-
-.animate-fade-in {
-  animation: fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-scale-up {
-  animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
 }
 
 .animate-synapse {
   stroke-dasharray: 6 6;
   animation: synapse-flow 1.2s linear infinite;
+}
+
+/* Stagger helper: children rise in sequence */
+.stagger > * {
+  animation: rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.08s; }
+.stagger > *:nth-child(3) { animation-delay: 0.14s; }
+.stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger > *:nth-child(5) { animation-delay: 0.26s; }
+.stagger > *:nth-child(6) { animation-delay: 0.32s; }
+.stagger > *:nth-child(7) { animation-delay: 0.38s; }
+.stagger > *:nth-child(8) { animation-delay: 0.44s; }
+.stagger > *:nth-child(9) { animation-delay: 0.5s; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -31,23 +31,23 @@ export const ARCHITECTURE_MODULES = [
   { id: 'ssm_mamba', level: '5', title: 'SSM & Mamba', tag: 'State Spaces' },
   { id: 'gnn', level: '6', title: 'Graph Networks', tag: 'Message Passing' },
   { id: 'generative', level: '7', title: 'Diffusion & VAE', tag: 'Generative' },
-  { id: 'specialized', level: '8', title: 'Neural ODEs', tag: 'Frontiers' },
+  { id: 'specialized', level: '8', title: 'Neural ODEs', tag: 'Specialized' },
 ];
 
 export const BADGES: BadgeDefinition[] = [
   {
     id: 'badge_perceptron',
     title: 'Synapse Pioneer',
-    tagline: 'First Step Across the Threshold',
+    tagline: 'Linear decision boundary',
     category: 'architecture',
     moduleId: 'perceptron',
     moduleLabel: 'Module 0 · Single Neuron',
     tier: 'Bronze',
     xpReward: 100,
     iconName: 'Zap',
-    accentColor: '#10b981', // emerald
-    description: 'Mastered the single neuron linear separation hyperplane, dot products, bias offsets, and step activations.',
-    requirement: 'Complete Module 0: Single Neuron Lab and pass its concept check.',
+    accentColor: '#4353ff',
+    description: 'Understood the single-neuron linear decision boundary, dot products, bias offsets, and step activations.',
+    requirement: 'Complete Module 0: Single neuron lab.',
     checkUnlocked: (p) => p.completedLabs.includes('perceptron') || p.solvedQuizzes.includes('perceptron'),
     getProgress: (p) => ({
       current: p.completedLabs.includes('perceptron') || p.solvedQuizzes.includes('perceptron') ? 1 : 0,
@@ -57,17 +57,17 @@ export const BADGES: BadgeDefinition[] = [
   },
   {
     id: 'badge_mlp',
-    title: 'XOR Shatterer',
-    tagline: 'Non-Linear Space Warper',
+    title: 'XOR Separation',
+    tagline: 'Nonlinear representation space',
     category: 'architecture',
     moduleId: 'mlp',
     moduleLabel: 'Module 1 · MLP & XOR',
     tier: 'Bronze',
     xpReward: 120,
     iconName: 'Split',
-    accentColor: '#059669', // emerald dark
-    description: 'Overcame the Minsky & Papert linear limitation by warping representation space with hidden layers.',
-    requirement: 'Complete Module 1: MLP & Feedforward Lab.',
+    accentColor: '#2f3bf0',
+    description: 'Understood how hidden layers fold representation space to separate nonlinear data.',
+    requirement: 'Complete Module 1: MLP and feedforward lab.',
     checkUnlocked: (p) => p.completedLabs.includes('mlp') || p.solvedQuizzes.includes('mlp'),
     getProgress: (p) => ({
       current: p.completedLabs.includes('mlp') || p.solvedQuizzes.includes('mlp') ? 1 : 0,
@@ -78,16 +78,16 @@ export const BADGES: BadgeDefinition[] = [
   {
     id: 'badge_cnn',
     title: 'Spatial Convolver',
-    tagline: 'Kernel Slider & Skip Highway',
+    tagline: 'Filters and skip connections',
     category: 'architecture',
     moduleId: 'cnn_resnet',
     moduleLabel: 'Module 2 · CNN & ResNet',
     tier: 'Silver',
     xpReward: 150,
     iconName: 'Layers',
-    accentColor: '#0284c7', // sky
-    description: 'Harnessed translation-invariant convolutional filters, spatial pooling, and identity residual shortcuts F(x) + x.',
-    requirement: 'Complete Module 2: CNN & ResNet Lab.',
+    accentColor: '#0284c7',
+    description: 'Understood translation-invariant convolutional filters, spatial pooling, and residual skip connections y = x + F(x).',
+    requirement: 'Complete Module 2: CNN and ResNet lab.',
     checkUnlocked: (p) => p.completedLabs.includes('cnn_resnet') || p.solvedQuizzes.includes('cnn_resnet'),
     getProgress: (p) => ({
       current: p.completedLabs.includes('cnn_resnet') || p.solvedQuizzes.includes('cnn_resnet') ? 1 : 0,
@@ -97,17 +97,17 @@ export const BADGES: BadgeDefinition[] = [
   },
   {
     id: 'badge_rnn',
-    title: 'Temporal Gatekeeper',
-    tagline: 'Memory Cell Guardian',
+    title: 'Temporal Recurrence',
+    tagline: 'Sequential state memory',
     category: 'architecture',
     moduleId: 'rnn_lstm',
     moduleLabel: 'Module 3 · RNN & LSTM',
     tier: 'Silver',
     xpReward: 150,
     iconName: 'Clock',
-    accentColor: '#d97706', // amber
-    description: 'Controlled recurrent sequential information flow using forget, input, and output gates to conquer vanishing gradients.',
-    requirement: 'Complete Module 3: RNN & LSTM Laboratory.',
+    accentColor: '#d97706',
+    description: 'Understood recurrent sequential state flow and LSTM gating mechanisms that address vanishing gradients.',
+    requirement: 'Complete Module 3: Recurrent networks and LSTM lab.',
     checkUnlocked: (p) => p.completedLabs.includes('rnn_lstm') || p.solvedQuizzes.includes('rnn_lstm'),
     getProgress: (p) => ({
       current: p.completedLabs.includes('rnn_lstm') || p.solvedQuizzes.includes('rnn_lstm') ? 1 : 0,
@@ -117,17 +117,17 @@ export const BADGES: BadgeDefinition[] = [
   },
   {
     id: 'badge_transformer',
-    title: 'Attention Maestro',
-    tagline: 'All You Need is Softmax(QKᵀ / √d)',
+    title: 'Self-Attention',
+    tagline: 'Pairwise query-key interaction',
     category: 'architecture',
     moduleId: 'transformer',
     moduleLabel: 'Module 4 · Transformers',
     tier: 'Gold',
     xpReward: 200,
     iconName: 'Sparkles',
-    accentColor: '#7c3aed', // violet
-    description: 'Decoupled sequence length from compute paths using Query-Key-Value self-attention and multi-head parallel projections.',
-    requirement: 'Complete Module 4: Transformer & Attention Lab.',
+    accentColor: '#7c3aed',
+    description: 'Understood Query-Key-Value self-attention and parallel sequence processing.',
+    requirement: 'Complete Module 4: Transformers and self-attention lab.',
     checkUnlocked: (p) => p.completedLabs.includes('transformer') || p.solvedQuizzes.includes('transformer'),
     getProgress: (p) => ({
       current: p.completedLabs.includes('transformer') || p.solvedQuizzes.includes('transformer') ? 1 : 0,
@@ -138,16 +138,16 @@ export const BADGES: BadgeDefinition[] = [
   {
     id: 'badge_mamba',
     title: 'State-Space Navigator',
-    tagline: 'Linear-Time Selective Scan',
+    tagline: 'Linear-time selective scan',
     category: 'architecture',
     moduleId: 'ssm_mamba',
     moduleLabel: 'Module 5 · SSM & Mamba',
     tier: 'Gold',
     xpReward: 200,
     iconName: 'Binary',
-    accentColor: '#2563eb', // blue
-    description: 'Traversed continuous state-space representations, selective discretization B(x), and hardware-aware associative scans.',
-    requirement: 'Complete Module 5: SSM & Mamba Lab.',
+    accentColor: '#2563eb',
+    description: 'Understood continuous state-space representations, selective discretization B(x), and linear-time sequence scans.',
+    requirement: 'Complete Module 5: State-space models and Mamba lab.',
     checkUnlocked: (p) => p.completedLabs.includes('ssm_mamba') || p.solvedQuizzes.includes('ssm_mamba'),
     getProgress: (p) => ({
       current: p.completedLabs.includes('ssm_mamba') || p.solvedQuizzes.includes('ssm_mamba') ? 1 : 0,
@@ -157,17 +157,17 @@ export const BADGES: BadgeDefinition[] = [
   },
   {
     id: 'badge_gnn',
-    title: 'Relational Grapher',
-    tagline: 'Permutation Invariant Message Passer',
+    title: 'Graph Message Passer',
+    tagline: 'Permutation-invariant aggregation',
     category: 'architecture',
     moduleId: 'gnn',
     moduleLabel: 'Module 6 · Graph Neural Networks',
     tier: 'Gold',
     xpReward: 200,
     iconName: 'Share2',
-    accentColor: '#0891b2', // cyan
-    description: 'Propagated structural node embeddings across irregular non-Euclidean graphs via localized message passing.',
-    requirement: 'Complete Module 6: Graph Networks Lab.',
+    accentColor: '#0891b2',
+    description: 'Understood permutation-invariant message passing across graph topologies.',
+    requirement: 'Complete Module 6: Graph neural networks lab.',
     checkUnlocked: (p) => p.completedLabs.includes('gnn') || p.solvedQuizzes.includes('gnn'),
     getProgress: (p) => ({
       current: p.completedLabs.includes('gnn') || p.solvedQuizzes.includes('gnn') ? 1 : 0,
@@ -177,17 +177,17 @@ export const BADGES: BadgeDefinition[] = [
   },
   {
     id: 'badge_generative',
-    title: 'Diffusion Alchemist',
-    tagline: 'Reverse Noise Trajectory Sculptor',
+    title: 'Diffusion Denoising',
+    tagline: 'Reverse noise estimation',
     category: 'architecture',
     moduleId: 'generative',
     moduleLabel: 'Module 7 · Diffusion & VAE',
     tier: 'Platinum',
     xpReward: 250,
     iconName: 'Flame',
-    accentColor: '#e11d48', // rose
-    description: 'Synthesized complex high-dimensional distributions through latent KL regularization and reverse stochastic differential equations.',
-    requirement: 'Complete Module 7: Generative Diffusion & VAE Lab.',
+    accentColor: '#e11d48',
+    description: 'Understood generative paradigms including diffusion score estimation, VAE latents, and U-Net backbones.',
+    requirement: 'Complete Module 7: Generative models lab.',
     checkUnlocked: (p) => p.completedLabs.includes('generative') || p.solvedQuizzes.includes('generative'),
     getProgress: (p) => ({
       current: p.completedLabs.includes('generative') || p.solvedQuizzes.includes('generative') ? 1 : 0,
@@ -197,17 +197,17 @@ export const BADGES: BadgeDefinition[] = [
   },
   {
     id: 'badge_neural_ode',
-    title: 'Continuous Dynamicist',
-    tagline: 'Infinite Depth via ODE Solvers',
+    title: 'Continuous Depth',
+    tagline: 'Vector fields and ODE solvers',
     category: 'architecture',
     moduleId: 'specialized',
     moduleLabel: 'Module 8 · Neural ODEs',
     tier: 'Platinum',
     xpReward: 250,
     iconName: 'Orbit',
-    accentColor: '#4f46e5', // indigo
-    description: 'Replaced discrete layers with continuous vector fields solved via Runge-Kutta numerical integration and adjoint backpropagation.',
-    requirement: 'Complete Module 8: Neural ODEs & Specialized Frontiers.',
+    accentColor: '#4f46e5',
+    description: 'Understood continuous depth vector fields solved with numerical ODE integration.',
+    requirement: 'Complete Module 8: Neural ODEs and specialized models lab.',
     checkUnlocked: (p) => p.completedLabs.includes('specialized') || p.solvedQuizzes.includes('specialized'),
     getProgress: (p) => ({
       current: p.completedLabs.includes('specialized') || p.solvedQuizzes.includes('specialized') ? 1 : 0,
@@ -217,14 +217,14 @@ export const BADGES: BadgeDefinition[] = [
   },
   {
     id: 'badge_quiz_champion',
-    title: 'Concept Checkpoint Ace',
-    tagline: 'Theory & Intuition Invariant',
+    title: 'Checkpoint Explorer',
+    tagline: 'Theory and mechanics',
     category: 'milestone',
     tier: 'Silver',
     xpReward: 200,
     iconName: 'CheckCircle2',
-    accentColor: '#10b981',
-    description: 'Demonstrated deep conceptual understanding by answering 4 or more architecture checkpoints correctly on the first attempt.',
+    accentColor: '#4353ff',
+    description: 'Answered 4 or more architecture concept check quizzes correctly.',
     requirement: 'Pass at least 4 architecture concept quizzes.',
     checkUnlocked: (p) => p.solvedQuizzes.length >= 4,
     getProgress: (p) => ({
@@ -235,15 +235,15 @@ export const BADGES: BadgeDefinition[] = [
   },
   {
     id: 'badge_code_architect',
-    title: 'Kernel Synthesizer',
-    tagline: 'From Math to Executable Tensors',
+    title: 'Code Workshop Tester',
+    tagline: 'From math to code',
     category: 'milestone',
     tier: 'Gold',
     xpReward: 220,
     iconName: 'Code2',
     accentColor: '#0ea5e9',
-    description: 'Executed and passed automated mathematical invariant unit tests in the Code Workshop sandbox across multiple families.',
-    requirement: 'Execute unit test suites for at least 3 architectures in the Code Workshop.',
+    description: 'Ran unit test suites in the code workshop across multiple architectures.',
+    requirement: 'Run unit test suites for at least 3 architectures in the code workshop.',
     checkUnlocked: (p) => p.runCodeTests.length >= 3,
     getProgress: (p) => ({
       current: Math.min(p.runCodeTests.length, 3),
@@ -253,14 +253,14 @@ export const BADGES: BadgeDefinition[] = [
   },
   {
     id: 'badge_grandmaster',
-    title: 'Grandmaster Architect',
-    tagline: 'Unified Master of the Neural Atlas',
+    title: 'Atlas Explorer',
+    tagline: 'All nine architecture modules completed',
     category: 'mastery',
     tier: 'Diamond',
     xpReward: 500,
     iconName: 'Trophy',
-    accentColor: '#f59e0b', // amber gold
-    description: 'Completed all 9 core neural architecture modules spanning from Rosenblatt’s 1958 Perceptron to continuous Neural ODEs.',
+    accentColor: '#f59e0b',
+    description: 'Completed all 9 neural architecture modules from the 1958 Perceptron to continuous Neural ODEs.',
     requirement: 'Complete all 9 architecture modules across the platform.',
     checkUnlocked: (p) => {
       const allModules = ['perceptron', 'mlp', 'cnn_resnet', 'rnn_lstm', 'transformer', 'ssm_mamba', 'gnn', 'generative', 'specialized'];
@@ -328,7 +328,7 @@ export function computeUserStats(progress: LearningProgress): UserStats {
   // Level 4: 1100 - 1800 (Attention Specialist)
   // Level 5: 1800 - 2700 (State Space Pilot)
   // Level 6: 2700 - 3800 (Generative Architect)
-  // Level 7: 3800+ (Foundation Grandmaster)
+  // Level 7: 3800+ (Atlas Architect)
   const LEVEL_THRESHOLDS = [
     { level: 1, minXp: 0, maxXp: 250, title: 'Novice Observer' },
     { level: 2, minXp: 250, maxXp: 600, title: 'Synaptic Builder' },
@@ -336,7 +336,7 @@ export function computeUserStats(progress: LearningProgress): UserStats {
     { level: 4, minXp: 1100, maxXp: 1800, title: 'Attention Specialist' },
     { level: 5, minXp: 1800, maxXp: 2700, title: 'State-Space Pilot' },
     { level: 6, minXp: 2700, maxXp: 3800, title: 'Generative Architect' },
-    { level: 7, minXp: 3800, maxXp: 5000, title: 'Foundation Grandmaster' },
+    { level: 7, minXp: 3800, maxXp: 5000, title: 'Atlas Architect' },
   ];
 
   let currentTier = LEVEL_THRESHOLDS[0];

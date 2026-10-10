@@ -73,7 +73,7 @@ function forwardNeuron(inputs: number[], weights: number[], bias: number, activa
     ],
     keyIdeas: [
       'Universal Approximation Theorem: An MLP with even 1 non-linear hidden layer can approximate any continuous function.',
-      'Solves the XOR problem effortlessly by projecting into higher dimensions.',
+      'Solves the XOR problem by projecting inputs into a representation space where classes become linearly separable.',
       'Trained via Backpropagation (chain rule of calculus propagating gradients backward).',
     ],
     historicalContext: '1986: Rumelhart, Hinton, and Williams popularize Backpropagation, reigniting neural network research.',
@@ -128,7 +128,7 @@ function forwardMlp(x: number[], W1: number[][], b1: number[], W2: number[][], b
     keyIdeas: [
       'Weight sharing: The same 3x3 filter scans the entire image, drastically reducing parameter counts.',
       'Hierarchical features: Early layers detect edges, middle layers detect textures, late layers detect objects.',
-      'ResNet is not a separate family: It is a convolutional architecture with identity skip connections that unlocked 100+ layer networks.',
+      'ResNet is not a separate family: it is a convolutional architecture with identity skip connections that made 100+ layer networks trainable.',
     ],
     historicalContext: '1989: LeCun introduces LeNet-5 for digit reading. 2012: AlexNet wins ImageNet. 2015: He et al. introduce ResNet (152 layers), winning all ImageNet benchmarks.',
     examples: ['AlexNet (2012)', 'VGG (2014)', 'ResNet (2015)', 'DenseNet (2017)', 'ConvNeXt (2022)'],
@@ -460,7 +460,7 @@ function denoiseTrajectory(initialNoise: number, steps: number): number[] {
     title: 'Specialized & Continuous Networks',
     family: 'specialized',
     familyName: 'Specialized Networks',
-    oneLiner: 'Frontier paradigms: Spiking Neural Networks (SNNs), Continuous-time Neural ODEs, Kolmogorov-Arnold Networks (KANs), and Physics-Informed PINNs.',
+    oneLiner: 'Specialized paradigms: Spiking Neural Networks (SNNs), Continuous-time Neural ODEs, Kolmogorov-Arnold Networks (KANs), and Physics-Informed PINNs.',
     analogy: 'Neural ODEs view a neural network not as distinct stacked floors in a building (Layer 1 -> Layer 2 -> Layer 3), but as a continuous fluid slide where depth is smooth continuous time $t \\in [0, T]$ governed by a differential equation.',
     mathFormula: '\\frac{dh(t)}{dt} = f(h(t), t, \\theta), \\quad h(t_1) = h(t_0) + \\int_{t_0}^{t_1} f(h(t), t, \\theta) dt',
     mathBreakdown: [
@@ -514,7 +514,7 @@ export const LANDMARK_MODELS: LandmarkModel[] = [
     coreArchitecture: 'Convolutional Neural Network (CNN)',
     mechanisms: ['Residual Identity Connections: y = x + F(x)', 'Batch Normalization', 'Bottleneck 1x1-3x3-1x1 blocks'],
     trainingTask: 'Supervised 1000-class ImageNet classification',
-    whyItMatters: 'Proved that deep models were failing not because of overfitting, but because of vanishing gradients. Unlocked 100+ layer architectures.',
+    whyItMatters: 'Demonstrated that degradation in deep networks came from vanishing gradients rather than overfitting, enabling networks with 100+ layers.',
     familyId: 'cnn_resnet',
   },
   {
@@ -525,7 +525,7 @@ export const LANDMARK_MODELS: LandmarkModel[] = [
     coreArchitecture: 'Decoder-Only Transformer',
     mechanisms: ['Causal Multi-Head Self-Attention', 'Residual Connections', 'RMSNorm / LayerNorm', 'SwiGLU Feedforward MLPs', 'Rotary Positional Embeddings (RoPE)'],
     trainingTask: 'Autoregressive Next-Token Prediction on massive internet corpora',
-    whyItMatters: 'Demonstrated massive emergent reasoning capabilities simply by scaling causal attention and parameter counts.',
+    whyItMatters: 'Showed that scaling causal attention and parameters improves complex reasoning across domains.',
     familyId: 'transformer',
   },
   {
@@ -536,7 +536,7 @@ export const LANDMARK_MODELS: LandmarkModel[] = [
     coreArchitecture: 'Encoder-Only Transformer',
     mechanisms: ['Bidirectional Self-Attention', 'Residual Connections', 'Layer Normalization', 'Absolute Positional Embeddings'],
     trainingTask: 'Masked Language Modeling (fill-in-the-blank) & Next Sentence Prediction',
-    whyItMatters: 'Revolutionized search and NLP embeddings by allowing tokens to attend bidirectionally across the entire sentence.',
+    whyItMatters: 'Improved search and NLP representations by allowing tokens to attend bidirectionally across the entire sentence.',
     familyId: 'transformer',
   },
   {

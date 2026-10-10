@@ -39,7 +39,7 @@ export const ProjectLabsHub: React.FC<ProjectLabsHubProps> = ({
   return (
     <div className="space-y-6">
       {/* Horizontal Level Stepper */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 p-1.5 bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 shadow-xs transition-colors">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 p-1.5 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 shadow-xs transition-colors">
         {labList.map((lab) => {
           const isActive = activeLabId === lab.id;
           return (
@@ -48,17 +48,17 @@ export const ProjectLabsHub: React.FC<ProjectLabsHubProps> = ({
               onClick={() => onSelectLab(lab.id)}
               className={`flex-1 min-w-[130px] p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500/50 text-slate-900 dark:text-white shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200/60 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-white/20'
+                  ? 'bg-brand-50 dark:bg-brand-500/20 border-brand-500/50 text-ink-900 dark:text-white shadow-xs'
+                  : 'bg-ink-50 dark:bg-ink-900/50 border-ink-200/60 dark:border-white/5 text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white hover:border-ink-300 dark:hover:border-white/20'
               }`}
             >
               <div className="flex items-center justify-between text-[10px] font-mono">
-                <span className={isActive ? 'text-emerald-700 dark:text-emerald-400 font-bold' : 'text-slate-400 dark:text-slate-500'}>
+                <span className={isActive ? 'text-brand-700 dark:text-brand-400 font-bold' : 'text-ink-400 dark:text-ink-500'}>
                   LEVEL {lab.level}
                 </span>
-                <span className="text-slate-400 dark:text-slate-500">{lab.tag}</span>
+                <span className="text-ink-400 dark:text-ink-500">{lab.tag}</span>
               </div>
-              <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-1 truncate">
+              <div className="text-xs font-bold text-ink-900 dark:text-ink-100 mt-1 truncate">
                 {lab.title}
               </div>
             </button>

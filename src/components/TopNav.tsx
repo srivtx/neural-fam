@@ -61,7 +61,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   const stats = computeUserStats(progress);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 dark:bg-[#090d16]/95 backdrop-blur-md border-b border-slate-200 dark:border-white/10 transition-colors shadow-2xs">
+    <header className="sticky top-0 z-50 w-full bg-white/95 dark:bg-ink-950/95 backdrop-blur-md border-b border-ink-200 dark:border-white/10 transition-colors shadow-2xs">
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 py-2 flex items-center justify-between gap-1.5 sm:gap-3 xl:gap-4 overflow-visible">
         {/* Zone 1: Brand wordmark & Quick Search */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
@@ -69,14 +69,14 @@ export const TopNav: React.FC<TopNavProps> = ({
             onClick={() => onSelectView('home')}
             className="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-none shrink-0"
           >
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-brand-500/10 dark:bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-brand-600 dark:text-brand-400 group-hover:scale-105 transition-transform shrink-0">
               <Network className="w-4 h-4" />
             </div>
             <div className="flex flex-col">
-              <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white whitespace-nowrap group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+              <span className="text-base font-bold tracking-tight text-ink-900 dark:text-white whitespace-nowrap group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                 Neural Family
               </span>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono -mt-1 hidden sm:block">
+              <span className="text-[10px] text-ink-400 dark:text-ink-500 font-mono -mt-1 hidden sm:block">
                 Architecture Lab
               </span>
             </div>
@@ -86,25 +86,25 @@ export const TopNav: React.FC<TopNavProps> = ({
           <button
             onClick={onOpenSearch}
             title="Search architectures, labs, or formulas (Ctrl+K)"
-            className="hidden md:flex items-center gap-2 px-2.5 py-1 text-xs text-slate-500 dark:text-slate-400 bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800/80 dark:hover:bg-slate-800 rounded-lg border border-slate-200/60 dark:border-white/10 transition-colors cursor-pointer shrink-0"
+            className="hidden md:flex items-center gap-2 px-2.5 py-1 text-xs text-ink-500 dark:text-ink-400 bg-ink-100 hover:bg-ink-200/80 dark:bg-ink-800/80 dark:hover:bg-ink-800 rounded-lg border border-ink-200/60 dark:border-white/10 transition-colors cursor-pointer shrink-0"
           >
-            <Search className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <Search className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
             <span>Search</span>
-            <kbd className="text-[10px] font-mono px-1 py-0.2 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-400">
+            <kbd className="text-[10px] font-mono px-1 py-0.2 rounded bg-white dark:bg-ink-900 border border-ink-200 dark:border-white/10 text-ink-400">
               Ctrl+K
             </kbd>
           </button>
         </div>
 
         {/* Zone 2: Navigation Links (Responsive compact labels on lg, full on xl) */}
-        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 shrink min-w-0 p-0.5 bg-slate-100/70 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-white/5">
+        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 text-xs font-semibold text-ink-600 dark:text-ink-300 shrink min-w-0 p-0.5 bg-ink-100/70 dark:bg-ink-900/60 rounded-xl border border-ink-200/60 dark:border-white/5">
           <button
             onClick={() => onSelectView('home')}
             title="Home (Press 1)"
             className={`px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'home'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             Home
@@ -115,8 +115,8 @@ export const TopNav: React.FC<TopNavProps> = ({
             title="Tree Atlas (Press 2)"
             className={`px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'atlas'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <span className="xl:hidden">Atlas</span>
@@ -128,8 +128,8 @@ export const TopNav: React.FC<TopNavProps> = ({
             title="Project Labs (Press 3)"
             className={`px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'labs'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <span className="xl:hidden">Labs</span>
@@ -141,8 +141,8 @@ export const TopNav: React.FC<TopNavProps> = ({
             title="Taxonomy Matrix (Press 4)"
             className={`px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'taxonomy'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <span className="xl:hidden">Matrix</span>
@@ -155,8 +155,8 @@ export const TopNav: React.FC<TopNavProps> = ({
             title="Synthesis Studio (Press 5)"
             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'synthesis'
-                ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 font-bold shadow-xs'
-                : 'text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-white'
+                ? 'bg-white dark:bg-ink-800 text-brand-700 dark:text-brand-300 font-bold shadow-xs'
+                : 'text-brand-700 dark:text-brand-400 hover:text-brand-800 dark:hover:text-white'
             }`}
           >
             <Compass className="w-3.5 h-3.5" />
@@ -169,8 +169,8 @@ export const TopNav: React.FC<TopNavProps> = ({
             title="Code Workshop (Press 6)"
             className={`px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'code'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <span className="xl:hidden">Code</span>
@@ -184,9 +184,9 @@ export const TopNav: React.FC<TopNavProps> = ({
           <button
             onClick={onToggleHideNav}
             title="Hide navigation bar for full-screen focus (Esc)"
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+            className="p-1.5 rounded-lg border border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors cursor-pointer shrink-0"
           >
-            <EyeOff className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+            <EyeOff className="w-4 h-4 text-ink-500 dark:text-ink-400" />
           </button>
 
           {/* Hide Scrollbars Toggle */}
@@ -195,8 +195,8 @@ export const TopNav: React.FC<TopNavProps> = ({
             title={hideScrollbars ? 'Scrollbars Hidden (Click to restore)' : 'Hide scrollbars for clean desktop view'}
             className={`px-2 py-1 text-xs rounded-lg border transition-colors cursor-pointer hidden 2xl:flex items-center gap-1 font-mono shrink-0 ${
               hideScrollbars
-                ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-300 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
-                : 'border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-brand-50 dark:bg-brand-500/20 border-brand-300 dark:border-brand-500/30 text-brand-700 dark:text-brand-300'
+                : 'border-ink-200 dark:border-white/10 text-ink-500 dark:text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800'
             }`}
           >
             <span className="text-[10px]">{hideScrollbars ? 'Bars: Off' : 'Bars: On'}</span>
@@ -206,12 +206,12 @@ export const TopNav: React.FC<TopNavProps> = ({
           <button
             onClick={onToggleSound}
             title={isSoundMuted ? 'Audio Feedback Muted' : 'Audio Feedback Active'}
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer hidden sm:flex shrink-0"
+            className="p-1.5 rounded-lg border border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors cursor-pointer hidden sm:flex shrink-0"
           >
             {isSoundMuted ? (
-              <VolumeX className="w-4 h-4 text-slate-400" />
+              <VolumeX className="w-4 h-4 text-ink-400" />
             ) : (
-              <Volume2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <Volume2 className="w-4 h-4 text-brand-600 dark:text-brand-400" />
             )}
           </button>
 
@@ -219,7 +219,7 @@ export const TopNav: React.FC<TopNavProps> = ({
           <button
             onClick={onOpenGlossary}
             title="Open Architectural Glossary"
-            className="hidden md:flex p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+            className="hidden md:flex p-1.5 rounded-lg border border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors cursor-pointer shrink-0"
           >
             <BookOpen className="w-4 h-4 text-amber-500" />
           </button>
@@ -228,16 +228,16 @@ export const TopNav: React.FC<TopNavProps> = ({
           <button
             onClick={onOpenShare}
             title="Share & Project Links"
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+            className="p-1.5 rounded-lg border border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors cursor-pointer shrink-0"
           >
-            <Share2 className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+            <Share2 className="w-4 h-4 text-ink-600 dark:text-ink-300" />
           </button>
 
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
             title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+            className="p-1.5 rounded-lg border border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors cursor-pointer shrink-0"
           >
             {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-400" />}
           </button>
@@ -246,37 +246,102 @@ export const TopNav: React.FC<TopNavProps> = ({
           <button
             onClick={onOpenBadges}
             title="View Badges & Architecture Milestones"
-            className="flex items-center gap-1.5 sm:gap-2 pl-1.5 pr-2.5 py-1 bg-emerald-50/70 hover:bg-emerald-100/80 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 border border-emerald-300/80 dark:border-emerald-500/30 rounded-xl transition-all cursor-pointer group shadow-2xs hover:scale-[1.02] shrink-0"
+            className="flex items-center gap-1.5 sm:gap-2 pl-1.5 pr-2.5 py-1 bg-brand-50/70 hover:bg-brand-100/80 dark:bg-brand-950/40 dark:hover:bg-brand-900/50 border border-brand-300/80 dark:border-brand-500/30 rounded-xl transition-all cursor-pointer group shadow-2xs hover:scale-[1.02] shrink-0"
           >
             <div className="relative shrink-0">
-              <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+              <div className="w-7 h-7 rounded-lg bg-brand-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">
                 {USER_PROFILE.displayName.charAt(0).toUpperCase()}
               </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full border border-white dark:border-[#090d16]" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-brand-400 rounded-full border border-white dark:border-ink-950" />
             </div>
 
             <div className="flex flex-col text-left shrink-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold text-slate-900 dark:text-white group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors max-w-[70px] sm:max-w-none truncate">
+                <span className="text-xs font-semibold text-ink-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors max-w-[70px] sm:max-w-none truncate">
                   <span className="lg:hidden xl:inline">{USER_PROFILE.displayName}</span>
                   <span className="hidden lg:inline xl:hidden">Learner</span>
                 </span>
-                <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-emerald-200/60 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-bold shrink-0">
+                <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-brand-200/60 dark:bg-brand-500/20 text-brand-800 dark:text-brand-300 font-bold shrink-0">
                   Lv.{stats.level}
                 </span>
               </div>
 
-              <div className="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-300 font-medium">
+              <div className="flex items-center gap-1 text-[11px] text-ink-600 dark:text-ink-300 font-medium">
                 <Trophy className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
                 <span>
                   {stats.unlockedBadgesCount}/{stats.totalBadgesCount}
                 </span>
-                <span className="text-[10px] text-slate-400 hidden sm:inline">Badges</span>
+                <span className="text-[10px] text-ink-400 hidden sm:inline">Badges</span>
               </div>
             </div>
           </button>
         </div>
       </div>
+
+      {/* Mobile Horizontal Navigation Strip */}
+      <nav aria-label="Mobile navigation" className="flex lg:hidden overflow-x-auto no-scrollbar px-3 py-1.5 border-t border-ink-100 dark:border-white/5 gap-1.5 bg-ink-50/70 dark:bg-ink-950/70 text-xs">
+        <button
+          onClick={() => onSelectView('home')}
+          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+            activeView === 'home'
+              ? 'bg-brand-500 text-white font-bold shadow-2xs'
+              : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+          }`}
+        >
+          Home
+        </button>
+        <button
+          onClick={() => onSelectView('atlas')}
+          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+            activeView === 'atlas'
+              ? 'bg-brand-500 text-white font-bold shadow-2xs'
+              : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+          }`}
+        >
+          Atlas
+        </button>
+        <button
+          onClick={() => onSelectView('labs')}
+          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+            activeView === 'labs'
+              ? 'bg-brand-500 text-white font-bold shadow-2xs'
+              : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+          }`}
+        >
+          Labs
+        </button>
+        <button
+          onClick={() => onSelectView('taxonomy')}
+          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+            activeView === 'taxonomy'
+              ? 'bg-brand-500 text-white font-bold shadow-2xs'
+              : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+          }`}
+        >
+          3-Question Matrix
+        </button>
+        <button
+          onClick={() => onSelectView('synthesis')}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+            activeView === 'synthesis'
+              ? 'bg-brand-500 text-white font-bold shadow-2xs'
+              : 'text-brand-600 dark:text-brand-400 hover:text-brand-700'
+          }`}
+        >
+          <Compass className="w-3 h-3" />
+          <span>Synthesis Studio</span>
+        </button>
+        <button
+          onClick={() => onSelectView('code')}
+          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+            activeView === 'code'
+              ? 'bg-brand-500 text-white font-bold shadow-2xs'
+              : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+          }`}
+        >
+          Code
+        </button>
+      </nav>
     </header>
   );
 };

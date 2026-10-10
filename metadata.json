@@ -1,6 +1,0 @@
-{
-  "name": "Neural Family Tree - Interactive Architecture Laboratory",
-  "description": "Explore the complete family tree of neural networks from the ground up: interactive simulators, live code scratchpads, and the 3-question research taxonomy from single neuron to Transformers, SSMs, and GNNs.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

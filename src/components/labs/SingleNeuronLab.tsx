@@ -125,9 +125,9 @@ export const SingleNeuronLab: React.FC = () => {
 
     // 3. Draw Decision Boundary Line: w1*x1 + w2*x2 + b = 0 => x2 = (-w1*x1 - b) / w2
     if (Math.abs(w2) > 0.001) {
-      ctx.strokeStyle = '#059669';
+      ctx.strokeStyle = '#2f3bf0';
       ctx.lineWidth = 2.5;
-      ctx.shadowColor = '#10b981';
+      ctx.shadowColor = '#4353ff';
       ctx.shadowBlur = 6;
       ctx.beginPath();
       
@@ -143,7 +143,7 @@ export const SingleNeuronLab: React.FC = () => {
     } else if (Math.abs(w1) > 0.001) {
       // Vertical line: x1 = -b / w1
       const xConst = -bias / w1;
-      ctx.strokeStyle = '#059669';
+      ctx.strokeStyle = '#2f3bf0';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.moveTo(toCanvasX(xConst), 0);
@@ -171,7 +171,7 @@ export const SingleNeuronLab: React.FC = () => {
       ctx.stroke();
 
       ctx.font = '10px "JetBrains Mono"';
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = '#a39b8a';
       ctx.fillText(pt.label, toCanvasX(pt.x) + 7, toCanvasY(pt.y) - 7);
     });
 
@@ -230,7 +230,7 @@ export const SingleNeuronLab: React.FC = () => {
       `Testing Point (0, 0) -> z = (${w1} * 0) + (${w2} * 0) + (${bias}) = ${bias.toFixed(3)} -> Output: ${(bias >= 0 ? 1 : 0)}`,
       `Active Probe (${probe.x1}, ${probe.x2}) -> Output: ${output}`,
       `STATUS: PASS (Forward pass matches 2D geometric boundary)`,
-      `✓ Level 0 Progress Saved to Laboratory Record!`,
+      `✓ Level 0 progress recorded.`,
     ].join('\n');
     setCodeOutput(results);
   };
@@ -238,64 +238,63 @@ export const SingleNeuronLab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header and Sub-tabs */}
-      {/* Header and Sub-tabs */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-ink-200 dark:border-white/10">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-mono">
-            Level 0 · The Atomic Foundation
+          <span className="text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400 font-mono">
+            Level 0 · Perceptron
           </span>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            The Single Neuron & Linear Decision Boundary
+          <h2 className="text-xl font-bold font-display tracking-tight text-ink-900 dark:text-white mt-0.5">
+            Single neuron and linear decision boundary
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
+          <p className="text-sm text-ink-600 dark:text-ink-400 mt-1 max-w-2xl">
             Watch how two input dials (x₁, x₂), two weight knobs (w₁, w₂), and a threshold spring (b) carve a boundary dividing space into two decisions.
           </p>
         </div>
 
         {/* Lab Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'visual'
-                ? 'bg-emerald-600 text-white font-semibold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            Visual Simulator
+            Simulation
           </button>
           <button
             onClick={() => setSubTab('code')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'code'
-                ? 'bg-emerald-600 text-white font-semibold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <Code2 className="w-3.5 h-3.5" />
-            <span>Code Scratchpad</span>
+            <span>Code</span>
           </button>
           <button
             onClick={() => setSubTab('analogy')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'analogy'
-                ? 'bg-emerald-600 text-white font-semibold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <HelpCircle className="w-3.5 h-3.5" />
-            <span>Simple Analogy</span>
+            <span>Analogy</span>
           </button>
           <button
             onClick={() => setSubTab('quiz')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'quiz'
-                ? 'bg-emerald-600 text-white font-semibold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Checkpoint Quiz</span>
+            <span>Concept check</span>
           </button>
         </div>
       </div>
@@ -304,23 +303,23 @@ export const SingleNeuronLab: React.FC = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Canvas: 2D Spatial Plane (7 cols) */}
-            <div className="lg:col-span-7 bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-5 space-y-4 shadow-xs transition-colors">
+            <div className="lg:col-span-7 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs transition-colors">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">2D Input Space (x₁, x₂)</span>
+                <div className="flex items-center gap-2 text-xs text-ink-500 dark:text-ink-400">
+                  <span className="font-semibold text-ink-800 dark:text-ink-200">2D Input Space (x₁, x₂)</span>
                   <span>·</span>
                   <span>Click canvas to place probe</span>
                 </div>
 
                 {/* Presets */}
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-slate-500">Presets:</span>
+                  <span className="text-xs text-ink-500">Presets:</span>
                   <button
                     onClick={() => applyPreset('and_gate')}
                     className={`px-2 py-1 text-xs rounded border transition-colors cursor-pointer ${
                       preset === 'and_gate'
-                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold'
-                        : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10 text-brand-800 dark:text-brand-300 font-semibold'
+                        : 'border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
                     }`}
                   >
                     AND Gate
@@ -329,8 +328,8 @@ export const SingleNeuronLab: React.FC = () => {
                     onClick={() => applyPreset('or_gate')}
                     className={`px-2 py-1 text-xs rounded border transition-colors cursor-pointer ${
                       preset === 'or_gate'
-                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold'
-                        : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10 text-brand-800 dark:text-brand-300 font-semibold'
+                        : 'border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
                     }`}
                   >
                     OR Gate
@@ -339,8 +338,8 @@ export const SingleNeuronLab: React.FC = () => {
                     onClick={() => applyPreset('custom')}
                     className={`px-2 py-1 text-xs rounded border transition-colors cursor-pointer ${
                       preset === 'custom'
-                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold'
-                        : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10 text-brand-800 dark:text-brand-300 font-semibold'
+                        : 'border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
                     }`}
                   >
                     Free Play
@@ -349,7 +348,7 @@ export const SingleNeuronLab: React.FC = () => {
               </div>
 
               {/* Canvas Container */}
-              <div className="relative aspect-square max-h-[380px] w-full mx-auto bg-slate-50 dark:bg-[#080d17] rounded-lg border border-slate-200/60 dark:border-white/5 overflow-hidden flex items-center justify-center">
+              <div className="relative aspect-square max-h-[380px] w-full mx-auto bg-ink-50 dark:bg-ink-950 rounded-lg border border-ink-200/60 dark:border-white/5 overflow-hidden flex items-center justify-center">
                 <canvas
                   ref={canvasRef}
                   width={500}
@@ -357,16 +356,16 @@ export const SingleNeuronLab: React.FC = () => {
                   onClick={handleCanvasClick}
                   className="w-full h-full cursor-crosshair"
                 />
-                <div className="absolute bottom-2 left-3 text-[11px] font-mono text-slate-700 dark:text-slate-300 bg-white/90 dark:bg-slate-900/90 px-2 py-0.5 rounded border border-slate-200 dark:border-white/10 pointer-events-none shadow-xs">
+                <div className="absolute bottom-2 left-3 text-[11px] font-mono text-ink-700 dark:text-ink-300 bg-white/90 dark:bg-ink-900/90 px-2 py-0.5 rounded border border-ink-200 dark:border-white/10 pointer-events-none shadow-xs">
                   Boundary: {w1.toFixed(1)}x₁ + {w2.toFixed(1)}x₂ {bias >= 0 ? `+ ${bias.toFixed(1)}` : `- ${Math.abs(bias).toFixed(1)}`} = 0
                 </div>
               </div>
 
               {/* Legend & Probe Inspector */}
               <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs">
-                <div className="flex items-center gap-4 text-slate-600 dark:text-slate-400">
+                <div className="flex items-center gap-4 text-ink-600 dark:text-ink-400">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-brand-500 inline-block" />
                     <span>Activation Zone (ŷ ≥ 0.5)</span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -375,9 +374,9 @@ export const SingleNeuronLab: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 font-mono text-slate-800 dark:text-slate-300 bg-slate-100 dark:bg-slate-900/90 px-2.5 py-1 rounded border border-slate-200 dark:border-white/10">
+                <div className="flex items-center gap-2 font-mono text-ink-800 dark:text-ink-300 bg-ink-100 dark:bg-ink-900/90 px-2.5 py-1 rounded border border-ink-200 dark:border-white/10">
                   <span>Probe ({probe.x1}, {probe.x2}):</span>
-                  <span className={`font-semibold ${output >= 0.5 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+                  <span className={`font-semibold ${output >= 0.5 ? 'text-brand-600 dark:text-brand-400' : 'text-red-500'}`}>
                     ŷ = {output}
                   </span>
                 </div>
@@ -387,8 +386,8 @@ export const SingleNeuronLab: React.FC = () => {
             {/* Right Column: Synaptic Sliders & Live Math (5 cols) */}
             <div className="lg:col-span-5 space-y-4">
               {/* Live Parameter Dials */}
-              <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-5 space-y-4 shadow-xs transition-colors">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center justify-between">
+              <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs transition-colors">
+                <h3 className="text-sm font-semibold font-display tracking-tight text-ink-900 dark:text-white flex items-center justify-between">
                   <span>Synaptic Parameters</span>
                   <button
                     onClick={() => {
@@ -397,7 +396,7 @@ export const SingleNeuronLab: React.FC = () => {
                       setBias(-0.5);
                       setProbe({ x1: 1.0, x2: 0.5 });
                     }}
-                    className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 cursor-pointer"
+                    className="text-xs text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white flex items-center gap-1 cursor-pointer"
                   >
                     <RotateCcw className="w-3 h-3" />
                     <span>Reset</span>
@@ -407,8 +406,8 @@ export const SingleNeuronLab: React.FC = () => {
                 {/* Weight 1 Slider */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-mono">
-                    <span className="text-slate-700 dark:text-slate-300">Weight 1 (w₁) [x₁ slope]</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">{w1.toFixed(2)}</span>
+                    <span className="text-ink-700 dark:text-ink-300">Weight 1 (w₁) [x₁ slope]</span>
+                    <span className="text-brand-600 dark:text-brand-400 font-bold">{w1.toFixed(2)}</span>
                   </div>
                   <input
                     type="range"
@@ -420,15 +419,15 @@ export const SingleNeuronLab: React.FC = () => {
                       setW1(parseFloat(e.target.value));
                       setPreset('custom');
                     }}
-                    className="w-full accent-emerald-600 cursor-pointer"
+                    className="w-full accent-brand-600 cursor-pointer"
                   />
                 </div>
 
                 {/* Weight 2 Slider */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-mono">
-                    <span className="text-slate-700 dark:text-slate-300">Weight 2 (w₂) [x₂ slope]</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">{w2.toFixed(2)}</span>
+                    <span className="text-ink-700 dark:text-ink-300">Weight 2 (w₂) [x₂ slope]</span>
+                    <span className="text-brand-600 dark:text-brand-400 font-bold">{w2.toFixed(2)}</span>
                   </div>
                   <input
                     type="range"
@@ -440,14 +439,14 @@ export const SingleNeuronLab: React.FC = () => {
                       setW2(parseFloat(e.target.value));
                       setPreset('custom');
                     }}
-                    className="w-full accent-emerald-600 cursor-pointer"
+                    className="w-full accent-brand-600 cursor-pointer"
                   />
                 </div>
 
                 {/* Bias Slider */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-mono">
-                    <span className="text-slate-700 dark:text-slate-300">Bias (b) [Offset Position]</span>
+                    <span className="text-ink-700 dark:text-ink-300">Bias (b) [Offset Position]</span>
                     <span className="text-amber-600 dark:text-amber-400 font-bold">{bias.toFixed(2)}</span>
                   </div>
                   <input
@@ -465,8 +464,8 @@ export const SingleNeuronLab: React.FC = () => {
                 </div>
 
                 {/* Activation Function Selector */}
-                <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/10">
-                  <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold block">
+                <div className="space-y-1.5 pt-2 border-t border-ink-100 dark:border-white/10">
+                  <label className="text-xs text-ink-700 dark:text-ink-300 font-semibold block">
                     Activation Function (σ)
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -476,8 +475,8 @@ export const SingleNeuronLab: React.FC = () => {
                         onClick={() => setActivation(fn)}
                         className={`px-2.5 py-1.5 text-xs font-mono font-medium rounded border transition-colors cursor-pointer uppercase ${
                           activation === fn
-                            ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-bold'
-                            : 'border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            ? 'bg-brand-50 dark:bg-brand-500/20 border-brand-500 text-brand-800 dark:text-brand-300 font-bold'
+                            : 'border-ink-200 dark:border-white/10 bg-surface dark:bg-ink-900 text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
                         }`}
                       >
                         {fn}
@@ -488,31 +487,31 @@ export const SingleNeuronLab: React.FC = () => {
               </div>
 
               {/* Live Step-by-Step Math Inspector */}
-              <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-5 space-y-3 font-mono text-xs shadow-xs transition-colors">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-sans">
+              <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-3 font-mono text-xs shadow-xs transition-colors">
+                <h3 className="text-xs font-semibold font-display tracking-tight uppercase tracking-wider text-ink-500 dark:text-ink-400 font-sans">
                   Real-Time Arithmetic Breakdown
                 </h3>
                 
-                <div className="p-3 bg-slate-50 dark:bg-slate-950/70 rounded-lg border border-slate-200/60 dark:border-white/5 space-y-2">
-                  <div className="text-slate-600 dark:text-slate-400">
-                    <span className="text-emerald-700 dark:text-emerald-400 font-semibold">1. Weighted Sum:</span>
-                    <div className="text-slate-800 dark:text-slate-200 mt-1 pl-2">
+                <div className="p-3 bg-ink-50 dark:bg-ink-950/70 rounded-lg border border-ink-200/60 dark:border-white/5 space-y-2">
+                  <div className="text-ink-600 dark:text-ink-400">
+                    <span className="text-brand-700 dark:text-brand-400 font-semibold">1. Weighted Sum:</span>
+                    <div className="text-ink-800 dark:text-ink-200 mt-1 pl-2">
                       z = (w₁ · x₁) + (w₂ · x₂) + b
                     </div>
-                    <div className="text-slate-600 dark:text-slate-300 mt-0.5 pl-2">
+                    <div className="text-ink-600 dark:text-ink-300 mt-0.5 pl-2">
                       z = ({w1.toFixed(2)} · {probe.x1}) + ({w2.toFixed(2)} · {probe.x2}) + ({bias.toFixed(2)})
                     </div>
-                    <div className="text-emerald-700 dark:text-emerald-300 font-bold mt-0.5 pl-2">
-                      z = {(w1 * probe.x1).toFixed(2)} + {(w2 * probe.x2).toFixed(2)} + {bias.toFixed(2)} = <span className="text-slate-900 dark:text-white text-sm">{z}</span>
+                    <div className="text-brand-700 dark:text-brand-300 font-bold mt-0.5 pl-2">
+                      z = {(w1 * probe.x1).toFixed(2)} + {(w2 * probe.x2).toFixed(2)} + {bias.toFixed(2)} = <span className="text-ink-900 dark:text-white text-sm">{z}</span>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400">
-                    <span className="text-emerald-700 dark:text-emerald-400 font-semibold">2. Activation Step:</span>
-                    <div className="text-slate-800 dark:text-slate-200 mt-1 pl-2">
+                  <div className="pt-2 border-t border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-400">
+                    <span className="text-brand-700 dark:text-brand-400 font-semibold">2. Activation Step:</span>
+                    <div className="text-ink-800 dark:text-ink-200 mt-1 pl-2">
                       ŷ = {activation}(z) = {activation}({z})
                     </div>
-                    <div className="text-emerald-700 dark:text-emerald-300 font-bold text-sm mt-0.5 pl-2">
+                    <div className="text-brand-700 dark:text-brand-300 font-bold text-sm mt-0.5 pl-2">
                       ŷ = {output} {output >= 0.5 ? '(Fires / Class 1)' : '(Silent / Class 0)'}
                     </div>
                   </div>
@@ -522,18 +521,18 @@ export const SingleNeuronLab: React.FC = () => {
           </div>
 
           {/* Prompt To Concept Check */}
-          <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-500/20 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="p-4 bg-brand-50 dark:bg-brand-950/20 border border-brand-200 dark:border-brand-500/20 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
             <div>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+              <h4 className="text-xs font-bold text-ink-900 dark:text-white">
                 Understood the Single Neuron?
               </h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400">
+              <p className="text-[11px] text-ink-600 dark:text-ink-400">
                 Test your understanding with the Level 0 Concept Checkpoint quiz.
               </p>
             </div>
             <button
               onClick={() => setSubTab('quiz')}
-              className="px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors cursor-pointer shadow-xs shrink-0"
+              className="px-3.5 py-1.5 text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 rounded-lg transition-colors cursor-pointer shadow-xs shrink-0"
             >
               Take Concept Check
             </button>
@@ -545,8 +544,8 @@ export const SingleNeuronLab: React.FC = () => {
       {subTab === 'code' && (
         <div className="space-y-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">Runnable Perceptron Implementation</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white">Runnable perceptron implementation</h3>
+            <p className="text-xs text-ink-500 dark:text-ink-400">
               Pure, dependency-free mathematical forward pass. Inspect how vectors turn into numbers.
             </p>
           </div>
@@ -579,7 +578,7 @@ console.log('Prediction:', result); // Output: ${output}`}
             language="TypeScript"
             filename="perceptron_forward.ts"
             onRun={runCodeVerification}
-            runLabel="Run Code & Verify"
+            runLabel="Run"
             output={codeOutput}
           />
         </div>
@@ -587,43 +586,43 @@ console.log('Prediction:', result); // Output: ${output}`}
 
       {/* SubTab 3: Plain Physical Analogy */}
       {subTab === 'analogy' && (
-        <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-6 space-y-5 shadow-xs transition-colors">
+        <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-6 space-y-5 shadow-xs transition-colors">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">The Simple Analogy: A Heavy Spring & Volume Dials</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">No calculus. No tensor jargon. Just physical intuition.</p>
+              <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white">Physical analogy: A heavy spring and balance lever</h3>
+              <p className="text-xs text-ink-500 dark:text-ink-400">A physical intuition for weights, bias, and thresholding.</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="p-4 bg-slate-50 dark:bg-slate-900/80 rounded-lg border border-slate-200 dark:border-white/5 space-y-2">
-              <h4 className="font-semibold text-emerald-700 dark:text-emerald-400">1. Inputs (x) are Physical Weights</h4>
-              <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed">
+            <div className="p-4 bg-ink-50 dark:bg-ink-900/80 rounded-lg border border-ink-200 dark:border-white/5 space-y-2">
+              <h4 className="font-semibold text-brand-700 dark:text-brand-400">1. Inputs (x) are Physical Weights</h4>
+              <p className="text-ink-600 dark:text-ink-300 text-xs leading-relaxed">
                 Imagine two people placing bags on a scale pan. Person 1 puts a {probe.x1} kg bag (x₁). Person 2 puts a {probe.x2} kg bag (x₂).
               </p>
             </div>
 
-            <div className="p-4 bg-slate-50 dark:bg-slate-900/80 rounded-lg border border-slate-200 dark:border-white/5 space-y-2">
-              <h4 className="font-semibold text-emerald-700 dark:text-emerald-400">2. Weights (w) are Lever Arms</h4>
-              <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed">
-                If weight w₁ = {w1.toFixed(1)}, Person 1’s bag is placed at a lever distance of {w1.toFixed(1)} meters from the pivot. The lever multiplies the force! A negative weight means pushing upward instead of downward.
+            <div className="p-4 bg-ink-50 dark:bg-ink-900/80 rounded-lg border border-ink-200 dark:border-white/5 space-y-2">
+              <h4 className="font-semibold text-brand-700 dark:text-brand-400">2. Weights (w) are Lever Arms</h4>
+              <p className="text-ink-600 dark:text-ink-300 text-xs leading-relaxed">
+                If weight w₁ = {w1.toFixed(1)}, Person 1’s bag is placed at a lever distance of {w1.toFixed(1)} meters from the pivot. The lever multiplies the force. A negative weight means pushing upward instead of downward.
               </p>
             </div>
 
-            <div className="p-4 bg-slate-50 dark:bg-slate-900/80 rounded-lg border border-slate-200 dark:border-white/5 space-y-2">
+            <div className="p-4 bg-ink-50 dark:bg-ink-900/80 rounded-lg border border-ink-200 dark:border-white/5 space-y-2">
               <h4 className="font-semibold text-amber-600 dark:text-amber-400">3. Bias (b) is the Counterweight Spring</h4>
-              <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed">
+              <p className="text-ink-600 dark:text-ink-300 text-xs leading-relaxed">
                 Inside the scale, there is a stiff spring pushing back by {bias.toFixed(1)}. If the combined force from the bags doesn’t overcome this spring, the dial stays below zero.
               </p>
             </div>
 
-            <div className="p-4 bg-slate-50 dark:bg-slate-900/80 rounded-lg border border-slate-200 dark:border-white/5 space-y-2">
-              <h4 className="font-semibold text-emerald-700 dark:text-emerald-400">4. Activation (σ) is the Snap Switch</h4>
-              <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed">
-                The moment the lever tips past zero, a crisp light switch clicks on (output ŷ = 1). If it fails to tip the scale, the bulb stays dark (output ŷ = 0). That’s all a single neuron is!
+            <div className="p-4 bg-ink-50 dark:bg-ink-900/80 rounded-lg border border-ink-200 dark:border-white/5 space-y-2">
+              <h4 className="font-semibold text-brand-700 dark:text-brand-400">4. Activation (σ) is the Snap Switch</h4>
+              <p className="text-ink-600 dark:text-ink-300 text-xs leading-relaxed">
+                The moment the lever tips past zero, a crisp light switch clicks on (output ŷ = 1). If it fails to tip the scale, the bulb stays dark (output ŷ = 0). This matches the basic behavior of an artificial neuron.
               </p>
             </div>
           </div>
@@ -634,7 +633,7 @@ console.log('Prediction:', result); // Output: ${output}`}
       {subTab === 'quiz' && (
         <CheckpointQuiz
           quizKey="quiz_neuron"
-          title="Level 0 Mastery Check: Single Neuron Mechanics"
+          title="Level 0 concept check: Single neuron mechanics"
           questions={neuronQuizQuestions}
           onPassAll={handleLabCompleted}
         />

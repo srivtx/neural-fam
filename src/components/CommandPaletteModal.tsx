@@ -292,12 +292,12 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[#0c1220] rounded-2xl border border-slate-200 dark:border-white/10 max-w-xl w-full shadow-2xl overflow-hidden space-y-0"
+        className="bg-white dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 max-w-xl w-full shadow-2xl overflow-hidden space-y-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-200 dark:border-white/10">
-          <Search className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-ink-200 dark:border-white/10">
+          <Search className="w-5 h-5 text-brand-600 dark:text-brand-400 shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -308,17 +308,17 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
             }}
             onKeyDown={handleKeyDown}
             placeholder="Search any architecture, formula, lab, or quiz (e.g. ResNet, Attention, Mamba, KAN)..."
-            className="flex-1 bg-transparent text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-ink-900 dark:text-white placeholder-ink-400 focus:outline-none"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              className="p-1 text-ink-400 hover:text-ink-600 dark:hover:text-ink-200 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           )}
-          <span className="hidden sm:inline-flex text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-white/10">
+          <span className="hidden sm:inline-flex text-[10px] font-mono px-1.5 py-0.5 rounded bg-ink-100 dark:bg-ink-800 text-ink-500 border border-ink-200 dark:border-white/10">
             ESC
           </span>
         </div>
@@ -326,7 +326,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         {/* Results list */}
         <div className="max-h-96 overflow-y-auto no-scrollbar p-2 space-y-1">
           {filteredItems.length === 0 ? (
-            <div className="py-10 text-center text-slate-400 text-xs">
+            <div className="py-10 text-center text-ink-400 text-xs">
               No matching neural architectures found for "{query}".
             </div>
           ) : (
@@ -339,15 +339,15 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-left transition-colors cursor-pointer ${
                     isSelected
-                      ? 'bg-emerald-50 dark:bg-emerald-500/20 text-slate-900 dark:text-white border border-emerald-200 dark:border-emerald-500/30'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                      ? 'bg-brand-50 dark:bg-brand-500/20 text-ink-900 dark:text-white border border-brand-200 dark:border-brand-500/30'
+                      : 'text-ink-700 dark:text-ink-300 hover:bg-ink-50 dark:hover:bg-ink-800/50'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
                         item.category === 'lab'
-                          ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                          ? 'bg-brand-100 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300'
                           : item.category === 'architecture'
                           ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300'
                           : 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
@@ -365,12 +365,12 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold truncate">{item.title}</span>
                         {item.badge && (
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-200/60 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium shrink-0">
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-ink-200/60 dark:bg-ink-800 text-ink-700 dark:text-ink-300 font-medium shrink-0">
                             {item.badge}
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-400 dark:text-slate-400 truncate">
+                      <p className="text-[11px] text-ink-400 dark:text-ink-400 truncate">
                         {item.subtitle}
                       </p>
                     </div>
@@ -378,7 +378,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
 
                   <ArrowRight
                     className={`w-4 h-4 shrink-0 transition-opacity ${
-                      isSelected ? 'opacity-100 text-emerald-600 dark:text-emerald-400' : 'opacity-0'
+                      isSelected ? 'opacity-100 text-brand-600 dark:text-brand-400' : 'opacity-0'
                     }`}
                   />
                 </button>
@@ -388,18 +388,18 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         </div>
 
         {/* Footer shortcuts */}
-        <div className="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-[#070b12] border-t border-slate-200 dark:border-white/10 text-[11px] text-slate-400">
+        <div className="flex items-center justify-between px-4 py-2 bg-ink-50 dark:bg-ink-950 border-t border-ink-200 dark:border-white/10 text-[11px] text-ink-400">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 font-mono text-[9px]">↑↓</kbd>
+              <kbd className="px-1 py-0.5 rounded bg-white dark:bg-ink-800 border border-ink-200 dark:border-white/10 font-mono text-[9px]">↑↓</kbd>
               <span>Navigate</span>
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 font-mono text-[9px]">↵</kbd>
+              <kbd className="px-1 py-0.5 rounded bg-white dark:bg-ink-800 border border-ink-200 dark:border-white/10 font-mono text-[9px]">↵</kbd>
               <span>Select</span>
             </span>
           </div>
-          <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">
+          <span className="text-[10px] font-mono text-brand-600 dark:text-brand-400">
             Quick Jump (Ctrl+K)
           </span>
         </div>

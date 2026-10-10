@@ -81,8 +81,8 @@ export const MlpLab: React.FC = () => {
         const match = res.y === pt.target ? '✓ PASS' : '✗ FAIL';
         return `Point ${pt.label}: h1=${res.h1.toFixed(1)}, h2=${res.h2.toFixed(1)} -> Prediction ŷ=${res.y} (Target: ${pt.target}) [${match}]`;
       }),
-      'ALL 4 XOR POINTS CLASSIFIED CORRECTLY (Non-linear separation achieved!)',
-      '✓ Level 1 Progress Recorded!',
+      'All 4 XOR points classified correctly (non-linear separation achieved).',
+      '✓ Level 1 progress recorded.',
     ];
     setCodeOutput(lines.join('\n'));
   };
@@ -90,63 +90,63 @@ export const MlpLab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-ink-200 dark:border-white/10">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-mono">
-            Level 1 · Space Warping
+          <span className="text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400 font-mono">
+            Level 1 · Multilayer perceptron
           </span>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            The Multilayer Perceptron & The XOR Dilemma
+          <h2 className="text-xl font-bold font-display tracking-tight text-ink-900 dark:text-white mt-0.5">
+            Multilayer perceptron and non-linear separation
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
+          <p className="text-sm text-ink-600 dark:text-ink-400 mt-1 max-w-2xl">
             Why one neuron failed in 1969, and how stacking a hidden layer folds geometric space to separate the inseparable.
           </p>
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'visual'
-                ? 'bg-emerald-600 text-white font-semibold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            Visual Simulator
+            Simulation
           </button>
           <button
             onClick={() => setSubTab('code')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'code'
-                ? 'bg-emerald-600 text-white font-semibold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <Code2 className="w-3.5 h-3.5" />
-            <span>Code Scratchpad</span>
+            <span>Code</span>
           </button>
           <button
             onClick={() => setSubTab('analogy')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'analogy'
-                ? 'bg-emerald-600 text-white font-semibold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <HelpCircle className="w-3.5 h-3.5" />
-            <span>Paper Folding Analogy</span>
+            <span>Analogy</span>
           </button>
           <button
             onClick={() => setSubTab('quiz')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'quiz'
-                ? 'bg-emerald-600 text-white font-semibold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Checkpoint Quiz</span>
+            <span>Concept check</span>
           </button>
         </div>
       </div>
@@ -155,9 +155,9 @@ export const MlpLab: React.FC = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Canvas (7 cols) */}
-            <div className="lg:col-span-7 bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-5 space-y-4 shadow-xs transition-colors">
+            <div className="lg:col-span-7 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs transition-colors">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                <span className="text-xs font-semibold text-ink-800 dark:text-ink-200">
                   Exclusive OR (XOR) Feature Plane
                 </span>
 
@@ -168,7 +168,7 @@ export const MlpLab: React.FC = () => {
                     className={`px-2.5 py-1 text-xs rounded border transition-colors cursor-pointer flex items-center gap-1 ${
                       mode === 'single_fail'
                         ? 'border-red-500 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 font-semibold'
-                        : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        : 'border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
                     }`}
                   >
                     <AlertTriangle className="w-3 h-3 text-red-500" />
@@ -178,18 +178,18 @@ export const MlpLab: React.FC = () => {
                     onClick={() => setMode('mlp_solved')}
                     className={`px-2.5 py-1 text-xs rounded border transition-colors cursor-pointer flex items-center gap-1 ${
                       mode === 'mlp_solved'
-                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-semibold'
-                        : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/20 text-brand-800 dark:text-brand-300 font-semibold'
+                        : 'border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
                     }`}
                   >
-                    <Layers className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                    <Layers className="w-3 h-3 text-brand-600 dark:text-brand-400" />
                     <span>2-Layer MLP (Solves)</span>
                   </button>
                 </div>
               </div>
 
               {/* SVG Visual Representation */}
-              <div className="relative aspect-square max-h-[360px] w-full mx-auto bg-slate-50 dark:bg-[#080d17] rounded-lg border border-slate-200/60 dark:border-white/5 p-4 flex items-center justify-center">
+              <div className="relative aspect-square max-h-[360px] w-full mx-auto bg-ink-50 dark:bg-ink-950 rounded-lg border border-ink-200/60 dark:border-white/5 p-4 flex items-center justify-center">
                 <svg viewBox="-0.5 -0.5 2 2" className="w-full h-full">
                   {/* Background grid */}
                   <line x1="-0.2" y1="0" x2="1.4" y2="0" stroke="rgba(100,116,139,0.15)" strokeWidth="0.01" />
@@ -217,7 +217,7 @@ export const MlpLab: React.FC = () => {
                   {mode === 'mlp_solved' && (
                     <>
                       {/* Line 1: x1 + x2 = 0.5 (h1) */}
-                      <line x1="-0.1" y1="0.6" x2="0.6" y2="-0.1" stroke="#059669" strokeWidth="0.02" />
+                      <line x1="-0.1" y1="0.6" x2="0.6" y2="-0.1" stroke="#2f3bf0" strokeWidth="0.02" />
                       {/* Line 2: x1 + x2 = 1.5 (h2) */}
                       <line x1="0.3" y1="1.2" x2="1.2" y2="0.3" stroke="#0d9488" strokeWidth="0.02" />
                       {/* Shaded zone between lines */}
@@ -225,7 +225,7 @@ export const MlpLab: React.FC = () => {
                         points="-0.1,0.6 0.6,-0.1 1.2,0.3 0.3,1.2"
                         fill="rgba(5, 150, 105, 0.15)"
                       />
-                      <text x="0.05" y="0.5" fill="#059669" fontSize="0.05" fontFamily="JetBrains Mono" fontWeight="bold">
+                      <text x="0.05" y="0.5" fill="#2f3bf0" fontSize="0.05" fontFamily="JetBrains Mono" fontWeight="bold">
                         Line 1 (h₁)
                       </text>
                       <text x="0.75" y="0.9" fill="#0d9488" fontSize="0.05" fontFamily="JetBrains Mono" fontWeight="bold">
@@ -237,7 +237,7 @@ export const MlpLab: React.FC = () => {
                   {/* 4 XOR points */}
                   {xorPoints.map((pt) => {
                     const isSelected = activePoint.x1 === pt.x1 && activePoint.x2 === pt.x2;
-                    const color = pt.target === 1 ? '#059669' : '#ef4444';
+                    const color = pt.target === 1 ? '#2f3bf0' : '#ef4444';
                     return (
                       <g
                         key={pt.label}
@@ -266,10 +266,10 @@ export const MlpLab: React.FC = () => {
                         <text
                           x={pt.x1 + 0.08}
                           y={pt.x2 + 0.03}
-                          fill="#475569"
+                          fill="#5a5448"
                           fontSize="0.06"
                           fontFamily="JetBrains Mono"
-                          className="dark:fill-slate-300"
+                          className="dark:fill-ink-300"
                         >
                           {pt.label} → {pt.target}
                         </text>
@@ -279,11 +279,11 @@ export const MlpLab: React.FC = () => {
                 </svg>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-white/5">
+              <div className="flex items-center justify-between text-xs text-ink-500 dark:text-ink-400 pt-2 border-t border-ink-100 dark:border-white/5">
                 <span>Click any dot to trace hidden neuron firings.</span>
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Target = 1
+                    <span className="w-2.5 h-2.5 rounded-full bg-brand-500 inline-block" /> Target = 1
                   </span>
                   <span className="flex items-center gap-1">
                     <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" /> Target = 0
@@ -295,55 +295,57 @@ export const MlpLab: React.FC = () => {
             {/* Right Column: Network Architecture Diagram & Neuron Math (5 cols) */}
             <div className="lg:col-span-5 space-y-4">
               {/* Visual Synapse Flow */}
-              <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-5 space-y-4 shadow-xs transition-colors">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+              <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs transition-colors">
+                <h3 className="text-sm font-semibold font-display tracking-tight text-ink-900 dark:text-white">
                   Network Architecture & Layer Forward Pass
                 </h3>
 
                 {/* Point Inspector */}
-                <div className="p-3 bg-slate-50 dark:bg-slate-950/80 rounded-lg border border-slate-200/60 dark:border-white/5 space-y-3 font-mono text-xs">
-                  <div className="flex justify-between items-center text-slate-700 dark:text-slate-300">
+                <div className="p-3 bg-ink-50 dark:bg-ink-950/80 rounded-lg border border-ink-200/60 dark:border-white/5 space-y-3 font-mono text-xs">
+                  <div className="flex justify-between items-center text-ink-700 dark:text-ink-300">
                     <span>Inspecting Point:</span>
-                    <span className="text-emerald-700 dark:text-emerald-400 font-bold">{activePoint.label} (Target = {activePoint.target})</span>
+                    <span className="text-brand-700 dark:text-brand-400 font-bold">{activePoint.label} (Target = {activePoint.target})</span>
                   </div>
 
                   {/* Layer 1: Hidden Neurons */}
-                  <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-white/10">
-                    <div className="text-slate-500 dark:text-slate-400 text-[11px] font-sans uppercase font-semibold">
+                  <div className="space-y-1.5 pt-2 border-t border-ink-200 dark:border-white/10">
+                    <div className="text-ink-500 dark:text-ink-400 text-[11px] font-sans uppercase font-semibold">
                       Hidden Layer (2 Neurons)
                     </div>
-                    <div className="p-2 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-emerald-500/20 shadow-xs">
-                      <div className="flex justify-between text-emerald-800 dark:text-emerald-300 font-semibold">
+                    <div className="p-2 bg-surface dark:bg-ink-900 rounded border border-ink-200 dark:border-brand-500/20 shadow-xs">
+                      <div className="flex justify-between text-brand-800 dark:text-brand-300 font-semibold">
                         <span>h₁ (OR boundary):</span>
                         <span>{currentCalc.h1.toFixed(2)}</span>
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      <div className="text-[11px] text-ink-500 dark:text-ink-400 mt-0.5">
                         z₁ = (1·{activePoint.x1}) + (1·{activePoint.x2}) - 0.5 = {currentCalc.z1.toFixed(1)}
                       </div>
                     </div>
 
-                    <div className="p-2 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-teal-500/20 shadow-xs">
+                    <div className="p-2 bg-surface dark:bg-ink-900 rounded border border-ink-200 dark:border-teal-500/20 shadow-xs">
                       <div className="flex justify-between text-teal-800 dark:text-teal-300 font-semibold">
                         <span>h₂ (NAND boundary):</span>
                         <span>{currentCalc.h2.toFixed(2)}</span>
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      <div className="text-[11px] text-ink-500 dark:text-ink-400 mt-0.5">
                         z₂ = (-1·{activePoint.x1}) + (-1·{activePoint.x2}) + 1.5 = {currentCalc.z2.toFixed(1)}
                       </div>
                     </div>
                   </div>
 
                   {/* Layer 2: Output Neuron */}
-                  <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-white/10">
-                    <div className="text-slate-500 dark:text-slate-400 text-[11px] font-sans uppercase font-semibold">
+                  <div className="space-y-1.5 pt-2 border-t border-ink-200 dark:border-white/10">
+                    <div className="text-ink-500 dark:text-ink-400 text-[11px] font-sans uppercase font-semibold">
                       Output Layer (1 Neuron)
                     </div>
-                    <div className="p-2 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-emerald-500/20 shadow-xs">
-                      <div className="flex justify-between text-emerald-700 dark:text-emerald-300 font-bold">
-                        <span>Prediction ŷ:</span>
-                        <span>{currentCalc.y} {currentCalc.y === activePoint.target ? '✓ (CORRECT)' : '✗ (ERROR)'}</span>
+                    <div className="p-2 bg-surface dark:bg-ink-900 rounded border border-ink-200 dark:border-brand-500/20 shadow-xs">
+                      <div className="flex justify-between font-bold">
+                        <span className="text-ink-700 dark:text-ink-300">Prediction ŷ:</span>
+                        <span className={currentCalc.y === activePoint.target ? 'text-green-600 dark:text-green-400' : 'text-rose-600 dark:text-rose-400'}>
+                          {currentCalc.y} {currentCalc.y === activePoint.target ? '✓ (CORRECT)' : '✗ (ERROR)'}
+                        </span>
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      <div className="text-[11px] text-ink-500 dark:text-ink-400 mt-0.5">
                         z_out = (1·{currentCalc.h1.toFixed(1)}) + (1·{currentCalc.h2.toFixed(1)}) - 1.5 = {currentCalc.zOut.toFixed(1)}
                       </div>
                     </div>
@@ -351,29 +353,29 @@ export const MlpLab: React.FC = () => {
                 </div>
 
                 {/* Universal Approximation Theorem callout */}
-                <div className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 p-3 rounded-lg">
-                  <span className="font-semibold text-emerald-800 dark:text-emerald-300 block mb-1">
+                <div className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/20 p-3 rounded-lg">
+                  <span className="font-semibold text-brand-800 dark:text-brand-300 block mb-1">
                     Universal Approximation Theorem (Cybenko, 1989)
                   </span>
-                  An MLP with even a single hidden layer and non-linear activations can approximate <em>any</em> smooth mathematical function to arbitrary precision!
+                  An MLP with even a single hidden layer and non-linear activations can approximate <em>any</em> smooth mathematical function to arbitrary precision.
                 </div>
               </div>
             </div>
           </div>
 
           {/* Prompt To Concept Check */}
-          <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-500/20 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="p-4 bg-brand-50 dark:bg-brand-950/20 border border-brand-200 dark:border-brand-500/20 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
             <div>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+              <h4 className="text-xs font-bold text-ink-900 dark:text-white">
                 Understood Space Warping & XOR?
               </h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400">
+              <p className="text-[11px] text-ink-600 dark:text-ink-400">
                 Test your understanding with the Level 1 Concept Checkpoint quiz.
               </p>
             </div>
             <button
               onClick={() => setSubTab('quiz')}
-              className="px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors cursor-pointer shadow-xs shrink-0"
+              className="px-3.5 py-1.5 text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 rounded-lg transition-colors cursor-pointer shadow-xs shrink-0"
             >
               Take Concept Check
             </button>
@@ -385,8 +387,8 @@ export const MlpLab: React.FC = () => {
       {subTab === 'code' && (
         <div className="space-y-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">2-Layer MLP Matrix Forward Pass</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white">Two-layer MLP forward pass</h3>
+            <p className="text-xs text-ink-500 dark:text-ink-400">
               Vectorized multiplication that maps 2 inputs through 2 hidden neurons to an output.
             </p>
           </div>
@@ -406,7 +408,7 @@ export const MlpLab: React.FC = () => {
             language="TypeScript"
             filename="mlp_xor_forward.ts"
             onRun={runMlpTest}
-            runLabel="Verify All 4 XOR Cases"
+            runLabel="Run"
             output={codeOutput}
           />
         </div>
@@ -414,20 +416,20 @@ export const MlpLab: React.FC = () => {
 
       {/* Analogy Tab */}
       {subTab === 'analogy' && (
-        <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-6 space-y-4 shadow-xs transition-colors">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">The Paper-Folding Analogy</h3>
-          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+        <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-6 space-y-4 shadow-xs transition-colors">
+          <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white">Paper-folding analogy</h3>
+          <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
             Take a flat sheet of paper. Draw two blue dots on the top-left and bottom-right, and two red dots on the bottom-left and top-right (the XOR layout).
           </p>
-          <div className="p-4 bg-slate-50 dark:bg-slate-900/80 rounded-lg border border-slate-200 dark:border-white/5 space-y-2 text-xs text-slate-700 dark:text-slate-300">
+          <div className="p-4 bg-ink-50 dark:bg-ink-900/80 rounded-lg border border-ink-200 dark:border-white/5 space-y-2 text-xs text-ink-700 dark:text-ink-300">
             <p>
-              <strong className="text-red-600 dark:text-red-400">Can you make ONE straight scissors cut</strong> that separates both blue dots from both red dots? It is mathematically impossible on a flat sheet!
+              <strong className="text-red-600 dark:text-red-400">Can you make one straight scissors cut</strong> that separates both blue dots from both red dots? It is mathematically impossible on a flat sheet.
             </p>
             <p>
-              <strong className="text-emerald-700 dark:text-emerald-400 font-semibold">Now fold the paper in half.</strong> Suddenly, the two blue dots touch each other in 3D space! Now make that same single straight scissors cut. You cut both at once!
+              <strong className="text-brand-700 dark:text-brand-400 font-semibold">Now fold the paper in half.</strong> Suddenly, the two blue dots touch each other in 3D space. A single straight cut now separates both classes simultaneously.
             </p>
-            <p className="text-emerald-800 dark:text-emerald-300 font-medium">
-              That folding action is what hidden layers do: they warp flat coordinate space into a geometry where straight lines can easily solve complex problems.
+            <p className="text-brand-800 dark:text-brand-300 font-medium">
+              That folding action is what hidden layers do: they warp flat coordinate space into a geometry where straight lines can easily solve non-linear problems.
             </p>
           </div>
         </div>
@@ -437,7 +439,7 @@ export const MlpLab: React.FC = () => {
       {subTab === 'quiz' && (
         <CheckpointQuiz
           quizKey="quiz_mlp"
-          title="Level 1 Mastery Check: Multilayer Perceptrons & XOR"
+          title="Level 1 concept check: Multilayer perceptrons and XOR"
           questions={mlpQuizQuestions}
           onPassAll={() => markLabCompleted('mlp')}
         />

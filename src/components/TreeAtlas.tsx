@@ -36,13 +36,13 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
   const getFamilyColor = (family: FamilyCategory) => {
     switch (family) {
       case 'feedforward':
-        return 'text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10';
+        return 'text-brand-700 dark:text-brand-400 border-brand-200 dark:border-brand-500/30 bg-brand-50 dark:bg-brand-500/10';
       case 'sequence':
         return 'text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10';
       case 'attention':
         return 'text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-500/30 bg-teal-50 dark:bg-teal-500/10';
       case 'ssm':
-        return 'text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10';
+        return 'text-brand-700 dark:text-brand-400 border-brand-200 dark:border-brand-500/30 bg-brand-50 dark:bg-brand-500/10';
       case 'graph':
         return 'text-pink-700 dark:text-pink-400 border-pink-200 dark:border-pink-500/30 bg-pink-50 dark:bg-pink-500/10';
       case 'generative':
@@ -50,41 +50,41 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
       case 'specialized':
         return 'text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-500/10';
       default:
-        return 'text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800';
+        return 'text-ink-600 dark:text-ink-400 border-ink-200 dark:border-ink-700 bg-ink-50 dark:bg-ink-800';
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Hero Banner */}
-      <div className="p-6 md:p-8 bg-white dark:bg-[#0c1220] rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs relative overflow-hidden transition-colors">
+      <div className="p-6 md:p-8 bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 shadow-xs relative overflow-hidden transition-colors">
         <div className="max-w-3xl space-y-3 relative z-10">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-mono">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400 font-mono">
             <Sparkles className="w-4 h-4" />
-            <span>Taxonomic Atlas of Neural Architectures</span>
+            <span>Taxonomy and lineage</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            The Neural Network Family Tree
+          <h1 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-ink-900 dark:text-white">
+            Neural network family tree
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            There is no single rigid taxonomy in AI research. Topologies, structural mechanisms, and training paradigms cross-pollinate. Explore every branch below—from the single neuron to modern Mamba and Diffusion—and jump into hands-on interactive labs.
+          <p className="text-sm text-ink-600 dark:text-ink-300 leading-relaxed">
+            Neural network architectures evolve through cross-pollination across topologies, structural mechanisms, and training paradigms. Explore each family below and inspect its mathematical formulation and hands-on laboratory.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
-            <span>7 Core Architectural Families</span>
+          <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-ink-500 dark:text-ink-400 font-mono">
+            <span>7 architectural families</span>
             <span>·</span>
-            <span>Live Mathematical Simulators</span>
+            <span>Interactive simulations</span>
             <span>·</span>
-            <span>Client-Side Code Scratchpads</span>
+            <span>Runnable code examples</span>
           </div>
         </div>
 
         {/* Atlas View Mode Switcher */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-white/10 text-xs mt-4 md:mt-6">
+        <div className="flex items-center gap-1.5 p-1 bg-ink-100 dark:bg-ink-900/90 rounded-xl border border-ink-200 dark:border-white/10 text-xs mt-4 md:mt-6">
           <button
             onClick={() => setAtlasMode('both')}
             className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-              atlasMode === 'both' ? 'bg-emerald-600 text-white font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              atlasMode === 'both' ? 'bg-brand-600 text-white font-bold shadow-xs' : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             Full Atlas
@@ -92,7 +92,7 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
           <button
             onClick={() => setAtlasMode('graph_only')}
             className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-              atlasMode === 'graph_only' ? 'bg-emerald-600 text-white font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              atlasMode === 'graph_only' ? 'bg-brand-600 text-white font-bold shadow-xs' : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             Graph View
@@ -100,7 +100,7 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
           <button
             onClick={() => setAtlasMode('cards_only')}
             className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-              atlasMode === 'cards_only' ? 'bg-emerald-600 text-white font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              atlasMode === 'cards_only' ? 'bg-brand-600 text-white font-bold shadow-xs' : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             Card Catalog
@@ -117,21 +117,21 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
       {(atlasMode === 'both' || atlasMode === 'cards_only') && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">Architecture Catalog & Deep Profiles</h3>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">{filteredNodes.length} Models Loaded</span>
+            <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white">Architecture catalog</h3>
+            <span className="text-xs text-ink-500 dark:text-ink-400 font-mono">{filteredNodes.length} Models Loaded</span>
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 p-1 bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-white/10 shadow-xs">
-            <Filter className="w-4 h-4 text-slate-400 ml-2 mr-1 shrink-0" />
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 p-1 bg-surface dark:bg-ink-900/90 rounded-xl border border-ink-200 dark:border-white/10 shadow-xs">
+            <Filter className="w-4 h-4 text-ink-400 ml-2 mr-1 shrink-0" />
             {filterTabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveFilter(tab.id)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
                   activeFilter === tab.id
-                    ? 'bg-emerald-600 text-white font-bold shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-brand-600 text-white font-bold shadow-xs'
+                    : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
                 }`}
               >
                 {tab.label}
@@ -151,17 +151,17 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
                   onClick={() => setSelectedNode(node)}
                   className={`p-5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between space-y-4 group shadow-xs ${
                     isSelected
-                      ? 'bg-emerald-50/50 dark:bg-[#10192e] border-emerald-500 shadow-md'
-                      : 'bg-white dark:bg-[#0c1220] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-[#0f172a]'
+                      ? 'bg-brand-50/50 dark:bg-ink-850 border-brand-500 shadow-md'
+                      : 'bg-surface dark:bg-ink-900 border-ink-200 dark:border-white/10 hover:border-ink-300 dark:hover:border-white/20 hover:bg-ink-50 dark:hover:bg-ink-850'
                   }`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2 text-xs">
-                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span className="font-semibold text-brand-600 dark:text-brand-400">
                         {node.familyName}
                       </span>
                       {node.labAvailable && (
-                        <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
+                        <span className="text-[11px] font-mono text-brand-600 dark:text-brand-400 flex items-center gap-1 font-semibold">
                           <Cpu className="w-3 h-3" />
                           <span>Interactive Lab</span>
                         </span>
@@ -169,22 +169,22 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
                     </div>
 
                     <div>
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                      <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                         {node.title}
                       </h3>
-                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-ink-600 dark:text-ink-300 mt-1 line-clamp-2 leading-relaxed">
                         {node.oneLiner}
                       </p>
                     </div>
 
                     {/* Mathematical Formula Banner */}
-                    <div className="p-2.5 bg-slate-50 dark:bg-slate-950/90 rounded-lg border border-slate-200/60 dark:border-white/5 font-mono text-xs text-emerald-700 dark:text-emerald-300 truncate">
+                    <div className="p-2.5 bg-ink-50 dark:bg-ink-950/90 rounded-lg border border-ink-200/60 dark:border-white/5 font-mono text-xs text-brand-700 dark:text-brand-300 truncate">
                       {node.mathFormula}
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                  <div className="pt-3 border-t border-ink-100 dark:border-white/5 flex items-center justify-between">
+                    <span className="text-[11px] text-ink-500 dark:text-ink-400 line-clamp-1">
                       {node.threeQuestions.coreArchitecture}
                     </span>
 
@@ -193,9 +193,9 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
                         e.stopPropagation();
                         onOpenLab(node.id);
                       }}
-                      className="flex items-center gap-1 px-3 py-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-md transition-colors whitespace-nowrap cursor-pointer shrink-0 shadow-xs"
+                      className="flex items-center gap-1 px-3 py-1 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-500 rounded-md transition-colors whitespace-nowrap cursor-pointer shrink-0 shadow-xs"
                     >
-                      <span>Open Lab</span>
+                      <span>Open lab</span>
                       <ArrowRight className="w-3 h-3" />
                     </button>
                   </div>
@@ -206,14 +206,14 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
 
           {/* Selected Node Detailed Flyout / Inspector */}
           {selectedNode && (
-            <div className="p-6 bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 space-y-5 shadow-xs transition-colors">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-white/10">
+            <div className="p-6 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 space-y-5 shadow-xs transition-colors">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-ink-100 dark:border-white/10">
                 <div>
-                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">
-                    Architecture Blueprint Profile
+                  <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 uppercase tracking-wider font-mono">
+                    Architecture profile
                   </span>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">{selectedNode.title}</h2>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+                  <h2 className="text-xl font-bold font-display tracking-tight text-ink-900 dark:text-white mt-0.5">{selectedNode.title}</h2>
+                  <div className="text-xs text-ink-500 dark:text-ink-400 mt-1 flex items-center gap-2">
                     <span>{selectedNode.familyName}</span>
                     <span>·</span>
                     <span>{selectedNode.historicalContext}</span>
@@ -222,38 +222,38 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
 
                 <button
                   onClick={() => onOpenLab(selectedNode.id)}
-                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors cursor-pointer shadow-xs"
+                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 rounded-lg transition-colors cursor-pointer shadow-xs"
                 >
                   <Cpu className="w-4 h-4" />
-                  <span>Launch Interactive Project Lab</span>
+                  <span>Open lab</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* Analogy & Intuition */}
-                <div className="p-4 bg-slate-50 dark:bg-slate-950/80 rounded-lg border border-slate-200 dark:border-white/5 space-y-2">
+                <div className="p-4 bg-ink-50 dark:bg-ink-950/80 rounded-lg border border-ink-200 dark:border-white/5 space-y-2">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5 font-sans">
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>Physical Mental Model (Intuitive Analogy)</span>
+                    <span>Intuitive analogy</span>
                   </h4>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                  <p className="text-xs text-ink-700 dark:text-ink-300 leading-relaxed">
                     {selectedNode.analogy}
                   </p>
                 </div>
 
                 {/* Mathematical Breakdown */}
-                <div className="p-4 bg-slate-50 dark:bg-slate-950/80 rounded-lg border border-slate-200 dark:border-white/5 space-y-2 font-mono text-xs">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-sans">
-                    Mathematical Symbols & Definitions
+                <div className="p-4 bg-ink-50 dark:bg-ink-950/80 rounded-lg border border-ink-200 dark:border-white/5 space-y-2 font-mono text-xs">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-brand-400 font-sans">
+                    Mathematical notation
                   </h4>
-                  <div className="text-emerald-800 dark:text-emerald-300 font-bold mb-2">
+                  <div className="text-brand-800 dark:text-brand-300 font-bold mb-2">
                     {selectedNode.mathFormula}
                   </div>
                   <div className="space-y-1">
                     {selectedNode.mathBreakdown.map((item, idx) => (
-                      <div key={idx} className="text-slate-600 dark:text-slate-300 text-[11px]">
-                        <strong className="text-slate-900 dark:text-white">{item.symbol}:</strong> {item.meaning}
+                      <div key={idx} className="text-ink-600 dark:text-ink-300 text-[11px]">
+                        <strong className="text-ink-900 dark:text-white">{item.symbol}:</strong> {item.meaning}
                       </div>
                     ))}
                   </div>
@@ -263,8 +263,8 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
               {/* Key Ideas & Real World Examples */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1 text-xs">
                 <div className="space-y-1.5">
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">Key Architectural Invariants:</span>
-                  <ul className="space-y-1 text-slate-600 dark:text-slate-400 list-disc list-inside">
+                  <span className="font-semibold text-ink-800 dark:text-ink-200">Key architectural properties:</span>
+                  <ul className="space-y-1 text-ink-600 dark:text-ink-400 list-disc list-inside">
                     {selectedNode.keyIdeas.map((idea, idx) => (
                       <li key={idx}>{idea}</li>
                     ))}
@@ -272,12 +272,12 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">Real-World Landmark Implementations:</span>
+                  <span className="font-semibold text-ink-800 dark:text-ink-200">Landmark implementations:</span>
                   <div className="flex flex-wrap gap-1.5">
                     {selectedNode.examples.map((ex, idx) => (
                       <span
                         key={idx}
-                        className="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-mono text-[11px]"
+                        className="px-2.5 py-1 rounded bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 text-ink-700 dark:text-ink-300 font-mono text-[11px]"
                       >
                         {ex}
                       </span>

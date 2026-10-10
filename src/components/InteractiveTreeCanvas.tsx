@@ -50,7 +50,7 @@ export const InteractiveTreeCanvas: React.FC<InteractiveTreeCanvasProps> = ({ on
       category: 'Family 1',
       x: 320,
       y: 110,
-      color: '#10b981',
+      color: '#4353ff',
       parent: 'root',
       formula: 'No recurrent state loop',
       desc: 'Information flows unidirectionally from input to output.',
@@ -108,7 +108,7 @@ export const InteractiveTreeCanvas: React.FC<InteractiveTreeCanvasProps> = ({ on
       category: 'Level 0',
       x: 620,
       y: 70,
-      color: '#10b981',
+      color: '#4353ff',
       parent: 'feedforward',
       labId: 'perceptron',
       formula: 'y = σ(Wx + b)',
@@ -120,7 +120,7 @@ export const InteractiveTreeCanvas: React.FC<InteractiveTreeCanvasProps> = ({ on
       category: 'Level 1',
       x: 620,
       y: 110,
-      color: '#10b981',
+      color: '#4353ff',
       parent: 'feedforward',
       labId: 'mlp',
       formula: 'h = ReLU(W₁x + b₁)',
@@ -132,7 +132,7 @@ export const InteractiveTreeCanvas: React.FC<InteractiveTreeCanvasProps> = ({ on
       category: 'Level 2',
       x: 620,
       y: 150,
-      color: '#10b981',
+      color: '#4353ff',
       parent: 'feedforward',
       labId: 'cnn_resnet',
       formula: 'y = x + F(x)',
@@ -246,35 +246,35 @@ export const InteractiveTreeCanvas: React.FC<InteractiveTreeCanvasProps> = ({ on
   };
 
   return (
-    <div className="bg-white dark:bg-[#0c1220] rounded-2xl border border-slate-200 dark:border-white/10 p-6 space-y-6 shadow-xs transition-colors">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-white/10">
+    <div className="bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 p-6 space-y-6 shadow-xs transition-colors">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-ink-100 dark:border-white/10">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-mono">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400 font-mono">
             <Sparkles className="w-4 h-4" />
-            <span>Interactive Phylogenetic Map</span>
+            <span>Architecture map</span>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            Phylogenetic Tree of Neural Networks
+          <h2 className="font-display tracking-tight text-xl font-bold text-ink-900 dark:text-white mt-0.5">
+            Neural network family tree
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Click any node in the circuit below to trace its lineage, observe its governing transformation, and jump directly into its project lab.
+          <p className="text-xs text-ink-500 dark:text-ink-400 mt-1">
+            Select a node to inspect its governing equation and relationship to other families.
           </p>
         </div>
 
         {activeNode.labId && (
           <button
             onClick={() => onSelectLab(activeNode.labId!)}
-            className="flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors cursor-pointer shadow-xs"
+            className="flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 rounded-lg transition-colors cursor-pointer shadow-xs"
           >
             <Cpu className="w-3.5 h-3.5" />
-            <span>Launch {activeNode.name} Lab</span>
+            <span>Open {activeNode.name} lab</span>
             <ArrowRight className="w-3 h-3" />
           </button>
         )}
       </div>
 
       {/* SVG Canvas Container */}
-      <div className="relative w-full overflow-x-auto bg-slate-50 dark:bg-[#070b14] rounded-xl border border-slate-200/60 dark:border-white/5 p-4 flex items-center justify-center">
+      <div className="relative w-full overflow-x-auto bg-ink-50 dark:bg-ink-950 rounded-xl border border-ink-200/60 dark:border-white/5 p-4 flex items-center justify-center">
         <svg viewBox="0 0 1020 600" className="w-full min-w-[780px] max-w-[1020px] h-auto select-none">
           {/* Subtle background coordinate grid */}
           <defs>
@@ -322,7 +322,7 @@ export const InteractiveTreeCanvas: React.FC<InteractiveTreeCanvasProps> = ({ on
                   cx={node.x}
                   cy={node.y}
                   r={isLeaf ? 14 : 18}
-                  fill={isSelected ? node.color : (isDark ? '#0c1220' : '#ffffff')}
+                  fill={isSelected ? node.color : (isDark ? '#1a1815' : '#ffffff')}
                   stroke={node.color}
                   strokeWidth={isSelected ? 2.5 : 2}
                   className="transition-all duration-200 shadow-sm"
@@ -333,11 +333,11 @@ export const InteractiveTreeCanvas: React.FC<InteractiveTreeCanvasProps> = ({ on
                   x={node.x}
                   y={node.y - (isLeaf ? 18 : 24)}
                   textAnchor="middle"
-                  fill="#0f172a"
+                  fill="#1a1815"
                   fontSize={isLeaf ? '11' : '12'}
                   fontFamily="Plus Jakarta Sans, sans-serif"
                   fontWeight={isSelected ? 'bold' : '600'}
-                  className="dark:fill-slate-100 transition-colors"
+                  className="dark:fill-ink-100 transition-colors"
                 >
                   {node.name}
                 </text>
@@ -346,7 +346,7 @@ export const InteractiveTreeCanvas: React.FC<InteractiveTreeCanvasProps> = ({ on
                   x={node.x}
                   y={node.y + (isLeaf ? 26 : 32)}
                   textAnchor="middle"
-                  fill="#64748b"
+                  fill="#7a7364"
                   fontSize="9"
                   fontFamily="JetBrains Mono, monospace"
                 >
@@ -359,26 +359,26 @@ export const InteractiveTreeCanvas: React.FC<InteractiveTreeCanvasProps> = ({ on
       </div>
 
       {/* Selected Node Summary Box */}
-      <div className="p-4 bg-slate-50 dark:bg-slate-950/80 rounded-xl border border-slate-200 dark:border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs font-mono transition-colors">
+      <div className="p-4 bg-ink-50 dark:bg-ink-950/80 rounded-xl border border-ink-200 dark:border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs font-mono transition-colors">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: activeNode.color }} />
-            <span className="font-bold text-slate-900 dark:text-white text-sm font-sans">{activeNode.name}</span>
-            <span className="text-slate-500">[{activeNode.category}]</span>
+            <span className="font-bold text-ink-900 dark:text-white text-sm font-sans">{activeNode.name}</span>
+            <span className="text-ink-500">[{activeNode.category}]</span>
           </div>
-          <div className="text-slate-600 dark:text-slate-300 font-sans">{activeNode.desc}</div>
+          <div className="text-ink-600 dark:text-ink-300 font-sans">{activeNode.desc}</div>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="px-3 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-emerald-700 dark:text-emerald-400 font-semibold shadow-xs">
+          <div className="px-3 py-1.5 rounded bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 text-brand-700 dark:text-brand-400 font-semibold shadow-xs">
             {activeNode.formula}
           </div>
           {activeNode.labId && (
             <button
               onClick={() => onSelectLab(activeNode.labId!)}
-              className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold font-sans transition-colors cursor-pointer shadow-xs"
+              className="px-3 py-1.5 rounded bg-brand-600 hover:bg-brand-500 text-white font-bold font-sans transition-colors cursor-pointer shadow-xs"
             >
-              Enter Lab
+              Open lab
             </button>
           )}
         </div>

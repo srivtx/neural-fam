@@ -75,7 +75,7 @@ export const TransformerAttentionLab: React.FC = () => {
         return `  Token [${i}] "${tok}": ${(wt * 100).toFixed(1)}% ${i === selectedTokenIdx ? '(Self)' : ''}`;
       }),
       'STATUS: PASS (Softmax normalizes row sum to 1.0)',
-      '✓ Level 4 Progress Recorded!',
+      '✓ Level 4 progress recorded.',
     ];
     setCodeOutput(lines.join('\n'));
   };
@@ -83,73 +83,73 @@ export const TransformerAttentionLab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-ink-200 dark:border-white/10">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-            Level 4 · Pairwise Interactions & Parallelism
+          <span className="text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+            Level 4 · Attention mechanisms
           </span>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            Transformers & Scaled Dot-Product Attention
+          <h2 className="text-xl font-bold font-display tracking-tight text-ink-900 dark:text-white mt-0.5">
+            Transformers and scaled dot-product attention
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
+          <p className="text-sm text-ink-600 dark:text-ink-400 mt-1 max-w-2xl">
             Replacing recurrent step-by-step loops with parallel matrix multiplication: Attention(Q, K, V) = Softmax(QKᵀ / √d_k) V.
           </p>
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'visual'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            Attention Spotlight
+            Attention map
           </button>
           <button
             onClick={() => setSubTab('types')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'types'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            Transformer Types
+            Archetypes
           </button>
           <button
             onClick={() => setSubTab('code')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'code'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <Code2 className="w-3.5 h-3.5" />
-            <span>Code Scratchpad</span>
+            <span>Code</span>
           </button>
           <button
             onClick={() => setSubTab('analogy')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'analogy'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <HelpCircle className="w-3.5 h-3.5" />
-            <span>Spotlight Analogy</span>
+            <span>Analogy</span>
           </button>
           <button
             onClick={() => setSubTab('quiz')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'quiz'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-brand-600 text-white font-semibold'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Concept Check</span>
+            <span>Concept check</span>
           </button>
         </div>
       </div>
@@ -157,16 +157,16 @@ export const TransformerAttentionLab: React.FC = () => {
       {subTab === 'visual' && (
         <div className="space-y-6">
           {/* Controls Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 shadow-xs">
             {/* Causal Mask Toggle */}
             <div className="flex items-center gap-3">
-              <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">Attention Mask:</span>
+              <span className="text-xs text-ink-700 dark:text-ink-300 font-medium">Attention Mask:</span>
               <button
                 onClick={() => setCausalMask(false)}
                 className={`px-2.5 py-1 text-xs rounded border transition-colors cursor-pointer ${
                   !causalMask
-                    ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-semibold'
-                    : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-brand-50 dark:bg-brand-500/20 border-brand-500 text-brand-800 dark:text-brand-300 font-semibold'
+                    : 'border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
                 }`}
               >
                 Bidirectional (BERT)
@@ -175,8 +175,8 @@ export const TransformerAttentionLab: React.FC = () => {
                 onClick={() => setCausalMask(true)}
                 className={`px-2.5 py-1 text-xs rounded border transition-colors cursor-pointer ${
                   causalMask
-                    ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-semibold'
-                    : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-brand-50 dark:bg-brand-500/20 border-brand-500 text-brand-800 dark:text-brand-300 font-semibold'
+                    : 'border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
                 }`}
               >
                 Causal Autoregressive (GPT)
@@ -185,9 +185,9 @@ export const TransformerAttentionLab: React.FC = () => {
 
             {/* Temperature Slider */}
             <div className="flex items-center gap-3">
-              <Sliders className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-xs font-mono text-slate-700 dark:text-slate-300">
-                Softmax Temp: <strong className="text-emerald-600 dark:text-emerald-400">{temperature.toFixed(1)}</strong>
+              <Sliders className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+              <span className="text-xs font-mono text-ink-700 dark:text-ink-300">
+                Softmax Temp: <strong className="text-brand-600 dark:text-brand-400">{temperature.toFixed(1)}</strong>
               </span>
               <input
                 type="range"
@@ -196,18 +196,18 @@ export const TransformerAttentionLab: React.FC = () => {
                 step="0.2"
                 value={temperature}
                 onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                className="w-28 accent-emerald-600 cursor-pointer"
+                className="w-28 accent-brand-600 cursor-pointer"
               />
             </div>
           </div>
 
           {/* Interactive Token Sentence */}
-          <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span className="font-semibold text-slate-900 dark:text-slate-200">
-                1. Select a Query Token to observe what it attends to:
+          <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between text-xs text-ink-500 dark:text-ink-400">
+              <span className="font-semibold text-ink-900 dark:text-ink-200">
+                1. Select a query token to observe what it attends to:
               </span>
-              <span>Notice how "it" resolves coreference to "animal"!</span>
+              <span>Notice how "it" resolves coreference to "animal".</span>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -219,14 +219,14 @@ export const TransformerAttentionLab: React.FC = () => {
                     onClick={() => setSelectedTokenIdx(idx)}
                     className={`px-3 py-2 rounded-lg border font-mono text-xs transition-all cursor-pointer flex flex-col items-center ${
                       isQuery
-                        ? 'bg-emerald-600 border-emerald-700 text-white font-bold shadow-md'
-                        : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-emerald-500'
+                        ? 'bg-brand-600 border-brand-700 text-white font-bold shadow-md'
+                        : 'bg-ink-50 dark:bg-ink-900/60 border-ink-200 dark:border-white/10 text-ink-700 dark:text-ink-300 hover:border-brand-500'
                     }`}
                   >
                     <span>{tok}</span>
                     <span
                       className={`text-[10px] mt-1 ${
-                        isQuery ? 'text-emerald-100 font-bold' : 'text-slate-400'
+                        isQuery ? 'text-brand-100 font-bold' : 'text-ink-400'
                       }`}
                     >
                       t={idx}
@@ -238,15 +238,15 @@ export const TransformerAttentionLab: React.FC = () => {
           </div>
 
           {/* Attention Weights Heat Distribution */}
-          <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
+          <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span className="font-semibold text-ink-900 dark:text-white flex items-center gap-2">
+                <Eye className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                 <span>
-                  Attention Spotlight for Query: <strong className="text-emerald-700 dark:text-emerald-300 font-mono">"{sentence[selectedTokenIdx]}"</strong>
+                  Attention Spotlight for Query: <strong className="text-brand-700 dark:text-brand-300 font-mono">"{sentence[selectedTokenIdx]}"</strong>
                 </span>
               </span>
-              <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+              <span className="text-ink-500 dark:text-ink-400 font-mono text-[11px]">
                 Softmax probabilities sum to 100%
               </span>
             </div>
@@ -259,22 +259,22 @@ export const TransformerAttentionLab: React.FC = () => {
 
                 return (
                   <div key={idx} className="flex items-center gap-3 text-xs font-mono">
-                    <span className="w-16 truncate text-slate-700 dark:text-slate-300 font-medium text-right">
+                    <span className="w-16 truncate text-ink-700 dark:text-ink-300 font-medium text-right">
                       {tok}
                     </span>
-                    <div className="flex-1 h-6 bg-slate-100 dark:bg-slate-950 rounded-md border border-slate-200 dark:border-white/5 overflow-hidden flex items-center px-2 relative">
+                    <div className="flex-1 h-6 bg-ink-100 dark:bg-ink-950 rounded-md border border-ink-200 dark:border-white/5 overflow-hidden flex items-center px-2 relative">
                       {isMasked ? (
-                        <span className="text-[10px] text-red-500 dark:text-red-400 italic">
+                        <span className="text-[10px] text-rose-500 dark:text-rose-400 italic">
                           [Future token masked by causal triangle]
                         </span>
                       ) : (
                         <div
-                          className="h-full absolute left-0 top-0 bg-emerald-500/80 rounded-md transition-all duration-300"
+                          className="h-full absolute left-0 top-0 bg-brand-500/80 rounded-md transition-all duration-300"
                           style={{ width: `${pct}%`, opacity: Math.max(0.25, weight) }}
                         />
                       )}
                       {!isMasked && (
-                        <span className="relative z-10 text-[11px] text-slate-900 dark:text-white font-bold pl-1">
+                        <span className="relative z-10 text-[11px] text-ink-900 dark:text-white font-bold pl-1">
                           {pct}%
                         </span>
                       )}
@@ -286,21 +286,21 @@ export const TransformerAttentionLab: React.FC = () => {
           </div>
 
           {/* Quick Concept Check Prompt */}
-          <div className="p-4 bg-emerald-50/80 dark:bg-emerald-950/30 rounded-xl border border-emerald-300/80 dark:border-emerald-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="p-4 bg-brand-50/80 dark:bg-brand-950/30 rounded-xl border border-brand-300/80 dark:border-brand-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0">
                 <Award className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-white">Ready to verify Level 4 mastery?</h4>
-                <p className="text-xs text-slate-600 dark:text-slate-300">Test your understanding of Q/K/V vectors, Softmax temperature scaling, and causal masks.</p>
+                <h4 className="text-sm font-bold text-ink-900 dark:text-white">Check your understanding</h4>
+                <p className="text-xs text-ink-600 dark:text-ink-300">Test your understanding of Q/K/V vectors, Softmax temperature scaling, and causal masks.</p>
               </div>
             </div>
             <button
               onClick={() => setSubTab('quiz')}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors cursor-pointer shadow-xs shrink-0"
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 rounded-lg transition-colors cursor-pointer shadow-xs shrink-0"
             >
-              <span>Take Concept Check</span>
+              <span>Take concept check</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -309,17 +309,17 @@ export const TransformerAttentionLab: React.FC = () => {
 
       {/* Types Tab */}
       {subTab === 'types' && (
-        <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-xs">
-          <div className="p-4 border-b border-slate-100 dark:border-white/10">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">The Three Transformer Archetypes & Extensions</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+        <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 overflow-hidden shadow-xs">
+          <div className="p-4 border-b border-ink-100 dark:border-white/10">
+            <h3 className="text-sm font-bold font-display tracking-tight text-ink-900 dark:text-white">Transformer archetypes and variants</h3>
+            <p className="text-xs text-ink-500 dark:text-ink-400">
               Self-attention blocks are versatile lego pieces configured differently based on the task.
             </p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-100 dark:border-white/10">
+              <thead className="bg-ink-50 dark:bg-ink-950 text-ink-500 dark:text-ink-400 font-semibold border-b border-ink-100 dark:border-white/10">
                 <tr>
                   <th className="py-3 px-4">Archetype</th>
                   <th className="py-3 px-4">Landmark Models</th>
@@ -327,15 +327,15 @@ export const TransformerAttentionLab: React.FC = () => {
                   <th className="py-3 px-4">Primary Use Case</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-300">
+              <tbody className="divide-y divide-ink-100 dark:divide-white/5 text-ink-700 dark:text-ink-300">
                 {transformerArchetypes.map((arch) => (
-                  <tr key={arch.type} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                    <td className="py-3 px-4 font-mono font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                  <tr key={arch.type} className="hover:bg-ink-50 dark:hover:bg-ink-900/50 transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-brand-700 dark:text-brand-400 whitespace-nowrap">
                       {arch.type}
                     </td>
-                    <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">{arch.example}</td>
-                    <td className="py-3 px-4 text-slate-500 dark:text-slate-400">{arch.access}</td>
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-300">{arch.use}</td>
+                    <td className="py-3 px-4 font-semibold text-ink-900 dark:text-white">{arch.example}</td>
+                    <td className="py-3 px-4 text-ink-500 dark:text-ink-400">{arch.access}</td>
+                    <td className="py-3 px-4 text-ink-600 dark:text-ink-300">{arch.use}</td>
                   </tr>
                 ))}
               </tbody>
@@ -348,8 +348,8 @@ export const TransformerAttentionLab: React.FC = () => {
       {subTab === 'code' && (
         <div className="space-y-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">Scaled Dot-Product Attention in Pure TypeScript</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white">Scaled dot-product attention in TypeScript</h3>
+            <p className="text-xs text-ink-500 dark:text-ink-400">
               Formula: Attention(Q, K, V) = Softmax(Q · K^T / sqrt(d_k)) · V
             </p>
           </div>
@@ -382,7 +382,7 @@ export const TransformerAttentionLab: React.FC = () => {
             language="TypeScript"
             filename="scaled_dot_product_attention.ts"
             onRun={runAttentionTest}
-            runLabel="Compute Attention Matrix"
+            runLabel="Run"
             output={codeOutput}
           />
         </div>
@@ -390,26 +390,26 @@ export const TransformerAttentionLab: React.FC = () => {
 
       {/* Analogy Tab */}
       {subTab === 'analogy' && (
-        <div className="bg-white dark:bg-[#0c1220] rounded-xl border border-slate-200 dark:border-white/10 p-6 space-y-4 shadow-xs">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">The Spotlight & Theatrical Library Analogy</h3>
-          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+        <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-6 space-y-4 shadow-xs">
+          <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white">Query, key, and value analogy</h3>
+          <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
             Imagine every word in a sentence is an actor on a dark stage holding three things:
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-700 dark:text-slate-300">
-            <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-white/5 space-y-1.5">
-              <strong className="text-emerald-700 dark:text-emerald-400 font-bold block">1. A Query Card (Q)</strong>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-ink-700 dark:text-ink-300">
+            <div className="p-4 bg-ink-50 dark:bg-ink-900 rounded-lg border border-ink-200 dark:border-white/5 space-y-1.5">
+              <strong className="text-brand-700 dark:text-brand-400 font-bold block">1. A Query Card (Q)</strong>
               <p>
                 "What clue am I looking for?" For example, the pronoun <em>"it"</em> holds a card asking: <em>"Who am I talking about?"</em>
               </p>
             </div>
-            <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-white/5 space-y-1.5">
+            <div className="p-4 bg-ink-50 dark:bg-ink-900 rounded-lg border border-ink-200 dark:border-white/5 space-y-1.5">
               <strong className="text-amber-700 dark:text-amber-400 font-bold block">2. A Key Badge (K)</strong>
               <p>
-                "Who am I?" The noun <em>"animal"</em> wears a badge saying: <em>"Living subject"</em>. When Query meets Key, their dot-product sparks!
+                "Who am I?" The noun <em>"animal"</em> wears a badge saying: <em>"Living subject"</em>. When Query meets Key, their dot product produces an attention weight.
               </p>
             </div>
-            <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-white/5 space-y-1.5">
-              <strong className="text-emerald-700 dark:text-emerald-400 font-bold block">3. A Value Backpack (V)</strong>
+            <div className="p-4 bg-ink-50 dark:bg-ink-900 rounded-lg border border-ink-200 dark:border-white/5 space-y-1.5">
+              <strong className="text-brand-700 dark:text-brand-400 font-bold block">3. A Value Backpack (V)</strong>
               <p>
                 The actual meaning vector passed forward. <em>"it"</em> packs <em>"animal"</em>’s value into its own bag, so future layers understand exactly what it means.
               </p>

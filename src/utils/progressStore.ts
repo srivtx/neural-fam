@@ -16,12 +16,13 @@ export interface LearningProgress {
 const STORAGE_KEY = 'neural_family_progress_v2';
 const PROGRESS_EVENT = 'neural_family_progress_changed';
 
+/**
+ * There are no accounts. Progress lives in this browser's localStorage,
+ * so the "profile" is just a friendly label for the UI.
+ */
 export const USER_PROFILE = {
-  email: 'crypticcc101@gmail.com',
-  displayName: 'crypticcc101',
-  role: 'AI Architecture Researcher',
-  organization: 'Neural Systems Lab',
-  memberSince: 'October 2026',
+  displayName: 'You',
+  note: 'Progress is saved in this browser only',
 };
 
 export function getProgress(): LearningProgress {
