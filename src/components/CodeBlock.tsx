@@ -52,10 +52,10 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
       if (commentMatch) {
         return (
           <div key={lineIdx} className="table-row">
-            <span className="table-cell select-none pr-4 text-right text-slate-400 dark:text-slate-600 text-[11px] font-mono select-none">
+            <span className="table-cell select-none pr-4 text-right text-slate-400 dark:text-slate-600 text-[11px] font-mono whitespace-nowrap">
               {lineIdx + 1}
             </span>
-            <span className="table-cell text-slate-500 dark:text-slate-400 italic">
+            <span className="table-cell text-slate-500 dark:text-slate-400 italic whitespace-pre font-mono">
               {commentMatch[1]}{commentMatch[2]}
             </span>
           </div>
@@ -67,10 +67,10 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
 
       return (
         <div key={lineIdx} className="table-row hover:bg-slate-200/30 dark:hover:bg-slate-900/40 transition-colors">
-          <span className="table-cell select-none pr-4 text-right text-slate-400 dark:text-slate-600 text-[11px] font-mono">
+          <span className="table-cell select-none pr-4 text-right text-slate-400 dark:text-slate-600 text-[11px] font-mono whitespace-nowrap">
             {lineIdx + 1}
           </span>
-          <span className="table-cell">
+          <span className="table-cell whitespace-pre font-mono">
             {tokens.map((token, tIdx) => {
               if (!token) return null;
 
@@ -205,8 +205,8 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
       </div>
 
       {/* Code Area */}
-      <div className="p-4 overflow-x-auto no-scrollbar leading-relaxed">
-        <div className="table w-full">{highlightSyntax(code)}</div>
+      <div className="p-4 overflow-x-auto leading-relaxed min-w-0">
+        <div className="table min-w-full">{highlightSyntax(code)}</div>
       </div>
 
       {/* Execution Output if any */}
