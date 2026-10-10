@@ -131,7 +131,7 @@ export const TaxonomyMatrix: React.FC = () => {
           </div>
 
           {/* Model 3-Question Profile Card */}
-          <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-6 space-y-6 shadow-xs transition-colors">
+          <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-4 sm:p-6 space-y-6 shadow-xs transition-colors">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-4 border-b border-ink-100 dark:border-white/10">
               <div>
                 <h3 className="text-lg font-bold font-display tracking-tight text-ink-900 dark:text-white flex items-center gap-2">
@@ -211,7 +211,7 @@ export const TaxonomyMatrix: React.FC = () => {
               </h4>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-xs min-w-[500px]">
                   <thead className="text-ink-500 dark:text-ink-400 font-semibold border-b border-ink-200 dark:border-white/10">
                     <tr>
                       <th className="py-2 px-3">Model</th>
@@ -328,8 +328,8 @@ export const TaxonomyMatrix: React.FC = () => {
           </div>
 
           {/* Synthesized Research Architecture Card */}
-          <div className="p-6 bg-surface dark:bg-ink-900 rounded-xl border border-brand-500/30 space-y-4 shadow-xs transition-colors">
-            <div className="flex items-center justify-between">
+          <div className="p-4 sm:p-6 bg-surface dark:bg-ink-900 rounded-xl border border-brand-500/30 space-y-4 shadow-xs transition-colors">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
               <div className="flex items-center gap-2 text-sm font-bold text-ink-900 dark:text-white">
                 <Sparkles className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                 <span>Synthesized architecture configuration</span>

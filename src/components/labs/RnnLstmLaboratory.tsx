@@ -205,7 +205,7 @@ export const RnnLstmLaboratory: React.FC = () => {
                   onChange={(e) => setForgetGate(parseFloat(e.target.value))}
                   className="w-full accent-brand-600 cursor-pointer"
                 />
-                <div className="flex justify-between text-[10px] text-ink-400">
+                <div className="flex flex-col sm:flex-row justify-between gap-1 text-[10px] text-ink-400">
                   <span>0.0: Wipe Past Memory Clean</span>
                   <span>1.0: Preserve All Historical Context</span>
                 </div>
@@ -286,7 +286,7 @@ export const RnnLstmLaboratory: React.FC = () => {
       {/* Code Tab */}
       {subTab === 'code' && (
         <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white">LSTM cell step and unrolling</h3>
               <p className="text-xs text-ink-500 dark:text-ink-400">

@@ -246,7 +246,7 @@ export const InteractiveTreeCanvas: React.FC<InteractiveTreeCanvasProps> = ({ on
   };
 
   return (
-    <div className="bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 p-6 space-y-6 shadow-xs transition-colors">
+    <div className="bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 p-4 sm:p-6 space-y-6 shadow-xs transition-colors">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-ink-100 dark:border-white/10">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400 font-mono">
@@ -369,8 +369,8 @@ export const InteractiveTreeCanvas: React.FC<InteractiveTreeCanvasProps> = ({ on
           <div className="text-ink-600 dark:text-ink-300 font-sans">{activeNode.desc}</div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="px-3 py-1.5 rounded bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 text-brand-700 dark:text-brand-400 font-semibold shadow-xs">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
+          <div className="px-3 py-1.5 rounded bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 text-brand-700 dark:text-brand-400 font-semibold shadow-xs break-all sm:break-normal max-w-full">
             {activeNode.formula}
           </div>
           {activeNode.labId && (

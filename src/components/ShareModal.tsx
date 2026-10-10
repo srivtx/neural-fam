@@ -32,8 +32,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-      <div className="bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 max-w-lg w-full p-6 shadow-2xl space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+      <div className="bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 max-w-lg w-full p-4 sm:p-6 shadow-2xl space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-ink-100 dark:border-white/10">
           <div className="flex items-center gap-2.5">
@@ -133,7 +133,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Device Guide */}
-          <div className="grid grid-cols-2 gap-3 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <div className="p-3 bg-ink-50 dark:bg-ink-900/60 rounded-xl border border-ink-200 dark:border-white/5 flex items-start gap-2.5">
               <Laptop className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0 mt-0.5" />
               <div>

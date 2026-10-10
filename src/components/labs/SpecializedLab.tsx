@@ -130,7 +130,7 @@ export const SpecializedLab: React.FC = () => {
         <div className="space-y-6">
           {/* Controls Bar */}
           <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 shadow-xs">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
               <Sliders className="w-4 h-4 text-brand-600 dark:text-brand-400" />
               <span className="text-xs font-mono text-ink-700 dark:text-ink-300">
                 Integration Step Size (dt): <strong className="text-brand-600 dark:text-brand-400">{stepSizeDt.toFixed(2)}</strong>
@@ -142,11 +142,11 @@ export const SpecializedLab: React.FC = () => {
                 step="0.05"
                 value={stepSizeDt}
                 onChange={(e) => setStepSizeDt(parseFloat(e.target.value))}
-                className="w-28 accent-brand-600 cursor-pointer"
+                className="w-full sm:w-28 accent-brand-600 cursor-pointer"
               />
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
               <span className="text-xs font-mono text-ink-700 dark:text-ink-300">
                 Initial State h(0): <strong className="text-brand-600 dark:text-brand-400">{initialH0.toFixed(1)}</strong>
               </span>
@@ -157,14 +157,14 @@ export const SpecializedLab: React.FC = () => {
                 step="0.5"
                 value={initialH0}
                 onChange={(e) => setInitialH0(parseFloat(e.target.value))}
-                className="w-28 accent-brand-600 cursor-pointer"
+                className="w-full sm:w-28 accent-brand-600 cursor-pointer"
               />
             </div>
           </div>
 
           {/* Continuous Integration Trajectory */}
           <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
-            <div className="flex items-center justify-between text-xs text-ink-500 dark:text-ink-400">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-ink-500 dark:text-ink-400">
               <span className="font-semibold text-ink-800 dark:text-ink-200">Continuous State Evolution:</span>
               <span className="font-mono">dh/dt = f(h(t), t) = 1.0 - h(t)</span>
             </div>

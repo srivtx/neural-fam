@@ -232,7 +232,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
       <div className="relative rounded-3xl p-6 sm:p-8 border border-ink-200 dark:border-white/10 bg-surface dark:bg-ink-900 shadow-xs transition-colors">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/30 text-brand-700 dark:text-brand-300 text-xs font-semibold tracking-wide">
                 <Compass className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
                 <span>Architecture Synthesis Studio</span>
@@ -780,7 +780,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
 
                     {/* SSM Controls */}
                     {selectedLayer.kind === 'ssm' && (
-                      <div className="grid grid-cols-3 gap-3 text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                         <div>
                           <label className="text-ink-500 block mb-1">State Dim (d_state)</label>
                           <select
@@ -1065,7 +1065,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-xs font-mono pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono pt-1">
                   <div className="p-2.5 rounded-lg bg-ink-50 dark:bg-ink-950 border border-ink-200/60 dark:border-white/5 space-y-0.5">
                     <span className="text-[10px] text-ink-500 flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-brand-500" />
@@ -1606,7 +1606,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
 
           {/* Interactive Crossover Curve Chart (SVG) */}
           <div className="p-6 rounded-2xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-bold font-display text-ink-900 dark:text-white">
                   Memory Scaling Curves: {modelAPreset.name} vs. {modelBPreset.name}
@@ -1701,8 +1701,8 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
           </div>
 
           {/* Comparative Metrics Table */}
-          <div className="p-6 rounded-2xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 shadow-xs overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono border-collapse">
+          <div className="p-4 sm:p-6 rounded-2xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 shadow-xs overflow-x-auto">
+            <table className="w-full min-w-[540px] text-left text-xs font-mono border-collapse">
               <thead>
                 <tr className="border-b border-ink-200 dark:border-white/10 text-ink-500 uppercase text-[10px]">
                   <th className="py-2.5 px-3">Metric</th>

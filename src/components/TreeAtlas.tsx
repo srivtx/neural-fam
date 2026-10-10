@@ -80,7 +80,7 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
         </div>
 
         {/* Atlas View Mode Switcher */}
-        <div className="flex items-center gap-1.5 p-1 bg-ink-100 dark:bg-ink-900/90 rounded-xl border border-ink-200 dark:border-white/10 text-xs mt-4 md:mt-6">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 p-1 bg-ink-100 dark:bg-ink-900/90 rounded-xl border border-ink-200 dark:border-white/10 text-xs mt-4 md:mt-6">
           <button
             onClick={() => setAtlasMode('both')}
             className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${

@@ -209,7 +209,7 @@ export const GenerativeLab: React.FC = () => {
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg max-w-full overflow-x-auto">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
@@ -371,9 +371,9 @@ export const GenerativeLab: React.FC = () => {
                 className="w-full accent-brand-600 cursor-pointer"
               />
 
-              <div className="flex justify-between text-[11px] font-mono text-ink-500 dark:text-ink-400">
+              <div className="flex flex-col sm:flex-row justify-between gap-1 text-[10px] sm:text-[11px] font-mono text-ink-500 dark:text-ink-400">
                 <span>{"← Clean Data x_0 (t = 0)"}</span>
-                <span>{"Reverse Denoising Direction ←"}</span>
+                <span className="hidden sm:inline">{"Reverse Denoising Direction ←"}</span>
                 <span>{"Pure Prior Noise x_T ~ N(0, I) (t = 20)"}</span>
               </div>
             </div>
@@ -402,7 +402,7 @@ export const GenerativeLab: React.FC = () => {
           {/* Interactive Dual-Panel Visualization: Latent x_t vs Predicted x_0 */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left: Noisy Latent x_t */}
-            <div className="lg:col-span-6 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-6 flex flex-col items-center justify-center space-y-4 shadow-xs">
+            <div className="lg:col-span-6 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-4 sm:p-6 flex flex-col items-center justify-center space-y-4 shadow-xs">
               <div className="flex items-center justify-between w-full text-xs">
                 <span className="font-semibold text-ink-900 dark:text-white flex items-center gap-1.5">
                   <Eye className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
@@ -411,7 +411,7 @@ export const GenerativeLab: React.FC = () => {
                 <span className="font-mono text-ink-500 text-[11px]">8×8 pixel grid</span>
               </div>
 
-              <div className="grid grid-cols-8 gap-1.5 p-3.5 bg-ink-900 rounded-xl border border-ink-800 shadow-inner">
+              <div className="grid grid-cols-8 gap-1 sm:gap-1.5 p-2.5 sm:p-3.5 bg-ink-900 rounded-xl border border-ink-800 shadow-inner max-w-full overflow-x-auto">
                 {activePattern.grid.map((row, r) =>
                   row.map((cleanVal, c) => {
                     const noiseVal = NOISE_GRID[r][c];
@@ -425,7 +425,7 @@ export const GenerativeLab: React.FC = () => {
                     return (
                       <div
                         key={`noisy-${r}-${c}`}
-                        className="w-7 h-7 rounded-xs transition-colors duration-150 flex items-center justify-center text-[7px] font-mono select-none"
+                        className="w-6 h-6 sm:w-7 sm:h-7 rounded-xs transition-colors duration-150 flex items-center justify-center text-[7px] font-mono select-none"
                         style={{
                           backgroundColor: `rgb(${brightness}, ${brightness}, ${brightness})`,
                           color: brightness > 128 ? '#000' : '#fff',
@@ -442,7 +442,7 @@ export const GenerativeLab: React.FC = () => {
             </div>
 
             {/* Right: Tweedie's Clean Reconstruction x_hat_0 */}
-            <div className="lg:col-span-6 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-6 flex flex-col items-center justify-center space-y-4 shadow-xs">
+            <div className="lg:col-span-6 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-4 sm:p-6 flex flex-col items-center justify-center space-y-4 shadow-xs">
               <div className="flex items-center justify-between w-full text-xs">
                 <span className="font-semibold text-ink-900 dark:text-white flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
@@ -451,7 +451,7 @@ export const GenerativeLab: React.FC = () => {
                 <span className="font-mono text-ink-500 text-[11px]">Tweedie estimation</span>
               </div>
 
-              <div className="grid grid-cols-8 gap-1.5 p-3.5 bg-ink-900 rounded-xl border border-ink-800 shadow-inner">
+              <div className="grid grid-cols-8 gap-1 sm:gap-1.5 p-2.5 sm:p-3.5 bg-ink-900 rounded-xl border border-ink-800 shadow-inner max-w-full overflow-x-auto">
                 {activePattern.grid.map((row, r) =>
                   row.map((cleanVal, c) => {
                     // When t is high, model makes a coarse prior guess; as t decreases, Tweedie estimate becomes crystal sharp
@@ -463,7 +463,7 @@ export const GenerativeLab: React.FC = () => {
                     return (
                       <div
                         key={`recon-${r}-${c}`}
-                        className="w-7 h-7 rounded-xs transition-colors duration-150 flex items-center justify-center text-[7px] font-mono select-none"
+                        className="w-6 h-6 sm:w-7 sm:h-7 rounded-xs transition-colors duration-150 flex items-center justify-center text-[7px] font-mono select-none"
                         style={{
                           backgroundColor: `rgb(${brightness}, ${brightness}, ${brightness})`,
                           color: brightness > 128 ? '#000' : '#fff',
@@ -527,7 +527,7 @@ export const GenerativeLab: React.FC = () => {
 
       {/* Paradigms Comparison Tab */}
       {subTab === 'paradigms' && (
-        <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-6 space-y-5 shadow-xs">
+        <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-4 sm:p-6 space-y-5 shadow-xs">
           <div className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-brand-600 dark:text-brand-400" />
             <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white">Five core generative paradigms</h3>
@@ -536,7 +536,7 @@ export const GenerativeLab: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {generativeParadigms.map((p, idx) => (
               <div key={idx} className="p-4 bg-ink-50 dark:bg-ink-900/80 rounded-lg border border-ink-200 dark:border-white/5 space-y-2 text-xs">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <h4 className="font-bold text-ink-900 dark:text-white text-sm">{p.name}</h4>
                   <span className="font-mono text-[10px] text-brand-700 dark:text-brand-400 font-semibold">{p.models}</span>
                 </div>

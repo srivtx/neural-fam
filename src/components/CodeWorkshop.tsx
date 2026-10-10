@@ -106,7 +106,7 @@ export const CodeWorkshop: React.FC = () => {
       {/* Language & Mode Switcher Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 shadow-xs">
         {/* Framework Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-ink-100 dark:bg-ink-900 rounded-lg text-xs font-semibold">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 p-1 bg-ink-100 dark:bg-ink-900 rounded-lg text-xs font-semibold max-w-full">
           <button
             onClick={() => {
               setActiveLanguage('typescript');
@@ -176,7 +176,7 @@ export const CodeWorkshop: React.FC = () => {
             isEditorMode ? (
               /* Interactive Edit Mode with Textarea */
               <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs transition-colors">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-xs font-mono text-ink-800 dark:text-ink-200">
                     <Code2 className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                     <span>{currentNode.title} · forward_pass.ts (editable)</span>

@@ -162,7 +162,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
   return (
     <div className="rounded-xl border border-ink-200 dark:border-white/10 overflow-hidden bg-ink-50 dark:bg-ink-950 shadow-xs text-xs font-mono">
       {/* Header Bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-ink-100 dark:bg-ink-900 border-b border-ink-200 dark:border-white/10 text-xs">
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-ink-100 dark:bg-ink-900 border-b border-ink-200 dark:border-white/10 text-xs">
         <div className="flex items-center gap-2">
           <Terminal className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
           <span className="font-semibold text-ink-700 dark:text-ink-300">

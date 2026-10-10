@@ -306,7 +306,7 @@ export const SsmMambaLab: React.FC = () => {
 
           {/* Sequence Stream Visualizer */}
           <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
-            <div className="flex items-center justify-between text-xs text-ink-500 dark:text-ink-400">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-ink-500 dark:text-ink-400">
               <span className="font-semibold text-ink-800 dark:text-ink-200">
                 Hidden State Trajectory:
               </span>
@@ -412,7 +412,7 @@ export const SsmMambaLab: React.FC = () => {
       {/* Code Tab */}
       {subTab === 'code' && (
         <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-bold font-display tracking-tight text-ink-900 dark:text-white">Mamba selective state-space step</h3>
               <p className="text-xs text-ink-500 dark:text-ink-400">

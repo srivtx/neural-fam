@@ -156,7 +156,7 @@ export const MlpLab: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Canvas (7 cols) */}
             <div className="lg:col-span-7 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs transition-colors">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <span className="text-xs font-semibold text-ink-800 dark:text-ink-200">
                   Exclusive OR (XOR) Feature Plane
                 </span>

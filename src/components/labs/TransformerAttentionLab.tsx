@@ -539,7 +539,7 @@ export const TransformerAttentionLab: React.FC = () => {
 
           {/* Interactive Token Strip */}
           <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
-            <div className="flex items-center justify-between text-xs text-ink-500 dark:text-ink-400">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs text-ink-500 dark:text-ink-400">
               <span className="font-semibold text-ink-900 dark:text-ink-200">
                 1. Select a query token (Q) to observe its attention weights across keys (K):
               </span>
@@ -581,7 +581,7 @@ export const TransformerAttentionLab: React.FC = () => {
           {/* Attention View: Spotlight Bar Chart vs N×N Matrix */}
           {viewMode === 'bars' ? (
             <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs">
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs">
                 <span className="font-semibold text-ink-900 dark:text-white flex items-center gap-2">
                   <Eye className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                   <span>

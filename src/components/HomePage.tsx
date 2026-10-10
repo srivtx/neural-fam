@@ -449,7 +449,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 text-xs shadow-xs transition-colors">
         <div className="flex items-center gap-3">
           <span className="font-semibold text-ink-800 dark:text-ink-200">Curriculum Progress:</span>
-          <div className="w-36 sm:w-60 h-2 bg-ink-100 dark:bg-ink-800 rounded-full overflow-hidden border border-ink-200/50 dark:border-white/5">
+          <div className="w-24 sm:w-60 h-2 bg-ink-100 dark:bg-ink-800 rounded-full overflow-hidden border border-ink-200/50 dark:border-white/5 shrink">
             <div
               className="h-full bg-brand-500 transition-all duration-500"
               style={{ width: `${progressPct}%` }}
@@ -533,7 +533,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* Selected Milestone Inspection Card */}
         <div className="p-4 sm:p-5 rounded-xl bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/5 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
           <div className="md:col-span-8 space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span
                 className="w-2.5 h-2.5 rounded-full"
                 style={{ backgroundColor: activeTimelineEvent.color }}

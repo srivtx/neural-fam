@@ -224,7 +224,7 @@ export const GnnLab: React.FC = () => {
               </div>
 
               {/* Slider for Layer Weight W */}
-              <div className="flex items-center justify-between p-3 bg-ink-50 dark:bg-ink-900/80 rounded-lg border border-ink-200 dark:border-white/5 text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-ink-50 dark:bg-ink-900/80 rounded-lg border border-ink-200 dark:border-white/5 text-xs">
                 <span className="font-mono text-ink-700 dark:text-ink-300">
                   GNN Transformation Matrix Weight W: <strong className="text-brand-600 dark:text-brand-400">{weightW.toFixed(1)}</strong>
                 </span>
@@ -235,7 +235,7 @@ export const GnnLab: React.FC = () => {
                   step="0.1"
                   value={weightW}
                   onChange={(e) => setWeightW(parseFloat(e.target.value))}
-                  className="w-32 accent-brand-600 cursor-pointer"
+                  className="w-full sm:w-32 accent-brand-600 cursor-pointer"
                 />
               </div>
             </div>

@@ -304,7 +304,7 @@ export const SingleNeuronLab: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Canvas: 2D Spatial Plane (7 cols) */}
             <div className="lg:col-span-7 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs transition-colors">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-xs text-ink-500 dark:text-ink-400">
                   <span className="font-semibold text-ink-800 dark:text-ink-200">2D Input Space (x₁, x₂)</span>
                   <span>·</span>

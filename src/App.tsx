@@ -124,7 +124,7 @@ export default function App() {
   const sharedUrl = 'https://ais-pre-wtquidnmwlynjc3xzujcc6-371726331409.asia-southeast1.run.app';
 
   return (
-    <div className="min-h-screen bg-ink-50 dark:bg-ink-950 text-ink-800 dark:text-ink-100 flex flex-col font-sans transition-colors selection:bg-brand-500/20 selection:text-brand-800 dark:selection:text-brand-200">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-ink-50 dark:bg-ink-950 text-ink-800 dark:text-ink-100 flex flex-col font-sans transition-colors selection:bg-brand-500/20 selection:text-brand-800 dark:selection:text-brand-200">
       {/* Universal Top Bar - Can be toggled / hidden for desktop immersion */}
       {!isNavHidden && (
         <TopNav
@@ -180,7 +180,7 @@ export default function App() {
       )}
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-6">
+      <main className="flex-1 max-w-7xl w-full min-w-0 mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-5 space-y-6">
         <ErrorBoundary key={activeView} onReset={() => setActiveView('home')}>
           {/* View Switcher Content */}
           {activeView === 'home' && (
