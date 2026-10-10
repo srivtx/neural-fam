@@ -63,7 +63,7 @@ function forwardNeuron(inputs: number[], weights: number[], bias: number, activa
     family: 'feedforward',
     familyName: 'Feedforward Networks',
     oneLiner: 'Layers of interconnected neurons where hidden layers warp and bend input space to classify non-linear patterns.',
-    analogy: 'If one ruler (single neuron) can only draw straight lines, an MLP is like folding a piece of paper in half first. Suddenly, a single straight slice cuts across two separated regions at once! Hidden layers bend the geometry.',
+    analogy: 'If one ruler (single neuron) can only draw straight lines, an MLP is like folding a piece of paper in half first. Suddenly, a single straight slice cuts across two separated regions at once. Hidden layers bend the geometry.',
     mathFormula: 'h = \\sigma(W_1 x + b_1), \\quad y = g(W_2 h + b_2)',
     mathBreakdown: [
       { symbol: 'W_1, b_1', meaning: 'Weights and biases of the first (hidden) layer transforming input into feature space.' },

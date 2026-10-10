@@ -390,7 +390,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
                 {copiedShareLink ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-white" />
-                    <span>Link Copied!</span>
+                    <span>Link copied</span>
                   </>
                 ) : (
                   <>
@@ -1396,7 +1396,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
                     filename={`${design.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.py`}
                     runLabel="Verify Forward Pass"
                     onRun={() => soundFX.playSuccess()}
-                    output={`PyTorch forward check successful!\nInput shape:  [2, ${Math.min(128, workload.seqLen)}, ${design.d}]\nOutput shape: [2, ${Math.min(128, workload.seqLen)}, ${design.vocab || design.outputDim || design.d}]\nParameters verified: ${(analysis.params.totalStored / 1e6).toFixed(2)}M stored`}
+                    output={`PyTorch forward check successful\nInput shape:  [2, ${Math.min(128, workload.seqLen)}, ${design.d}]\nOutput shape: [2, ${Math.min(128, workload.seqLen)}, ${design.vocab || design.outputDim || design.d}]\nParameters verified: ${(analysis.params.totalStored / 1e6).toFixed(2)}M stored`}
                   />
                 )}
 

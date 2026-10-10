@@ -208,7 +208,7 @@ export const MlpLab: React.FC = () => {
                         strokeDasharray="0.04 0.04"
                       />
                       <text x="0.1" y="-0.1" fill="#ef4444" fontSize="0.06" fontFamily="JetBrains Mono">
-                        Impossible straight slice (Cuts wrong points!)
+                        Impossible straight slice (misclassifies diagonal points)
                       </text>
                     </>
                   )}

@@ -103,7 +103,7 @@ class ResidualBlock(nn.Module):
         out = self.conv2(out)
         out = self.bn2(out)
 
-        # Skip addition: dy/dx = 1 + dF/dx (gradients never vanish!)
+        # Skip addition: dy/dx = 1 + dF/dx (gradients do not vanish)
         out += identity
         return self.relu(out)
 

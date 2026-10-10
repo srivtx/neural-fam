@@ -37,7 +37,7 @@ export const SingleNeuronLab: React.FC = () => {
         'It controls the learning rate of the optimizer.',
       ],
       correctIndex: 0,
-      explanation: 'Bias is an independent offset. Without it (b = 0), the boundary line would be trapped passing strictly through the coordinate origin (0, 0)!',
+      explanation: 'Bias is an independent offset. Without it (b = 0), the boundary line would be trapped passing strictly through the coordinate origin (0, 0).',
     },
     {
       question: 'Why was the single perceptron fundamentally incapable of learning XOR?',

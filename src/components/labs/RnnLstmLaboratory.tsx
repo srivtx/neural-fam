@@ -55,7 +55,7 @@ export const RnnLstmLaboratory: React.FC = () => {
       ),
       'Additive Gradient Highway: dC_t/dC_{t-1} = f_t (Linear gradient flow avoids vanishing multipliers)',
       'STATUS: PASS (Gated temporal recurrence verified)',
-      '✓ Level 3 Progress Recorded!',
+      '✓ Level 3 progress recorded.',
     ];
     setCodeOutput(lines.join('\n'));
   };
@@ -309,7 +309,7 @@ export const RnnLstmLaboratory: React.FC = () => {
   // Input gate candidate
   const candidate = Math.tanh(x);
   
-  // Cell state update (ADDITIVE, not multiplicative!)
+  // Cell state update (additive, not multiplicative)
   const nextC = (f_t * prevC) + (0.5 * candidate);
   
   // Hidden state output

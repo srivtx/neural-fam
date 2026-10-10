@@ -83,7 +83,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose }) => {
                 {copiedKey === 'url' ? (
                   <>
                     <Check className="w-3.5 h-3.5" />
-                    <span>Copied!</span>
+                    <span>Copied</span>
                   </>
                 ) : (
                   <>
