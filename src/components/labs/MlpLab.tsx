@@ -4,9 +4,11 @@
  */
 
 import React, { useState } from 'react';
-import { HelpCircle, Code2, Play, CheckCircle2, AlertTriangle, Layers, Award } from 'lucide-react';
+import { HelpCircle, Code2, Play, CheckCircle2, AlertTriangle, Layers, Award, Flame } from 'lucide-react';
 import { CheckpointQuiz, QuizQuestion } from '../CheckpointQuiz';
 import { CodeBlock } from '../CodeBlock';
+import { FirstPrinciplesNotebook } from '../FirstPrinciplesNotebook';
+import { FIRST_PRINCIPLES_DOSSIERS } from '../../data/firstPrinciplesData';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
 
 export const MlpLab: React.FC = () => {
@@ -17,7 +19,7 @@ export const MlpLab: React.FC = () => {
     label: '(1, 0)',
     target: 1,
   });
-  const [subTab, setSubTab] = useState<'visual' | 'code' | 'analogy' | 'quiz'>('visual');
+  const [subTab, setSubTab] = useState<'visual' | 'code' | 'analogy' | 'quiz' | 'first_principles'>('visual');
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
 
   const mlpQuizQuestions: QuizQuestion[] = [
@@ -136,6 +138,17 @@ export const MlpLab: React.FC = () => {
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>Analogy</span>
+          </button>
+          <button
+            onClick={() => setSubTab('first_principles')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'first_principles'
+                ? 'bg-amber-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>First principles</span>
           </button>
           <button
             onClick={() => setSubTab('quiz')}
@@ -443,6 +456,11 @@ export const MlpLab: React.FC = () => {
           questions={mlpQuizQuestions}
           onPassAll={() => markLabCompleted('mlp')}
         />
+      )}
+
+      {/* SubTab 5: First Principles Discovery Notebook */}
+      {subTab === 'first_principles' && (
+        <FirstPrinciplesNotebook dossier={FIRST_PRINCIPLES_DOSSIERS['mlp']} />
       )}
     </div>
   );

@@ -4,15 +4,18 @@
  */
 
 import React, { useState } from 'react';
-import { HelpCircle, Code2, Play, CheckCircle2, Sliders, ArrowRight, Award, Sparkles } from 'lucide-react';
+import { HelpCircle, Code2, Play, CheckCircle2, Sliders, ArrowRight, Award, Sparkles, Flame } from 'lucide-react';
 import { CheckpointQuiz } from '../CheckpointQuiz';
+import { CodeBlock } from '../CodeBlock';
+import { FirstPrinciplesNotebook } from '../FirstPrinciplesNotebook';
+import { FIRST_PRINCIPLES_DOSSIERS } from '../../data/firstPrinciplesData';
 import { LAB_QUIZZES } from '../../data/labQuizzes';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
 
 export const RnnLstmLaboratory: React.FC = () => {
   const [forgetGate, setForgetGate] = useState<number>(0.8);
   const [currentStep, setCurrentStep] = useState<number>(3);
-  const [subTab, setSubTab] = useState<'visual' | 'code' | 'analogy' | 'quiz'>('visual');
+  const [subTab, setSubTab] = useState<'visual' | 'code' | 'analogy' | 'quiz' | 'first_principles'>('visual');
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
 
   const tokens = ['The', 'detective', 'examined', 'the', 'clue', 'carefully'];
@@ -109,6 +112,17 @@ export const RnnLstmLaboratory: React.FC = () => {
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>Analogy</span>
+          </button>
+          <button
+            onClick={() => setSubTab('first_principles')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'first_principles'
+                ? 'bg-amber-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>First principles</span>
           </button>
           <button
             onClick={() => setSubTab('quiz')}
@@ -360,6 +374,11 @@ export const RnnLstmLaboratory: React.FC = () => {
           questions={LAB_QUIZZES.rnn_lstm.questions}
           onPassAll={() => markLabCompleted('rnn_lstm')}
         />
+      )}
+
+      {/* SubTab 5: First Principles Discovery Notebook */}
+      {subTab === 'first_principles' && (
+        <FirstPrinciplesNotebook dossier={FIRST_PRINCIPLES_DOSSIERS['rnn_lstm']} />
       )}
     </div>
   );

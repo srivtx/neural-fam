@@ -4,15 +4,17 @@
  */
 
 import React, { useState } from 'react';
-import { HelpCircle, Code2, Play, CheckCircle2, Activity, Sliders, Award, ArrowRight } from 'lucide-react';
+import { HelpCircle, Code2, Play, CheckCircle2, Activity, Sliders, Award, ArrowRight, Flame } from 'lucide-react';
 import { CheckpointQuiz } from '../CheckpointQuiz';
+import { FirstPrinciplesNotebook } from '../FirstPrinciplesNotebook';
+import { FIRST_PRINCIPLES_DOSSIERS } from '../../data/firstPrinciplesData';
 import { LAB_QUIZZES } from '../../data/labQuizzes';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
 
 export const SpecializedLab: React.FC = () => {
   const [stepSizeDt, setStepSizeDt] = useState<number>(0.2);
   const [initialH0, setInitialH0] = useState<number>(0.0);
-  const [subTab, setSubTab] = useState<'visual' | 'code' | 'tax' | 'analogy' | 'quiz'>('visual');
+  const [subTab, setSubTab] = useState<'visual' | 'code' | 'tax' | 'analogy' | 'quiz' | 'first_principles'>('visual');
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
 
   // Solve 1D Neural ODE: dh/dt = 1.0 - h(t)
@@ -122,6 +124,17 @@ export const SpecializedLab: React.FC = () => {
           >
             <Award className="w-3.5 h-3.5" />
             <span>Concept check</span>
+          </button>
+          <button
+            onClick={() => setSubTab('first_principles')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'first_principles'
+                ? 'bg-amber-600 text-white font-semibold shadow-xs'
+                : 'text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5" />
+            <span>First Principles</span>
           </button>
         </div>
       </div>
@@ -308,6 +321,11 @@ export const SpecializedLab: React.FC = () => {
           questions={LAB_QUIZZES.specialized.questions}
           onPassAll={() => markLabCompleted('specialized')}
         />
+      )}
+
+      {/* SubTab 6: First Principles Dialectic */}
+      {subTab === 'first_principles' && (
+        <FirstPrinciplesNotebook dossier={FIRST_PRINCIPLES_DOSSIERS['specialized']} />
       )}
     </div>
   );

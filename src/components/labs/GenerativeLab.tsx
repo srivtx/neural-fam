@@ -4,8 +4,10 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { HelpCircle, Code2, Play, Pause, RotateCcw, CheckCircle2, Sparkles, Layers, Sliders, Award, ArrowRight, Eye } from 'lucide-react';
+import { HelpCircle, Code2, Play, Pause, RotateCcw, CheckCircle2, Sparkles, Layers, Sliders, Award, ArrowRight, Eye, Flame } from 'lucide-react';
 import { CheckpointQuiz } from '../CheckpointQuiz';
+import { FirstPrinciplesNotebook } from '../FirstPrinciplesNotebook';
+import { FIRST_PRINCIPLES_DOSSIERS } from '../../data/firstPrinciplesData';
 import { LAB_QUIZZES } from '../../data/labQuizzes';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
 
@@ -94,7 +96,7 @@ export const GenerativeLab: React.FC = () => {
   const [denoiseStep, setDenoiseStep] = useState<number>(8); // t in 0..20
   const [scheduleType, setScheduleType] = useState<'cosine' | 'linear'>('cosine');
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [subTab, setSubTab] = useState<'visual' | 'code' | 'paradigms' | 'analogy' | 'quiz'>('visual');
+  const [subTab, setSubTab] = useState<'visual' | 'code' | 'paradigms' | 'analogy' | 'quiz' | 'first_principles'>('visual');
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
 
   const totalSteps = 20;
@@ -262,6 +264,17 @@ export const GenerativeLab: React.FC = () => {
           >
             <Award className="w-3.5 h-3.5" />
             <span>Concept check</span>
+          </button>
+          <button
+            onClick={() => setSubTab('first_principles')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'first_principles'
+                ? 'bg-amber-600 text-white font-semibold shadow-xs'
+                : 'text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5" />
+            <span>First Principles</span>
           </button>
         </div>
       </div>
@@ -632,6 +645,11 @@ export const GenerativeLab: React.FC = () => {
           questions={LAB_QUIZZES.generative.questions}
           onPassAll={() => markLabCompleted('generative')}
         />
+      )}
+
+      {/* SubTab: First Principles Dialectic */}
+      {subTab === 'first_principles' && (
+        <FirstPrinciplesNotebook dossier={FIRST_PRINCIPLES_DOSSIERS['generative']} />
       )}
     </div>
   );

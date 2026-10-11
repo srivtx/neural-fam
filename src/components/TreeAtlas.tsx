@@ -4,8 +4,9 @@
  */
 
 import React, { useState } from 'react';
-import { Network, ArrowRight, BookOpen, Cpu, Sparkles, Filter, ChevronRight, GitFork, LayoutGrid } from 'lucide-react';
+import { Network, ArrowRight, BookOpen, Cpu, Sparkles, Filter, ChevronRight, GitFork, LayoutGrid, Flame } from 'lucide-react';
 import { NETWORK_NODES } from '../data/familyTreeData';
+import { FIRST_PRINCIPLES_DOSSIERS } from '../data/firstPrinciplesData';
 import { NetworkFamilyNode, FamilyCategory } from '../types';
 import { InteractiveTreeCanvas } from './InteractiveTreeCanvas';
 
@@ -160,12 +161,20 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
                       <span className="font-semibold text-brand-600 dark:text-brand-400">
                         {node.familyName}
                       </span>
-                      {node.labAvailable && (
-                        <span className="text-[11px] font-mono text-brand-600 dark:text-brand-400 flex items-center gap-1 font-semibold">
-                          <Cpu className="w-3 h-3" />
-                          <span>Interactive Lab</span>
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {node.labAvailable && (
+                          <span className="text-[11px] font-mono text-brand-600 dark:text-brand-400 flex items-center gap-1 font-semibold">
+                            <Cpu className="w-3 h-3" />
+                            <span className="hidden sm:inline">Lab</span>
+                          </span>
+                        )}
+                        {FIRST_PRINCIPLES_DOSSIERS[node.id] && (
+                          <span className="text-[11px] font-mono text-amber-600 dark:text-amber-400 flex items-center gap-1 font-semibold">
+                            <Flame className="w-3 h-3" />
+                            <span>First Principles</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div>
@@ -285,6 +294,48 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
                   </div>
                 </div>
               </div>
+
+              {/* First-Principles Genesis & Bottleneck Callout */}
+              {FIRST_PRINCIPLES_DOSSIERS[selectedNode.id] && (() => {
+                const dossier = FIRST_PRINCIPLES_DOSSIERS[selectedNode.id];
+                return (
+                  <div className="p-4 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 dark:border-amber-500/30 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Flame className="w-4 h-4 text-amber-500" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 font-mono">
+                          First-Principles Genesis · Why this had to be invented
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-mono text-ink-500 dark:text-ink-400">
+                        Historical Dialectic
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                      <div className="space-y-1.5">
+                        <span className="font-semibold text-ink-800 dark:text-ink-200">The Hard Bottleneck:</span>
+                        <p className="text-ink-600 dark:text-ink-400 leading-relaxed">
+                          {dossier.crisis.description}
+                        </p>
+                        <div className="font-mono text-[11px] p-2 bg-ink-100/70 dark:bg-ink-950/80 rounded border border-ink-200/50 dark:border-white/5 text-amber-700 dark:text-amber-300">
+                          {dossier.crisis.baselineFailureSymptom}
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <span className="font-semibold text-ink-800 dark:text-ink-200">The Invariant that Broke the Barrier:</span>
+                        <p className="text-ink-600 dark:text-ink-400 leading-relaxed">
+                          {dossier.invariant.plainEnglishSummary}
+                        </p>
+                        <div className="font-mono text-[11px] p-2 bg-ink-100/70 dark:bg-ink-950/80 rounded border border-ink-200/50 dark:border-white/5 text-brand-700 dark:text-brand-300 font-bold">
+                          {dossier.invariant.governingEquation}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>

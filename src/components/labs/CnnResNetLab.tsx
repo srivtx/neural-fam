@@ -4,9 +4,11 @@
  */
 
 import React, { useState } from 'react';
-import { HelpCircle, Code2, Sliders, ShieldCheck, Award } from 'lucide-react';
+import { HelpCircle, Code2, Sliders, ShieldCheck, Award, Flame } from 'lucide-react';
 import { CheckpointQuiz } from '../CheckpointQuiz';
 import { CodeBlock } from '../CodeBlock';
+import { FirstPrinciplesNotebook } from '../FirstPrinciplesNotebook';
+import { FIRST_PRINCIPLES_DOSSIERS } from '../../data/firstPrinciplesData';
 import { LAB_QUIZZES } from '../../data/labQuizzes';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
 
@@ -14,7 +16,7 @@ export const CnnResNetLab: React.FC = () => {
   const [selectedKernel, setSelectedKernel] = useState<'edge_h' | 'edge_v' | 'sharpen' | 'blur'>('edge_h');
   const [residualEnabled, setResidualEnabled] = useState<boolean>(true);
   const [activeCell, setActiveCell] = useState<{ r: number; c: number }>({ r: 2, c: 2 });
-  const [subTab, setSubTab] = useState<'visual' | 'code' | 'table' | 'analogy' | 'quiz'>('visual');
+  const [subTab, setSubTab] = useState<'visual' | 'code' | 'table' | 'analogy' | 'quiz' | 'first_principles'>('visual');
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
 
   // 6x6 sample binary image (a cross / plus shape)
@@ -163,6 +165,17 @@ export const CnnResNetLab: React.FC = () => {
           <button onClick={() => setSubTab('analogy')} className={tabClass(subTab === 'analogy')}>
             <HelpCircle className="w-3.5 h-3.5" />
             <span>Analogy</span>
+          </button>
+          <button
+            onClick={() => setSubTab('first_principles')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'first_principles'
+                ? 'bg-amber-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>First principles</span>
           </button>
           <button onClick={() => setSubTab('quiz')} className={tabClass(subTab === 'quiz')}>
             <Award className="w-3.5 h-3.5" />
@@ -442,6 +455,11 @@ function residualBlock(x: number[], weights: number[][]): number[] {
           questions={LAB_QUIZZES.cnn_resnet.questions}
           onPassAll={() => markLabCompleted('cnn_resnet')}
         />
+      )}
+
+      {/* SubTab 6: First Principles Discovery Notebook */}
+      {subTab === 'first_principles' && (
+        <FirstPrinciplesNotebook dossier={FIRST_PRINCIPLES_DOSSIERS['cnn_resnet']} />
       )}
     </div>
   );

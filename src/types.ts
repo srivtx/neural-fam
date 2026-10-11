@@ -47,3 +47,5 @@ export interface LandmarkModel {
   whyItMatters: string;
   familyId: string;
 }
+
+export * from './types/firstPrinciples';

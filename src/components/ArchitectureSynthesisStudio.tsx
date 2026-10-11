@@ -35,6 +35,7 @@ import {
   Workflow,
   Eye,
   FileCode2,
+  Flame,
 } from 'lucide-react';
 import {
   Design,
@@ -63,6 +64,7 @@ import {
   decodeDesignFromHash,
 } from '../studio/calculator';
 import { CodeBlock } from './CodeBlock';
+import { FIRST_PRINCIPLES_DOSSIERS } from '../data/firstPrinciplesData';
 import { soundFX } from '../utils/audio';
 import { copyTextToClipboard } from '../utils/clipboard';
 
@@ -73,7 +75,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
   // Studio Composer State
   const [design, setDesign] = useState<Design>(() => cloneDesign(PRESETS[1].design)); // Start with Llama 3 8B
   const [workload, setWorkload] = useState<Workload>(() => ({ ...DEFAULT_WORKLOAD, seqLen: 4096 }));
-  const [activeTab, setActiveTab] = useState<'blueprint' | 'tensor_flow' | 'economics' | 'code' | 'params'>('blueprint');
+  const [activeTab, setActiveTab] = useState<'blueprint' | 'tensor_flow' | 'economics' | 'code' | 'params' | 'first_principles'>('blueprint');
   const [codeFramework, setCodeFramework] = useState<'pytorch' | 'jax' | 'hf' | 'mermaid'>('pytorch');
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const [copiedShareLink, setCopiedShareLink] = useState<boolean>(false);
@@ -1145,6 +1147,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
                   { id: 'economics', label: 'Scaling & Economics', icon: DollarSign },
                   { id: 'code', label: 'Multi-Framework Code', icon: FileCode2 },
                   { id: 'params', label: 'Parameter Matrix', icon: Layers },
+                  { id: 'first_principles', label: 'First Principles & Invariants', icon: Flame },
                 ].map((t) => {
                   const Icon = t.icon;
                   const isActive = activeTab === t.id;
@@ -1507,6 +1510,183 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
                     </tr>
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {/* TAB 6: First Principles & Invariants */}
+            {activeTab === 'first_principles' && (
+              <div className="space-y-6 py-2">
+                <div className="p-5 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 dark:border-amber-500/30 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Flame className="w-5 h-5 text-amber-500" />
+                    <h3 className="text-sm font-bold font-display uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                      First-Principles Dialectic & Invariant Auditor
+                    </h3>
+                  </div>
+                  <p className="text-xs text-ink-700 dark:text-ink-300 leading-relaxed">
+                    Architectures are not created by randomly chaining operations; they are forced into existence by mathematical crises and physical hardware barriers. Here is the first-principles audit for your composed model: <strong>{design.name}</strong>.
+                  </p>
+                </div>
+
+                {/* Layer-by-Layer Historical Necessity */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-ink-500 font-mono">
+                    Constituent Building Blocks & Their Historical Genesis
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Array.from(new Set(design.block.map((l) => l.kind))).map((kind) => {
+                      const kindMeta = KINDS[kind];
+                      const layerDossierMap: Record<string, { crisis: string; bottleneck: string; invariant: string; breakthrough: string }> = {
+                        attention: {
+                          crisis: 'The Sequential Recurrence Bottleneck (O(T) Compute Bound)',
+                          bottleneck: 'H_t = tanh(W_h H_{t-1} + W_x X_t) -> Cannot parallelize across GPU SIMD cores',
+                          invariant: 'Permutation-equivariant soft routing scaled by temperature sqrt(d_k)',
+                          breakthrough: 'Vaswani et al. (2017): Direct O(1) path between any pair of tokens with parallel GEMM matrices.',
+                        },
+                        window_attention: {
+                          crisis: 'The Quadratic Memory Wall of Global Softmax',
+                          bottleneck: 'O(N^2) memory footprint explodes for context lengths > 16k tokens',
+                          invariant: 'Strict local receptive field with linear compute O(N * W)',
+                          breakthrough: 'Beltagy et al. (2020): Local banded self-attention maintains quadratic-free scaling for long documents.',
+                        },
+                        ssm: {
+                          crisis: 'The Quadratic KV-Cache Explosion at Inference Time',
+                          bottleneck: 'KV-Cache = 2 * L * N * d_model bytes -> Exceeds VRAM for 100k+ tokens',
+                          invariant: 'Continuous-time ODE discretization with input-dependent selection Delta(x_t)',
+                          breakthrough: 'Gu & Dao (2023) Mamba: Linear O(N) training with associative scan + O(1) state inference.',
+                        },
+                        swiglu: {
+                          crisis: 'Linear ReLU Saturation and Gradient Deadlock',
+                          bottleneck: 'ReLU(z) = 0 for z < 0 -> Zero gradient kills neuron capacity irreversibly',
+                          invariant: 'Bilinear multiplicative gating: SwiGLU(x) = (xW_1 * Swish(xW_2))W_3',
+                          breakthrough: 'Shazeer (2020): Multiplicative gating allows smooth continuous gradient flow and richer expressivity.',
+                        },
+                        mlp: {
+                          crisis: 'Pointwise Channel Mixing and Feature Disentanglement',
+                          bottleneck: 'Token mixers only swap signals across time; representations cannot create cross-channel concepts',
+                          invariant: 'Universal approximation via non-linear affine projection in expanded hidden dimension',
+                          breakthrough: 'Rumelhart et al. (1986): 2-layer projection with non-linearity learns non-linear decision boundaries.',
+                        },
+                        moe: {
+                          crisis: 'The Dense Parameter Compute Law (FLOPs bound to stored capacity)',
+                          bottleneck: 'Dense models must compute every parameter for every single token -> Prohibitive FLOPs',
+                          invariant: 'Conditional computation: Top-k sparse gating over independent expert sub-networks',
+                          breakthrough: 'Shazeer et al. (2017) / Mixtral: Decouples stored parameters (capacity) from active compute FLOPs.',
+                        },
+                        conv: {
+                          crisis: 'Translation Sensitivity and Spatial Parameter Explosion',
+                          bottleneck: 'Dense MLP on 256x256 image requires 65k weights per hidden neuron -> Billions of parameters',
+                          invariant: 'Translational equivariance via shared spatial kernel cross-correlation',
+                          breakthrough: 'LeCun (1989): Weight sharing across 2D receptive fields guarantees shift invariance.',
+                        },
+                        gnn: {
+                          crisis: 'Arbitrary Permutation of Graph Node Ordering',
+                          bottleneck: 'Adjacency matrix depends on node numbering -> Permuting rows changes standard MLP outputs',
+                          invariant: 'Permutation invariance/equivariance via commutative multiset aggregation (Sum/Mean)',
+                          breakthrough: 'Kipf & Welling (2016): Message-passing aggregate function guarantees graph isomorphism invariance.',
+                        },
+                      };
+
+                      const info = layerDossierMap[kind] || {
+                        crisis: 'Representation Bottleneck',
+                        bottleneck: 'Fixed linear projection fails to capture multi-scale interactions',
+                        invariant: 'Symmetry preservation across feature dimensions',
+                        breakthrough: 'Specialized modular formulation.',
+                      };
+
+                      return (
+                        <div
+                          key={kind}
+                          className="p-4 rounded-xl bg-ink-50 dark:bg-ink-950/80 border border-ink-200 dark:border-white/5 space-y-2.5"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="w-2.5 h-2.5 rounded-full"
+                                style={{ backgroundColor: kindMeta.color }}
+                              />
+                              <span className="text-xs font-bold text-ink-900 dark:text-white">
+                                {kindMeta.label}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-ink-200/60 dark:bg-ink-800 text-ink-600 dark:text-ink-300">
+                              {kindMeta.cost}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 block">
+                              Why Invented: {info.crisis}
+                            </span>
+                            <div className="text-[11px] font-mono p-1.5 bg-ink-100 dark:bg-ink-900 rounded text-ink-600 dark:text-ink-400 truncate">
+                              {info.bottleneck}
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-semibold text-brand-600 dark:text-brand-400 block">
+                              Mathematical Invariant:
+                            </span>
+                            <p className="text-[11px] text-ink-600 dark:text-ink-300 leading-relaxed">
+                              {info.invariant}
+                            </p>
+                          </div>
+
+                          <div className="pt-1 text-[11px] text-ink-500 border-t border-ink-200/40 dark:border-white/5">
+                            <strong className="text-ink-700 dark:text-ink-300">The Discovery:</strong> {info.breakthrough}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4 Universal Dialectics Card */}
+                <div className="p-5 rounded-2xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-ink-900 dark:text-white flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                    <span>The 4 Universal Invariants of Architectural Invention</span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 rounded-lg bg-ink-50 dark:bg-ink-950/60 border border-ink-200/60 dark:border-white/5 space-y-1">
+                      <strong className="text-brand-700 dark:text-brand-300 block">
+                        1. The Gradient Highway (He et al.)
+                      </strong>
+                      <p className="text-[11px] text-ink-600 dark:text-ink-400 leading-relaxed">
+                        Signal backpropagation requires an identity term in the Jacobian: d(y)/d(x) = I + d(F)/d(x). Without this, gradients vanish or explode exponentially with depth.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-ink-50 dark:bg-ink-950/60 border border-ink-200/60 dark:border-white/5 space-y-1">
+                      <strong className="text-amber-700 dark:text-amber-300 block">
+                        2. Domain Symmetry & Equivariance
+                      </strong>
+                      <p className="text-[11px] text-ink-600 dark:text-ink-400 leading-relaxed">
+                        Data geometries dictate layer mathematics: 2D images demand translational shift invariance; sequences demand causal ordering; molecular graphs demand permutation invariance.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-ink-50 dark:bg-ink-950/60 border border-ink-200/60 dark:border-white/5 space-y-1">
+                      <strong className="text-rose-700 dark:text-rose-300 block">
+                        3. The Sequence Compression Boundary
+                      </strong>
+                      <p className="text-[11px] text-ink-600 dark:text-ink-400 leading-relaxed">
+                        Either store all past token vectors explicitly (Transformer O(N^2) memory, lossless recall) or compress them into a fixed recursive hidden state (SSM/RNN O(1) memory, lossy compression).
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-ink-50 dark:bg-ink-950/60 border border-ink-200/60 dark:border-white/5 space-y-1">
+                      <strong className="text-green-700 dark:text-green-300 block">
+                        4. The Compute-Capacity Decoupling (MoE)
+                      </strong>
+                      <p className="text-[11px] text-ink-600 dark:text-ink-400 leading-relaxed">
+                        Scaling stored parameters to trillions without quadratic FLOP growth requires dynamic conditional routing: each token activates only a sparse subset (top-k) of expert parameters.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>

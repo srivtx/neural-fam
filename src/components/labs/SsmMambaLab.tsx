@@ -4,8 +4,10 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { HelpCircle, Code2, Play, CheckCircle2, Zap, AlertTriangle, Award, Sparkles, ArrowRight, Sliders } from 'lucide-react';
+import { HelpCircle, Code2, Play, CheckCircle2, Zap, AlertTriangle, Award, Sparkles, ArrowRight, Sliders, Flame } from 'lucide-react';
 import { CheckpointQuiz } from '../CheckpointQuiz';
+import { FirstPrinciplesNotebook } from '../FirstPrinciplesNotebook';
+import { FIRST_PRINCIPLES_DOSSIERS } from '../../data/firstPrinciplesData';
 import { LAB_QUIZZES } from '../../data/labQuizzes';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
 
@@ -68,7 +70,7 @@ export const SsmMambaLab: React.FC = () => {
   const [continuousA, setContinuousA] = useState<number>(-0.8); // Continuous system pole (stable < 0)
   const [deltaStep, setDeltaStep] = useState<number>(0.6); // Discretization timescale Δ
   const [selectiveMode, setSelectiveMode] = useState<boolean>(true);
-  const [subTab, setSubTab] = useState<'visual' | 'code' | 'p027' | 'analogy' | 'quiz'>('visual');
+  const [subTab, setSubTab] = useState<'visual' | 'code' | 'p027' | 'analogy' | 'quiz' | 'first_principles'>('visual');
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
 
   const activePreset = PRESET_SEQUENCES.find((p) => p.id === selectedPresetId) || PRESET_SEQUENCES[0];
@@ -185,6 +187,17 @@ export const SsmMambaLab: React.FC = () => {
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>Analogy</span>
+          </button>
+          <button
+            onClick={() => setSubTab('first_principles')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'first_principles'
+                ? 'bg-amber-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>First principles</span>
           </button>
           <button
             onClick={() => setSubTab('quiz')}
@@ -494,6 +507,11 @@ export const SsmMambaLab: React.FC = () => {
           questions={LAB_QUIZZES.ssm_mamba.questions}
           onPassAll={() => markLabCompleted('ssm_mamba')}
         />
+      )}
+
+      {/* First Principles Discovery Notebook */}
+      {subTab === 'first_principles' && (
+        <FirstPrinciplesNotebook dossier={FIRST_PRINCIPLES_DOSSIERS['ssm_mamba']} />
       )}
     </div>
   );

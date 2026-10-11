@@ -4,9 +4,11 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { HelpCircle, Code2, Play, CheckCircle2, Sliders, Eye, Award, ArrowRight, Grid, Type, Sparkles } from 'lucide-react';
+import { HelpCircle, Code2, Play, CheckCircle2, Sliders, Eye, Award, ArrowRight, Grid, Type, Sparkles, Flame } from 'lucide-react';
 import { CheckpointQuiz } from '../CheckpointQuiz';
 import { CodeBlock } from '../CodeBlock';
+import { FirstPrinciplesNotebook } from '../FirstPrinciplesNotebook';
+import { FIRST_PRINCIPLES_DOSSIERS } from '../../data/firstPrinciplesData';
 import { LAB_QUIZZES } from '../../data/labQuizzes';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
 
@@ -78,7 +80,7 @@ export const TransformerAttentionLab: React.FC = () => {
   const [causalMask, setCausalMask] = useState<boolean>(false);
   const [temperature, setTemperature] = useState<number>(1.0);
   const [viewMode, setViewMode] = useState<'bars' | 'matrix'>('bars');
-  const [subTab, setSubTab] = useState<'visual' | 'code' | 'types' | 'analogy' | 'quiz'>('visual');
+  const [subTab, setSubTab] = useState<'visual' | 'code' | 'types' | 'analogy' | 'quiz' | 'first_principles'>('visual');
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
 
   // Active sentence tokens
@@ -333,6 +335,17 @@ export const TransformerAttentionLab: React.FC = () => {
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>Analogy</span>
+          </button>
+          <button
+            onClick={() => setSubTab('first_principles')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'first_principles'
+                ? 'bg-amber-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>First principles</span>
           </button>
           <button
             onClick={() => setSubTab('quiz')}
@@ -866,6 +879,11 @@ export const TransformerAttentionLab: React.FC = () => {
           questions={LAB_QUIZZES.transformer.questions}
           onPassAll={() => markLabCompleted('transformer')}
         />
+      )}
+
+      {/* First Principles Discovery Notebook */}
+      {subTab === 'first_principles' && (
+        <FirstPrinciplesNotebook dossier={FIRST_PRINCIPLES_DOSSIERS['transformer']} />
       )}
     </div>
   );
