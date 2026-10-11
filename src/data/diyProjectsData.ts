@@ -23,6 +23,7 @@ import {
   DIFFUSION_PROJECT,
   NEURAL_ODE_PROJECT,
 } from './nonEuclideanGenerativeContinuousProjects';
+import { PYTHON_DIY_PROJECTS } from './pythonDiyProjects';
 
 export {
   RNN_LSTM_PROJECT,
@@ -31,6 +32,7 @@ export {
   GNN_PROJECT,
   DIFFUSION_PROJECT,
   NEURAL_ODE_PROJECT,
+  PYTHON_DIY_PROJECTS,
 };
 
 export const DIY_PROJECTS: Record<string, DiyProject> = {
@@ -1416,6 +1418,14 @@ export function verifyResNetHighwayAdvantage(depth: number = 50, norm: number = 
   generative: DIFFUSION_PROJECT,
   specialized: NEURAL_ODE_PROJECT,
 };
+
+// Attach Python starter and solution datasets to all projects
+Object.entries(DIY_PROJECTS).forEach(([id, proj]) => {
+  if (PYTHON_DIY_PROJECTS[id]) {
+    proj.pythonStarterCode = PYTHON_DIY_PROJECTS[id].pythonStarterCode;
+    proj.pythonSolutionCode = PYTHON_DIY_PROJECTS[id].pythonSolutionCode;
+  }
+});
 
 export const DIY_PROJECTS_LIST: DiyProject[] = Object.values(DIY_PROJECTS);
 

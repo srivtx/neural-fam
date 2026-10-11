@@ -25,10 +25,16 @@ import {
   ChevronDown,
   ChevronUp,
   BookOpen,
+  Copy,
+  Check,
+  Loader2,
 } from 'lucide-react';
 import { DiyProject, TestCase, ProjectMilestone } from '../types/project';
 import { soundFX } from '../utils/audio';
 import { markLabCompleted, markTestRun } from '../utils/progressStore';
+import { copyTextToClipboard } from '../utils/clipboard';
+import { runPythonTestSuite } from '../utils/pyodideRunner';
+import { TheoreticalBedrockViewer } from './TheoreticalBedrockViewer';
 
 interface BuildFromScratchLabProps {
   project: DiyProject;
@@ -42,7 +48,10 @@ interface TestResult {
 }
 
 export const BuildFromScratchLab: React.FC<BuildFromScratchLabProps> = ({ project }) => {
-  const [code, setCode] = useState<string>(project.starterCode);
+  const [language, setLanguage] = useState<'javascript' | 'python'>('javascript');
+  const [jsCode, setJsCode] = useState<string>(project.starterCode);
+  const [pyCode, setPyCode] = useState<string>(project.pythonStarterCode || '');
+  const [copiedCode, setCopiedCode] = useState<boolean>(false);
   const [activeMilestone, setActiveMilestone] = useState<number>(1);
   const [showSolution, setShowSolution] = useState<boolean>(false);
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -51,9 +60,14 @@ export const BuildFromScratchLab: React.FC<BuildFromScratchLabProps> = ({ projec
   const [allPassed, setAllPassed] = useState<boolean>(false);
   const [activeHintStep, setActiveHintStep] = useState<number | null>(null);
 
+  const preRef = useRef<HTMLPreElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const lineNumbersRef = useRef<HTMLDivElement | null>(null);
+
   // Sync starter code when project changes
   useEffect(() => {
-    setCode(project.starterCode);
+    setJsCode(project.starterCode);
+    setPyCode(project.pythonStarterCode || '');
     setTestResults(null);
     setConsoleLogs([]);
     setAllPassed(false);
@@ -62,10 +76,137 @@ export const BuildFromScratchLab: React.FC<BuildFromScratchLabProps> = ({ projec
     setActiveHintStep(null);
   }, [project.id]);
 
-  // Safe client-side evaluator
-  const handleRunTests = () => {
+  const currentCode = language === 'python' ? pyCode : jsCode;
+
+  // Synchronized scrolling for syntax highlighter overlay
+  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    const { scrollTop, scrollLeft } = e.currentTarget;
+    if (preRef.current) {
+      preRef.current.scrollTop = scrollTop;
+      preRef.current.scrollLeft = scrollLeft;
+    }
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = scrollTop;
+    }
+  };
+
+  // Keyboard tab indentation handling
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const textarea = e.currentTarget;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const tabSpaces = language === 'python' ? '    ' : '  ';
+      const value = textarea.value;
+      const newValue = value.substring(0, start) + tabSpaces + value.substring(end);
+      if (language === 'python') {
+        setPyCode(newValue);
+      } else {
+        setJsCode(newValue);
+      }
+      setAllPassed(false);
+      requestAnimationFrame(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + tabSpaces.length;
+      });
+    }
+  };
+
+  const handleCopyCode = async () => {
+    const ok = await copyTextToClipboard(currentCode);
+    if (ok) {
+      setCopiedCode(true);
+      soundFX.playTap();
+      setTimeout(() => setCopiedCode(false), 2000);
+    }
+  };
+
+  const handleResetCode = () => {
+    if (language === 'python') {
+      setPyCode(project.pythonStarterCode || '');
+    } else {
+      setJsCode(project.starterCode);
+    }
+    setTestResults(null);
+    setConsoleLogs([]);
+    setAllPassed(false);
+    setShowSolution(false);
+    soundFX.playTap();
+  };
+
+  const handleLoadSolution = () => {
+    if (showSolution) {
+      if (language === 'python') {
+        setPyCode(project.pythonStarterCode || '');
+      } else {
+        setJsCode(project.starterCode);
+      }
+      setShowSolution(false);
+    } else {
+      if (language === 'python') {
+        setPyCode(project.pythonSolutionCode || '');
+      } else {
+        setJsCode(project.solutionCode);
+      }
+      setShowSolution(true);
+    }
+    setTestResults(null);
+    setConsoleLogs([]);
+    setAllPassed(false);
+    soundFX.playTap();
+  };
+
+  const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newCode = e.target.value;
+    if (language === 'python') {
+      setPyCode(newCode);
+      if (showSolution && newCode !== (project.pythonSolutionCode || '')) {
+        setShowSolution(false);
+      }
+    } else {
+      setJsCode(newCode);
+      if (showSolution && newCode !== project.solutionCode) {
+        setShowSolution(false);
+      }
+    }
+    setAllPassed(false);
+  };
+
+  // Safe client-side evaluator (JavaScript or Python Wasm)
+  const handleRunTests = async () => {
     setIsRunning(true);
     soundFX.playTap();
+
+    if (language === 'python') {
+      const logs: string[] = [];
+      logs.push(`>>> [Pyodide Wasm Runner] Initializing Python sandbox for ${project.architectureName}...`);
+      logs.push(`>>> Constraint Check: Pure Python scalar math & list operations only.`);
+      setConsoleLogs(logs);
+
+      try {
+        const outcome = await runPythonTestSuite(pyCode, project.testCases, (status) => {
+          setConsoleLogs((prev) => [...prev, `>>> ${status}`]);
+        });
+        setTestResults(outcome.results);
+        setConsoleLogs(outcome.logs);
+        setAllPassed(outcome.allPassed);
+
+        if (outcome.allPassed) {
+          soundFX.playSuccess();
+          markLabCompleted(project.id);
+          markTestRun(project.id);
+        }
+      } catch (err: any) {
+        logs.push(`>>> [PYTHON RUNTIME ERROR] ${err?.message || 'Execution failed'}`);
+        setConsoleLogs(logs);
+        setAllPassed(false);
+      } finally {
+        setIsRunning(false);
+      }
+      return;
+    }
+
+    // JavaScript / TypeScript Evaluation
     const logs: string[] = [];
     logs.push(`>>> [Neural Sandbox Runner] Initializing sandbox for ${project.architectureName}...`);
     logs.push(`>>> Constraint Check: ${project.axiomaticRule}`);
@@ -77,7 +218,7 @@ export const BuildFromScratchLab: React.FC<BuildFromScratchLabProps> = ({ projec
         const evaluatedModule = new Function(`
           "use strict";
           const exports = {};
-          ${code}
+          ${jsCode}
           return typeof exports !== 'undefined' && Object.keys(exports).length > 0 ? exports : this;
         `)();
 
@@ -92,7 +233,7 @@ export const BuildFromScratchLab: React.FC<BuildFromScratchLabProps> = ({ projec
               // Try evaluating the function name directly from code scope
               // eslint-disable-next-line no-new-func
               fn = new Function(`
-                ${code}
+                ${jsCode}
                 if (typeof ${tc.testFn} === 'function') return ${tc.testFn};
                 return undefined;
               `)();
@@ -216,18 +357,119 @@ export const BuildFromScratchLab: React.FC<BuildFromScratchLabProps> = ({ projec
     }, 250);
   };
 
-  const handleResetCode = () => {
-    setCode(project.starterCode);
-    setTestResults(null);
-    setConsoleLogs([]);
-    setAllPassed(false);
-    soundFX.playTap();
-  };
+  // Real-time syntax highlighter token renderer
+  const renderHighlightedCode = (rawCode: string, lang: 'javascript' | 'python') => {
+    const codeLines = rawCode.split('\n');
+    return codeLines.map((line, lineIdx) => {
+      if (line === '') {
+        return (
+          <div key={lineIdx} className="leading-6 h-6">
+            &nbsp;
+          </div>
+        );
+      }
 
-  const handleLoadSolution = () => {
-    setCode(project.solutionCode);
-    setShowSolution(true);
-    soundFX.playTap();
+      const isPyComment = lang === 'python' && line.trimStart().startsWith('#');
+      const isJsComment =
+        lang === 'javascript' &&
+        (line.trimStart().startsWith('//') ||
+          line.trimStart().startsWith('/*') ||
+          line.trimStart().startsWith('*'));
+
+      if (isPyComment || isJsComment) {
+        return (
+          <div key={lineIdx} className="leading-6 h-6">
+            <span className="text-ink-400 dark:text-ink-500 italic">{line}</span>
+          </div>
+        );
+      }
+
+      const tokens = line.split(
+        /(\b(?:const|let|var|function|return|import|from|export|class|def|if|elif|else|for|while|new|async|await|as|type|interface|self|super|lambda|in|is|not|and|or|pass|assert|try|except|finally|raise|with|yield)\b|\b(?:True|False|None|true|false|null|undefined)\b|\b(?:number|string|boolean|void|any|Array|int|float|str|list|dict|set|tuple|len|range|zip|enumerate|sum|min|max|abs|round|math|Math)\b|".*?"|'.*?'|`.*?`|\/\/.*|#.*|\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b|[=+\-*/@%<>!&|^~:]+)/g
+      );
+
+      return (
+        <div key={lineIdx} className="leading-6 h-6">
+          {tokens.map((token, tIdx) => {
+            if (!token) return null;
+
+            if (
+              /^(const|let|var|function|return|import|from|export|class|def|if|elif|else|for|while|new|async|await|as|type|interface|self|super|lambda|in|is|not|and|or|pass|assert|try|except|finally|raise|with|yield)$/.test(
+                token
+              )
+            ) {
+              return (
+                <span key={tIdx} className="text-purple-600 dark:text-purple-400 font-bold">
+                  {token}
+                </span>
+              );
+            }
+
+            if (/^(True|False|None|true|false|null|undefined)$/.test(token)) {
+              return (
+                <span key={tIdx} className="text-amber-600 dark:text-amber-400 font-bold">
+                  {token}
+                </span>
+              );
+            }
+
+            if (
+              /^(number|string|boolean|void|any|Array|int|float|str|list|dict|set|tuple|len|range|zip|enumerate|sum|min|max|abs|round|math|Math)$/.test(
+                token
+              )
+            ) {
+              return (
+                <span key={tIdx} className="text-blue-600 dark:text-blue-400 font-semibold">
+                  {token}
+                </span>
+              );
+            }
+
+            if (
+              (token.startsWith('"') && token.endsWith('"')) ||
+              (token.startsWith("'") && token.endsWith("'")) ||
+              (token.startsWith('`') && token.endsWith('`'))
+            ) {
+              return (
+                <span key={tIdx} className="text-emerald-600 dark:text-emerald-400">
+                  {token}
+                </span>
+              );
+            }
+
+            if (/^\d+(?:\.\d+)?(?:e[+-]?\d+)?$/i.test(token)) {
+              return (
+                <span key={tIdx} className="text-amber-600 dark:text-amber-300 font-mono font-semibold">
+                  {token}
+                </span>
+              );
+            }
+
+            if (token.startsWith('//') || token.startsWith('#')) {
+              return (
+                <span key={tIdx} className="text-ink-400 dark:text-ink-500 italic">
+                  {token}
+                </span>
+              );
+            }
+
+            if (/^[=+\-*/@%<>!&|^~:]+$/.test(token)) {
+              return (
+                <span key={tIdx} className="text-rose-500 dark:text-rose-400">
+                  {token}
+                </span>
+              );
+            }
+
+            return (
+              <span key={tIdx} className="text-ink-900 dark:text-ink-100">
+                {token}
+              </span>
+            );
+          })}
+        </div>
+      );
+    });
   };
 
   return (
@@ -285,7 +527,7 @@ export const BuildFromScratchLab: React.FC<BuildFromScratchLabProps> = ({ projec
         </div>
 
         {/* Milestone Steps Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 max-w-full">
           {project.milestones.map((m) => {
             const isCurrent = activeMilestone === m.step;
             return (
@@ -362,19 +604,79 @@ export const BuildFromScratchLab: React.FC<BuildFromScratchLabProps> = ({ projec
         {/* Left Column: Interactive Code Scratchpad (7 cols) */}
         <div className="lg:col-span-7 space-y-4">
           <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 overflow-hidden shadow-xs">
-            {/* Editor Top Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-ink-100/80 dark:bg-ink-950/80 border-b border-ink-200 dark:border-white/10 text-xs">
-              <div className="flex items-center gap-2">
-                <Code2 className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-                <span className="font-semibold font-mono text-ink-900 dark:text-white">
-                  scratchpad.js
-                </span>
-                <span className="text-[10px] text-ink-400">·</span>
-                <span className="text-[11px] text-ink-500">Pure JavaScript / TypeScript Math</span>
+            {/* Editor Top Bar with Language Toggle & Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5 p-3 bg-ink-100/90 dark:bg-ink-950/90 border-b border-ink-200 dark:border-white/10 text-xs">
+              {/* Left: Language Toggle Pills & File Indicator */}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-1 bg-ink-200/60 dark:bg-ink-900/90 p-0.5 rounded-lg border border-ink-300/40 dark:border-white/10 shadow-2xs">
+                  <button
+                    onClick={() => {
+                      setLanguage('javascript');
+                      setShowSolution(false);
+                      setTestResults(null);
+                      setConsoleLogs([]);
+                      soundFX.playTap();
+                    }}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                      language === 'javascript'
+                        ? 'bg-white dark:bg-ink-800 text-brand-600 dark:text-brand-400 font-semibold shadow-xs'
+                        : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <span>JavaScript / TS</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setLanguage('python');
+                      setShowSolution(false);
+                      setTestResults(null);
+                      setConsoleLogs([]);
+                      soundFX.playTap();
+                    }}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                      language === 'python'
+                        ? 'bg-white dark:bg-ink-800 text-amber-600 dark:text-amber-400 font-semibold shadow-xs'
+                        : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Python (Pyodide Wasm)</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-ink-500 dark:text-ink-400 font-mono text-[11px]">
+                  <Code2 className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+                  <span className="font-semibold text-ink-800 dark:text-ink-200">
+                    {language === 'python' ? 'scratchpad.py' : 'scratchpad.js'}
+                  </span>
+                  <span>·</span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                    {language === 'python' ? 'In-Browser Python 3.12 (Wasm)' : 'V8 Native JIT'}
+                  </span>
+                </div>
               </div>
 
-              {/* Action Buttons */}
+              {/* Right: Action Buttons */}
               <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleCopyCode}
+                  className="flex items-center gap-1 px-2 py-1 text-xs rounded border border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white transition-colors cursor-pointer"
+                  title="Copy code to clipboard"
+                >
+                  {copiedCode ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-500" />
+                      <span className="text-emerald-600 dark:text-emerald-400">Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+
                 <button
                   onClick={handleResetCode}
                   className="flex items-center gap-1 px-2.5 py-1 text-xs rounded border border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white transition-colors cursor-pointer"
@@ -391,7 +693,7 @@ export const BuildFromScratchLab: React.FC<BuildFromScratchLabProps> = ({ projec
                       ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-semibold'
                       : 'border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white'
                   }`}
-                  title="Reveal complete reference implementation"
+                  title={showSolution ? 'Revert to starter code' : 'Reveal complete reference implementation'}
                 >
                   <Eye className="w-3 h-3" />
                   <span>{showSolution ? 'Solution Loaded' : 'Solution'}</span>
@@ -402,25 +704,60 @@ export const BuildFromScratchLab: React.FC<BuildFromScratchLabProps> = ({ projec
                   disabled={isRunning}
                   className="flex items-center gap-1.5 px-3 py-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded text-xs transition-colors shadow-xs cursor-pointer disabled:opacity-50"
                 >
-                  <Play className="w-3 h-3 fill-white" />
-                  <span>{isRunning ? 'Running...' : 'Run & Test'}</span>
+                  {isRunning ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>{language === 'python' ? 'Running Wasm...' : 'Running...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3 h-3 fill-white" />
+                      <span>{language === 'python' ? 'Run & Test (Python)' : 'Run & Test'}</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
 
-            {/* Editable Code Area */}
-            <div className="relative">
-              <textarea
-                value={code}
-                onChange={(e) => {
-                  setCode(e.target.value);
-                  setAllPassed(false);
-                }}
-                spellCheck={false}
-                rows={22}
-                className="w-full p-4 font-mono text-xs sm:text-[13px] bg-ink-50/50 dark:bg-ink-950/90 text-ink-900 dark:text-ink-100 focus:outline-none resize-y leading-relaxed border-none selection:bg-brand-500/20"
-                style={{ tabSize: 2 }}
-              />
+            {/* Interactive Syntax-Highlighted Editor with Line Numbers */}
+            <div className="relative flex bg-ink-50/70 dark:bg-ink-950/95 font-mono text-xs sm:text-[13px] overflow-hidden h-[500px]">
+              {/* Left: Line Numbers Gutter */}
+              <div
+                ref={lineNumbersRef}
+                aria-hidden="true"
+                className="w-10 sm:w-12 shrink-0 py-4 px-2 text-right select-none text-ink-400 dark:text-ink-600 font-mono text-[11px] sm:text-xs leading-6 bg-ink-100/60 dark:bg-ink-950/90 border-r border-ink-200/50 dark:border-white/5 overflow-hidden"
+              >
+                {Array.from({ length: currentCode.split('\n').length }, (_, i) => (
+                  <div key={i} className="h-6 leading-6">
+                    {i + 1}
+                  </div>
+                ))}
+              </div>
+
+              {/* Right: Code Area with Overlaid Transparent Textarea */}
+              <div className="relative flex-1 h-full overflow-hidden">
+                {/* Underneath: Syntax Highlighting Preview */}
+                <pre
+                  ref={preRef}
+                  aria-hidden="true"
+                  className="absolute inset-0 m-0 p-4 font-mono text-xs sm:text-[13px] leading-6 whitespace-pre overflow-hidden pointer-events-none select-none text-ink-900 dark:text-ink-100 font-normal no-scrollbar"
+                  style={{ tabSize: language === 'python' ? 4 : 2 }}
+                >
+                  <code>{renderHighlightedCode(currentCode, language)}</code>
+                </pre>
+
+                {/* Overlaid: Native Transparent Textarea */}
+                <textarea
+                  ref={textareaRef}
+                  value={currentCode}
+                  onChange={handleCodeChange}
+                  onScroll={handleScroll}
+                  onKeyDown={handleKeyDown}
+                  spellCheck={false}
+                  className="relative z-10 w-full h-full m-0 p-4 font-mono text-xs sm:text-[13px] leading-6 whitespace-pre overflow-auto resize-none bg-transparent text-transparent caret-brand-600 dark:caret-brand-400 focus:outline-none selection:bg-brand-500/25 dark:selection:bg-brand-500/35 border-none no-scrollbar"
+                  style={{ tabSize: language === 'python' ? 4 : 2 }}
+                />
+              </div>
             </div>
           </div>
 
@@ -438,7 +775,7 @@ export const BuildFromScratchLab: React.FC<BuildFromScratchLabProps> = ({ projec
               </span>
             </div>
 
-            <div className="max-h-48 overflow-y-auto space-y-1 text-ink-300 text-[11px] sm:text-xs leading-relaxed">
+            <div className="max-h-48 overflow-y-auto no-scrollbar space-y-1 text-ink-300 text-[11px] sm:text-xs leading-relaxed">
               {consoleLogs.length === 0 ? (
                 <div className="text-ink-500 italic py-2">
                   Click 'Run & Test' to evaluate your implementation against the automated test suite.
@@ -491,7 +828,7 @@ export const BuildFromScratchLab: React.FC<BuildFromScratchLabProps> = ({ projec
               </span>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2.5 max-h-80 overflow-y-auto no-scrollbar">
               {project.testCases.map((tc, idx) => {
                 const res = testResults?.find((r) => r.testId === tc.id);
                 return (
@@ -586,16 +923,8 @@ export const BuildFromScratchLab: React.FC<BuildFromScratchLabProps> = ({ projec
             )}
           </div>
 
-          {/* First Principles Theoretical Bedrock Box */}
-          <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-4 sm:p-5 space-y-2 shadow-xs">
-            <h4 className="text-xs font-bold font-display uppercase tracking-wider text-brand-600 dark:text-brand-400 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Theoretical Bedrock</span>
-            </h4>
-            <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
-              {project.firstPrinciplesBedrock}
-            </p>
-          </div>
+          {/* First Principles Theoretical Bedrock Dossier */}
+          <TheoreticalBedrockViewer content={project.firstPrinciplesBedrock} />
         </div>
       </div>
     </div>

@@ -75,7 +75,7 @@ export const SpecializedLab: React.FC = () => {
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg overflow-x-auto max-w-full overscroll-x-contain">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg overflow-x-auto max-w-full overscroll-x-contain no-scrollbar">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
@@ -258,7 +258,7 @@ export const SpecializedLab: React.FC = () => {
             A reference breakdown of architectures that challenge conventional matrix multiplications:
           </p>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto no-scrollbar">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-ink-200 dark:border-white/10 text-ink-500 dark:text-ink-400">
@@ -302,7 +302,7 @@ export const SpecializedLab: React.FC = () => {
             </button>
           </div>
 
-          <pre className="p-4 bg-ink-950 rounded-lg border border-ink-800 font-mono text-xs text-ink-300 overflow-x-auto leading-relaxed">
+          <pre className="p-4 bg-ink-950 rounded-lg border border-ink-800 font-mono text-xs text-ink-300 overflow-x-auto no-scrollbar leading-relaxed">
 {`function neuralOdeEulerStep(h_t: number, dt: number, velocityField: (h: number) => number): number {
   // 1. Evaluate neural network to get instantaneous rate of change:
   const dh = velocityField(h_t);

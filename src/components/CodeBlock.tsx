@@ -205,7 +205,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
       </div>
 
       {/* Code Area */}
-      <div className="p-4 overflow-x-auto leading-relaxed min-w-0">
+      <div className="p-4 overflow-x-auto no-scrollbar leading-relaxed min-w-0">
         <div className="table min-w-full">{highlightSyntax(code)}</div>
       </div>
 

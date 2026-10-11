@@ -85,7 +85,7 @@ export const RnnLstmLaboratory: React.FC = () => {
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg overflow-x-auto max-w-full overscroll-x-contain">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg overflow-x-auto max-w-full overscroll-x-contain no-scrollbar">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
@@ -174,7 +174,7 @@ export const RnnLstmLaboratory: React.FC = () => {
               <span>Click any step or step through with arrow</span>
             </div>
 
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
               {states.map((s) => {
                 const isCurrent = s.step === currentStep;
                 return (
@@ -343,7 +343,7 @@ export const RnnLstmLaboratory: React.FC = () => {
             </button>
           </div>
 
-          <pre className="p-4 bg-ink-950 rounded-lg border border-ink-800 font-mono text-xs text-ink-300 overflow-x-auto leading-relaxed">
+          <pre className="p-4 bg-ink-950 rounded-lg border border-ink-800 font-mono text-xs text-ink-300 overflow-x-auto no-scrollbar leading-relaxed">
 {`function lstmStep(prevH: number, prevC: number, x: number, f_val: number): { nextH: number, nextC: number } {
   // Forget gate: how much old cell memory to keep
   const f_t = f_val;

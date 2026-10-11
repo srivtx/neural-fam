@@ -97,7 +97,7 @@ export const TopNav: React.FC<TopNavProps> = ({
         </div>
 
         {/* Zone 2: Navigation Links (Responsive compact labels on lg, full on 2xl) */}
-        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 text-xs font-semibold text-ink-600 dark:text-ink-300 shrink-0 p-0.5 bg-ink-100/70 dark:bg-ink-900/60 rounded-xl border border-ink-200/60 dark:border-white/5">
+        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 text-xs font-semibold text-ink-600 dark:text-ink-300 shrink-0 p-0.5 bg-ink-100/70 dark:bg-ink-900/60 rounded-xl border border-ink-200/60 dark:border-white/5 no-scrollbar">
           <button
             onClick={() => onSelectView('home')}
             title="Home (Press 1)"

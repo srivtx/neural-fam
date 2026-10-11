@@ -308,7 +308,7 @@ export const BadgesMilestonesModal: React.FC<BadgesMilestonesModalProps> = ({
           {/* Interactive Filters & Demo Actions */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
             {/* Filter pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full text-xs whitespace-nowrap">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 max-w-full text-xs whitespace-nowrap">
               <button
                 onClick={() => setActiveFilter('all')}
                 className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${

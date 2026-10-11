@@ -78,7 +78,7 @@ export const FirstPrinciplesNotebook: React.FC<FirstPrinciplesNotebookProps> = (
         </div>
 
         {/* 4-Stage Stepper Pills */}
-        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-950 rounded-xl border border-ink-200/60 dark:border-white/10 text-xs overflow-x-auto">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-950 rounded-xl border border-ink-200/60 dark:border-white/10 text-xs overflow-x-auto no-scrollbar">
           {[
             { id: 'crisis', label: '1. The Crisis', icon: ShieldAlert },
             { id: 'failed', label: '2. Failed Intuitions', icon: RotateCcw },
@@ -294,7 +294,7 @@ export const FirstPrinciplesNotebook: React.FC<FirstPrinciplesNotebookProps> = (
               <div className="text-[10px] uppercase font-bold text-ink-400">
                 Mathematical Proof of Failure:
               </div>
-              <div className="text-amber-700 dark:text-amber-400 font-bold overflow-x-auto py-1">
+              <div className="text-amber-700 dark:text-amber-400 font-bold overflow-x-auto no-scrollbar py-1">
                 {selectedIntuition.mathExplanation}
               </div>
             </div>
@@ -335,7 +335,7 @@ export const FirstPrinciplesNotebook: React.FC<FirstPrinciplesNotebookProps> = (
             </div>
 
             {/* Formula Presentation */}
-            <div className="p-4 rounded-xl bg-surface dark:bg-ink-900 border border-brand-300/80 dark:border-brand-500/30 font-mono text-center text-base sm:text-lg font-bold text-brand-900 dark:text-brand-200 overflow-x-auto shadow-2xs">
+            <div className="p-4 rounded-xl bg-surface dark:bg-ink-900 border border-brand-300/80 dark:border-brand-500/30 font-mono text-center text-base sm:text-lg font-bold text-brand-900 dark:text-brand-200 overflow-x-auto no-scrollbar shadow-2xs">
               {dossier.invariant.governingEquation}
             </div>
 
@@ -370,7 +370,7 @@ export const FirstPrinciplesNotebook: React.FC<FirstPrinciplesNotebookProps> = (
               <div className="text-[11px] font-mono uppercase font-bold text-ink-500">
                 Analytical Invariant Formulation:
               </div>
-              <div className="p-2.5 bg-ink-50 dark:bg-ink-950 rounded-lg font-mono text-brand-700 dark:text-brand-300 text-xs overflow-x-auto">
+              <div className="p-2.5 bg-ink-50 dark:bg-ink-950 rounded-lg font-mono text-brand-700 dark:text-brand-300 text-xs overflow-x-auto no-scrollbar">
                 {dossier.invariant.identityDerivativeFormula}
               </div>
               {dossier.invariant.proofSketch && (
@@ -474,7 +474,7 @@ export const FirstPrinciplesNotebook: React.FC<FirstPrinciplesNotebookProps> = (
               <span className="text-[11px] font-mono text-ink-400 uppercase font-bold">
                 Verification Execution Log:
               </span>
-              <pre className="p-4 bg-ink-900 dark:bg-black rounded-xl border border-ink-800 font-mono text-[11px] text-green-400 overflow-x-auto leading-relaxed shadow-inner">
+              <pre className="p-4 bg-ink-900 dark:bg-black rounded-xl border border-ink-800 font-mono text-[11px] text-green-400 overflow-x-auto no-scrollbar leading-relaxed shadow-inner">
                 {dossier.breakthrough.verificationLog.join('\n')}
               </pre>
             </div>

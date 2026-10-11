@@ -58,7 +58,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           </div>
 
           {this.state.error && (
-            <div className="p-3 bg-ink-50 dark:bg-ink-950/80 rounded-xl border border-ink-200 dark:border-white/5 font-mono text-[11px] text-ink-600 dark:text-ink-400 overflow-x-auto">
+            <div className="p-3 bg-ink-50 dark:bg-ink-950/80 rounded-xl border border-ink-200 dark:border-white/5 font-mono text-[11px] text-ink-600 dark:text-ink-400 overflow-x-auto no-scrollbar">
               <code>{this.state.error.message || 'Unknown runtime error'}</code>
             </div>
           )}

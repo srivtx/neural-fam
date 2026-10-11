@@ -48,6 +48,8 @@ export interface DiyProject {
   milestones: ProjectMilestone[];
   starterCode: string;
   solutionCode: string;
+  pythonStarterCode?: string;
+  pythonSolutionCode?: string;
   testCases: TestCase[];
   visualFeedbackType: 'decision_boundary' | 'loss_curve' | 'feature_map' | 'sequence_state' | 'attention_matrix' | 'ssm_state' | 'graph_nodes' | 'diffusion_grid' | 'continuous_flow';
   visualSimulationMapping?: VisualSimulationMapping;

@@ -39,7 +39,7 @@ export const ProjectLabsHub: React.FC<ProjectLabsHubProps> = ({
   return (
     <div className="space-y-6">
       {/* Horizontal Level Stepper */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 p-1.5 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 shadow-xs transition-colors max-w-full overscroll-x-contain">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 p-1.5 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 shadow-xs transition-colors max-w-full overscroll-x-contain">
         {labList.map((lab) => {
           const isActive = activeLabId === lab.id;
           return (

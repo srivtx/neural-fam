@@ -210,7 +210,7 @@ export const TaxonomyMatrix: React.FC = () => {
                 <span>Research distinctions: ResNet vs GPT-style vs P-027</span>
               </h4>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto no-scrollbar">
                 <table className="w-full text-left text-xs min-w-[500px]">
                   <thead className="text-ink-500 dark:text-ink-400 font-semibold border-b border-ink-200 dark:border-white/10">
                     <tr>

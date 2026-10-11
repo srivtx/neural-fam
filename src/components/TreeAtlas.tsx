@@ -123,7 +123,7 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 p-1 bg-surface dark:bg-ink-900/90 rounded-xl border border-ink-200 dark:border-white/10 shadow-xs">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 p-1 bg-surface dark:bg-ink-900/90 rounded-xl border border-ink-200 dark:border-white/10 shadow-xs">
             <Filter className="w-4 h-4 text-ink-400 ml-2 mr-1 shrink-0" />
             {filterTabs.map((tab) => (
               <button

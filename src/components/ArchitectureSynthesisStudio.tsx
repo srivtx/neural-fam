@@ -1183,7 +1183,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
                   Schematic flow of information through one repeated block of <strong>{design.name}</strong>.
                 </p>
 
-                <div className="p-6 bg-ink-50 dark:bg-ink-950 rounded-2xl border border-ink-200 dark:border-white/5 flex flex-col items-center space-y-3 font-mono text-xs overflow-x-auto">
+                <div className="p-6 bg-ink-50 dark:bg-ink-950 rounded-2xl border border-ink-200 dark:border-white/5 flex flex-col items-center space-y-3 font-mono text-xs overflow-x-auto no-scrollbar">
                   <div className="px-4 py-2 rounded-lg bg-surface dark:bg-ink-900 border border-ink-300 dark:border-white/10 font-bold text-ink-900 dark:text-white shadow-2xs">
                     Input Tensor: [Batch={workload.batch}, SeqLen={workload.seqLen}, d={design.d}]
                   </div>
@@ -1431,7 +1431,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
 
             {/* TAB 5: Detailed Parameter Matrix */}
             {activeTab === 'params' && (
-              <div className="overflow-x-auto py-1">
+              <div className="overflow-x-auto no-scrollbar py-1">
                 <table className="w-full text-left text-xs font-mono border-collapse">
                   <thead>
                     <tr className="border-b border-ink-200 dark:border-white/10 text-ink-500 uppercase text-[10px]">
@@ -1881,7 +1881,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
           </div>
 
           {/* Comparative Metrics Table */}
-          <div className="p-4 sm:p-6 rounded-2xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 shadow-xs overflow-x-auto">
+          <div className="p-4 sm:p-6 rounded-2xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 shadow-xs overflow-x-auto no-scrollbar">
             <table className="w-full min-w-[540px] text-left text-xs font-mono border-collapse">
               <thead>
                 <tr className="border-b border-ink-200 dark:border-white/10 text-ink-500 uppercase text-[10px]">

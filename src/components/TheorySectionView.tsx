@@ -185,7 +185,7 @@ export const TheorySectionView: React.FC<TheorySectionViewProps> = ({ theory }) 
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-600 dark:text-ink-400 font-mono block">
                 The Mathematical Proof of Failure:
               </span>
-              <div className="p-3.5 rounded-xl bg-ink-950 border border-ink-800 text-ink-200 font-mono text-xs overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
+              <div className="p-3.5 rounded-xl bg-ink-950 border border-ink-800 text-ink-200 font-mono text-xs overflow-x-auto no-scrollbar whitespace-pre-wrap leading-relaxed shadow-inner">
                 {activeContrast.mathematicalProof}
               </div>
             </div>
@@ -240,7 +240,7 @@ export const TheorySectionView: React.FC<TheorySectionViewProps> = ({ theory }) 
                 {isExpanded && (
                   <div className="px-5 pb-5 pt-1 space-y-3 text-xs border-t border-ink-100 dark:border-white/5">
                     {/* Formula Banner */}
-                    <div className="p-3 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 font-mono text-xs sm:text-sm text-brand-700 dark:text-brand-300 overflow-x-auto shadow-2xs font-semibold">
+                    <div className="p-3 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 font-mono text-xs sm:text-sm text-brand-700 dark:text-brand-300 overflow-x-auto no-scrollbar shadow-2xs font-semibold">
                       {step.formula}
                     </div>
 
@@ -274,7 +274,7 @@ export const TheorySectionView: React.FC<TheorySectionViewProps> = ({ theory }) 
             <span className="text-[11px] font-mono text-ink-500">Universal Form</span>
           </div>
 
-          <div className="p-4 bg-surface dark:bg-ink-950 rounded-xl border border-brand-500/20 text-center font-mono text-sm sm:text-base font-bold text-brand-700 dark:text-brand-300 overflow-x-auto shadow-xs">
+          <div className="p-4 bg-surface dark:bg-ink-950 rounded-xl border border-brand-500/20 text-center font-mono text-sm sm:text-base font-bold text-brand-700 dark:text-brand-300 overflow-x-auto no-scrollbar shadow-xs">
             {theory.firstPrinciplesDerivation.finalGoverningEquation}
           </div>
 

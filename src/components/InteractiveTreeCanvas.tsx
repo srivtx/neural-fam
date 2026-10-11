@@ -274,7 +274,7 @@ export const InteractiveTreeCanvas: React.FC<InteractiveTreeCanvasProps> = ({ on
       </div>
 
       {/* SVG Canvas Container */}
-      <div className="relative w-full overflow-x-auto bg-ink-50 dark:bg-ink-950 rounded-xl border border-ink-200/60 dark:border-white/5 p-4 flex items-center justify-center">
+      <div className="relative w-full overflow-x-auto no-scrollbar bg-ink-50 dark:bg-ink-950 rounded-xl border border-ink-200/60 dark:border-white/5 p-4 flex items-center justify-center">
         <svg viewBox="0 0 1020 600" className="w-full min-w-[780px] max-w-[1020px] h-auto select-none">
           {/* Subtle background coordinate grid */}
           <defs>

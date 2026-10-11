@@ -298,7 +298,7 @@ export const TransformerAttentionLab: React.FC = () => {
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg overflow-x-auto overscroll-x-contain no-scrollbar max-w-full">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
@@ -678,7 +678,7 @@ export const TransformerAttentionLab: React.FC = () => {
             </div>
           ) : (
             /* 2D Attention Heatmap Grid */
-            <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs overflow-x-auto">
+            <div className="bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 p-5 space-y-4 shadow-xs overflow-x-auto no-scrollbar">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-ink-900 dark:text-white flex items-center gap-2">
                   <Grid className="w-4 h-4 text-brand-600 dark:text-brand-400" />
@@ -784,7 +784,7 @@ export const TransformerAttentionLab: React.FC = () => {
             </p>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto no-scrollbar">
             <table className="w-full text-left text-xs">
               <thead className="bg-ink-50 dark:bg-ink-950 text-ink-500 dark:text-ink-400 font-semibold border-b border-ink-100 dark:border-white/10">
                 <tr>

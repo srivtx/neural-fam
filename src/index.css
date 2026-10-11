@@ -162,15 +162,68 @@
   padding-bottom: 0.08em;
 }
 
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* ───────────────────────────────────────────────────────────
+   Scrollbar Management & Global Polish
+   Default state: body.hide-scrollbars is enabled via App.tsx.
+   Both vertical and horizontal scrollbars are completely hidden
+   while keeping full mouse-wheel, touch-pan, and trackpad scrolling.
+   ─────────────────────────────────────────────────────────── */
+html:has(body.hide-scrollbars),
+body.hide-scrollbars,
+body.hide-scrollbars * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
-/* Thin, quiet scrollbars */
+html:has(body.hide-scrollbars)::-webkit-scrollbar,
+body.hide-scrollbars::-webkit-scrollbar,
+body.hide-scrollbars *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+body.hide-scrollbars::-webkit-scrollbar-thumb,
+body.hide-scrollbars *::-webkit-scrollbar-thumb,
+body.hide-scrollbars::-webkit-scrollbar-track,
+body.hide-scrollbars *::-webkit-scrollbar-track {
+  display: none !important;
+  background: transparent !important;
+}
+
+/* Universal no-scrollbar utility class for tab bars, pill strips, and tables */
+.no-scrollbar,
+.no-scrollbar * {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+.no-scrollbar::-webkit-scrollbar,
+.no-scrollbar *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+/* Horizontal overflow containers that act as tab strips or navigation scrollers */
+nav.overflow-x-auto,
+[role='tablist'].overflow-x-auto,
+.tabs-scroll,
+.pill-scroll {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+nav.overflow-x-auto::-webkit-scrollbar,
+[role='tablist'].overflow-x-auto::-webkit-scrollbar,
+.tabs-scroll::-webkit-scrollbar,
+.pill-scroll::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Sleek, unobtrusive scrollbars when scrollbars are visible (hide-scrollbars toggled off) */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-ink-300) transparent;
@@ -179,21 +232,65 @@
   scrollbar-color: var(--color-ink-700) transparent;
 }
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-ink-300);
-  border-radius: 8px;
-  border: 2px solid transparent;
+  border-radius: 9999px;
+  border: 1px solid transparent;
   background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-400);
 }
 .dark ::-webkit-scrollbar-thumb {
   background: var(--color-ink-700);
   background-clip: content-box;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-600);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Code blocks, pre, and textareas: sleek pill scrollbars, never ugly box tracks */
+pre,
+textarea,
+code,
+.code-block {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(160, 160, 160, 0.3) transparent;
+}
+pre::-webkit-scrollbar,
+textarea::-webkit-scrollbar,
+code::-webkit-scrollbar,
+.code-block::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+pre::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-track,
+code::-webkit-scrollbar-track,
+.code-block::-webkit-scrollbar-track {
+  background: transparent;
+}
+pre::-webkit-scrollbar-thumb,
+textarea::-webkit-scrollbar-thumb,
+code::-webkit-scrollbar-thumb,
+.code-block::-webkit-scrollbar-thumb {
+  background: rgba(160, 160, 160, 0.3);
+  border-radius: 9999px;
+}
+pre::-webkit-scrollbar-thumb:hover,
+textarea::-webkit-scrollbar-thumb:hover,
+code::-webkit-scrollbar-thumb:hover,
+.code-block::-webkit-scrollbar-thumb:hover {
+  background: rgba(160, 160, 160, 0.5);
 }
 
 @keyframes rise {

@@ -216,7 +216,7 @@ export const GenerativeLab: React.FC = () => {
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg max-w-full overflow-x-auto overscroll-x-contain">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg max-w-full overflow-x-auto overscroll-x-contain no-scrollbar">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
@@ -451,7 +451,7 @@ export const GenerativeLab: React.FC = () => {
                 <span className="font-mono text-ink-500 text-[11px]">8×8 pixel grid</span>
               </div>
 
-              <div className="grid grid-cols-8 gap-1 sm:gap-1.5 p-2.5 sm:p-3.5 bg-ink-900 rounded-xl border border-ink-800 shadow-inner max-w-full overflow-x-auto">
+              <div className="grid grid-cols-8 gap-1 sm:gap-1.5 p-2.5 sm:p-3.5 bg-ink-900 rounded-xl border border-ink-800 shadow-inner max-w-full overflow-x-auto no-scrollbar">
                 {activePattern.grid.map((row, r) =>
                   row.map((cleanVal, c) => {
                     const noiseVal = NOISE_GRID[r][c];
@@ -491,7 +491,7 @@ export const GenerativeLab: React.FC = () => {
                 <span className="font-mono text-ink-500 text-[11px]">Tweedie estimation</span>
               </div>
 
-              <div className="grid grid-cols-8 gap-1 sm:gap-1.5 p-2.5 sm:p-3.5 bg-ink-900 rounded-xl border border-ink-800 shadow-inner max-w-full overflow-x-auto">
+              <div className="grid grid-cols-8 gap-1 sm:gap-1.5 p-2.5 sm:p-3.5 bg-ink-900 rounded-xl border border-ink-800 shadow-inner max-w-full overflow-x-auto no-scrollbar">
                 {activePattern.grid.map((row, r) =>
                   row.map((cleanVal, c) => {
                     // When t is high, model makes a coarse prior guess; as t decreases, Tweedie estimate becomes crystal sharp
@@ -611,7 +611,7 @@ export const GenerativeLab: React.FC = () => {
             </button>
           </div>
 
-          <pre className="p-4 bg-ink-950 rounded-lg border border-ink-800 font-mono text-xs text-ink-300 overflow-x-auto leading-relaxed">
+          <pre className="p-4 bg-ink-950 rounded-lg border border-ink-800 font-mono text-xs text-ink-300 overflow-x-auto no-scrollbar leading-relaxed">
 {`function reverseDiffusionStep(
   x_t: number, 
   t: number, 

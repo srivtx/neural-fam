@@ -66,7 +66,7 @@ export const GlossaryModal: React.FC<GlossaryModalProps> = ({ isOpen, onClose })
             />
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto text-xs pb-0.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs pb-0.5">
             {(['all', 'core', 'mechanisms', 'math', 'paradigms'] as const).map((cat) => (
               <button
                 key={cat}

@@ -156,7 +156,7 @@ export const CnnResNetLab: React.FC = () => {
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex flex-wrap items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg overflow-x-auto max-w-full overscroll-x-contain">
+        <div className="flex flex-wrap items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg overflow-x-auto max-w-full overscroll-x-contain no-scrollbar">
           <button onClick={() => setSubTab('visual')} className={tabClass(subTab === 'visual')}>
             Kernel lab
           </button>
@@ -394,7 +394,7 @@ export const CnnResNetLab: React.FC = () => {
             </p>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto no-scrollbar">
             <table className="w-full text-left text-xs">
               <thead className="bg-ink-50 dark:bg-ink-950 text-ink-500 dark:text-ink-400 font-semibold border-b border-ink-100 dark:border-white/10">
                 <tr>
