@@ -1,9 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="8" fill="#110f0d"/>
-  <circle cx="9" cy="9" r="3" fill="#4353ff"/>
-  <circle cx="23" cy="9" r="3" fill="#00a86b"/>
-  <circle cx="16" cy="16" r="3.5" fill="#ff8a00"/>
-  <circle cx="9" cy="23" r="3" fill="#8b5cf6"/>
-  <circle cx="23" cy="23" r="3" fill="#ff3b6b"/>
-  <path d="M9 9L16 16M23 9L16 16M9 23L16 16M23 23L16 16" stroke="#4353ff" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1815"/>
+      <stop offset="1" stop-color="#0e0c0a"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="22" fill="url(#bg)"/>
+  <g transform="translate(10 10) scale(0.8)">
+    <path d="M50 22L28 50M50 22L72 50M28 50L16 78M28 50L40 78M72 50L60 78M72 50L84 78" stroke="#ebe6dc" stroke-opacity="0.6" stroke-width="2.4" stroke-linecap="round"/>
+    <circle cx="50" cy="22" r="8.5" fill="#ff8a00"/>
+    <circle cx="28" cy="50" r="6.5" fill="#4353ff"/>
+    <circle cx="72" cy="50" r="6.5" fill="#00a86b"/>
+    <circle cx="16" cy="78" r="5.5" fill="#8b5cf6"/>
+    <circle cx="40" cy="78" r="5.5" fill="#ff3b6b"/>
+    <circle cx="60" cy="78" r="5.5" fill="#ff3b6b"/>
+    <circle cx="84" cy="78" r="5.5" fill="#8b5cf6"/>
+  </g>
 </svg>

@@ -20,6 +20,7 @@ import {
   VolumeX,
   Share2,
   Compass,
+  Download,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useLearningProgress, USER_PROFILE } from '../utils/progressStore';
@@ -59,6 +60,25 @@ export const TopNav: React.FC<TopNavProps> = ({
   const { theme, toggleTheme } = useTheme();
   const progress = useLearningProgress();
   const stats = computeUserStats(progress);
+  const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/95 dark:bg-ink-950/95 backdrop-blur-md border-b border-ink-200 dark:border-white/10 transition-colors shadow-2xs">
@@ -223,6 +243,18 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             <BookOpen className="w-4 h-4 text-amber-500" />
           </button>
+
+          {/* PWA Install Button (renders when browser supports/fires beforeinstallprompt) */}
+          {deferredPrompt && (
+            <button
+              onClick={handleInstallClick}
+              title="Install Neural Family as App"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-brand-500/10 hover:bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/30 text-xs font-semibold transition-colors cursor-pointer shrink-0"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Install</span>
+            </button>
+          )}
 
           {/* Share Button */}
           <button

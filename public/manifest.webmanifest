@@ -1,0 +1,19 @@
+{
+  "name": "Neural Family Tree · Architecture Synthesis Studio & Labs",
+  "short_name": "Neural Fam",
+  "description": "Explore neural network architectures from first principles: interactive labs, build-from-scratch projects, and the lineage from the 1958 Perceptron to Transformers and Mamba.",
+  "id": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0e0c0a",
+  "theme_color": "#0e0c0a",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
