@@ -4,12 +4,17 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { HelpCircle, Code2, Play, Pause, RotateCcw, CheckCircle2, Sparkles, Layers, Sliders, Award, ArrowRight, Eye, Flame } from 'lucide-react';
+import { HelpCircle, Code2, Play, Pause, RotateCcw, CheckCircle2, Sparkles, Layers, Sliders, Award, ArrowRight, Eye, Flame, BookOpen, Terminal } from 'lucide-react';
 import { CheckpointQuiz } from '../CheckpointQuiz';
 import { FirstPrinciplesNotebook } from '../FirstPrinciplesNotebook';
 import { FIRST_PRINCIPLES_DOSSIERS } from '../../data/firstPrinciplesData';
+import { TheorySectionView } from '../TheorySectionView';
+import { THEORY_DOSSIERS } from '../../data/theoryData';
+import { BuildFromScratchLab } from '../BuildFromScratchLab';
+import { DIY_PROJECTS } from '../../data/diyProjectsData';
 import { LAB_QUIZZES } from '../../data/labQuizzes';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
+
 
 // Target 8x8 pattern grids
 type PatternKey = 'eight' | 'face' | 'star' | 'heart';
@@ -96,7 +101,7 @@ export const GenerativeLab: React.FC = () => {
   const [denoiseStep, setDenoiseStep] = useState<number>(8); // t in 0..20
   const [scheduleType, setScheduleType] = useState<'cosine' | 'linear'>('cosine');
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [subTab, setSubTab] = useState<'visual' | 'code' | 'paradigms' | 'analogy' | 'quiz' | 'first_principles'>('visual');
+  const [subTab, setSubTab] = useState<'visual' | 'theory' | 'build' | 'code' | 'paradigms' | 'analogy' | 'quiz' | 'first_principles'>('visual');
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
 
   const totalSteps = 20;
@@ -211,7 +216,7 @@ export const GenerativeLab: React.FC = () => {
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg max-w-full overflow-x-auto">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg max-w-full overflow-x-auto overscroll-x-contain">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
@@ -221,6 +226,39 @@ export const GenerativeLab: React.FC = () => {
             }`}
           >
             Denoising process
+          </button>
+          <button
+            onClick={() => setSubTab('theory')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'theory'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Theory</span>
+          </button>
+          <button
+            onClick={() => setSubTab('build')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'build'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Code2 className="w-3.5 h-3.5" />
+            <span>Build from scratch</span>
+          </button>
+          <button
+            onClick={() => setSubTab('first_principles')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'first_principles'
+                ? 'bg-amber-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>First principles</span>
           </button>
           <button
             onClick={() => setSubTab('paradigms')}
@@ -240,8 +278,8 @@ export const GenerativeLab: React.FC = () => {
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            <Code2 className="w-3.5 h-3.5" />
-            <span>Code</span>
+            <Terminal className="w-3.5 h-3.5" />
+            <span>Reference code</span>
           </button>
           <button
             onClick={() => setSubTab('analogy')}
@@ -264,17 +302,6 @@ export const GenerativeLab: React.FC = () => {
           >
             <Award className="w-3.5 h-3.5" />
             <span>Concept check</span>
-          </button>
-          <button
-            onClick={() => setSubTab('first_principles')}
-            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-              subTab === 'first_principles'
-                ? 'bg-amber-600 text-white font-semibold shadow-xs'
-                : 'text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300'
-            }`}
-          >
-            <Flame className="w-3.5 h-3.5" />
-            <span>First Principles</span>
           </button>
         </div>
       </div>
@@ -650,6 +677,16 @@ export const GenerativeLab: React.FC = () => {
       {/* SubTab: First Principles Dialectic */}
       {subTab === 'first_principles' && (
         <FirstPrinciplesNotebook dossier={FIRST_PRINCIPLES_DOSSIERS['generative']} />
+      )}
+
+      {/* Deep First-Principles Theory */}
+      {subTab === 'theory' && (
+        <TheorySectionView theory={THEORY_DOSSIERS['generative']} />
+      )}
+
+      {/* Interactive Build It Yourself from Scratch Project */}
+      {subTab === 'build' && (
+        <BuildFromScratchLab project={DIY_PROJECTS['generative']} />
       )}
     </div>
   );

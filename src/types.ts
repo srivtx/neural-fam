@@ -49,3 +49,6 @@ export interface LandmarkModel {
 }
 
 export * from './types/firstPrinciples';
+export * from './types/theory';
+export * from './types/project';
+

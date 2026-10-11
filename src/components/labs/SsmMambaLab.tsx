@@ -4,12 +4,17 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { HelpCircle, Code2, Play, CheckCircle2, Zap, AlertTriangle, Award, Sparkles, ArrowRight, Sliders, Flame } from 'lucide-react';
+import { HelpCircle, Code2, Play, CheckCircle2, Zap, AlertTriangle, Award, Sparkles, ArrowRight, Sliders, Flame, BookOpen, Terminal } from 'lucide-react';
 import { CheckpointQuiz } from '../CheckpointQuiz';
 import { FirstPrinciplesNotebook } from '../FirstPrinciplesNotebook';
 import { FIRST_PRINCIPLES_DOSSIERS } from '../../data/firstPrinciplesData';
+import { TheorySectionView } from '../TheorySectionView';
+import { THEORY_DOSSIERS } from '../../data/theoryData';
+import { BuildFromScratchLab } from '../BuildFromScratchLab';
+import { DIY_PROJECTS } from '../../data/diyProjectsData';
 import { LAB_QUIZZES } from '../../data/labQuizzes';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
+
 
 interface TokenItem {
   text: string;
@@ -70,7 +75,7 @@ export const SsmMambaLab: React.FC = () => {
   const [continuousA, setContinuousA] = useState<number>(-0.8); // Continuous system pole (stable < 0)
   const [deltaStep, setDeltaStep] = useState<number>(0.6); // Discretization timescale Δ
   const [selectiveMode, setSelectiveMode] = useState<boolean>(true);
-  const [subTab, setSubTab] = useState<'visual' | 'code' | 'p027' | 'analogy' | 'quiz' | 'first_principles'>('visual');
+  const [subTab, setSubTab] = useState<'visual' | 'theory' | 'build' | 'code' | 'p027' | 'analogy' | 'quiz' | 'first_principles'>('visual');
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
 
   const activePreset = PRESET_SEQUENCES.find((p) => p.id === selectedPresetId) || PRESET_SEQUENCES[0];
@@ -145,7 +150,7 @@ export const SsmMambaLab: React.FC = () => {
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg overflow-x-auto max-w-full overscroll-x-contain">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
@@ -155,6 +160,39 @@ export const SsmMambaLab: React.FC = () => {
             }`}
           >
             Simulation
+          </button>
+          <button
+            onClick={() => setSubTab('theory')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'theory'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Theory</span>
+          </button>
+          <button
+            onClick={() => setSubTab('build')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'build'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Code2 className="w-3.5 h-3.5" />
+            <span>Build from scratch</span>
+          </button>
+          <button
+            onClick={() => setSubTab('first_principles')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'first_principles'
+                ? 'bg-amber-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>First principles</span>
           </button>
           <button
             onClick={() => setSubTab('p027')}
@@ -174,8 +212,8 @@ export const SsmMambaLab: React.FC = () => {
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            <Code2 className="w-3.5 h-3.5" />
-            <span>Code</span>
+            <Terminal className="w-3.5 h-3.5" />
+            <span>Reference code</span>
           </button>
           <button
             onClick={() => setSubTab('analogy')}
@@ -187,17 +225,6 @@ export const SsmMambaLab: React.FC = () => {
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>Analogy</span>
-          </button>
-          <button
-            onClick={() => setSubTab('first_principles')}
-            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-              subTab === 'first_principles'
-                ? 'bg-amber-600 text-white font-semibold shadow-xs'
-                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
-            }`}
-          >
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
-            <span>First principles</span>
           </button>
           <button
             onClick={() => setSubTab('quiz')}
@@ -513,6 +540,17 @@ export const SsmMambaLab: React.FC = () => {
       {subTab === 'first_principles' && (
         <FirstPrinciplesNotebook dossier={FIRST_PRINCIPLES_DOSSIERS['ssm_mamba']} />
       )}
+
+      {/* Deep First-Principles Theory */}
+      {subTab === 'theory' && (
+        <TheorySectionView theory={THEORY_DOSSIERS['ssm_mamba']} />
+      )}
+
+      {/* Interactive Build It Yourself from Scratch Project */}
+      {subTab === 'build' && (
+        <BuildFromScratchLab project={DIY_PROJECTS['ssm_mamba']} />
+      )}
     </div>
   );
 };
+

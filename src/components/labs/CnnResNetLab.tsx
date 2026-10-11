@@ -4,11 +4,15 @@
  */
 
 import React, { useState } from 'react';
-import { HelpCircle, Code2, Sliders, ShieldCheck, Award, Flame } from 'lucide-react';
+import { HelpCircle, Code2, Sliders, ShieldCheck, Award, Flame, BookOpen, Terminal } from 'lucide-react';
 import { CheckpointQuiz } from '../CheckpointQuiz';
 import { CodeBlock } from '../CodeBlock';
 import { FirstPrinciplesNotebook } from '../FirstPrinciplesNotebook';
 import { FIRST_PRINCIPLES_DOSSIERS } from '../../data/firstPrinciplesData';
+import { TheorySectionView } from '../TheorySectionView';
+import { THEORY_DOSSIERS } from '../../data/theoryData';
+import { BuildFromScratchLab } from '../BuildFromScratchLab';
+import { DIY_PROJECTS } from '../../data/diyProjectsData';
 import { LAB_QUIZZES } from '../../data/labQuizzes';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
 
@@ -16,7 +20,8 @@ export const CnnResNetLab: React.FC = () => {
   const [selectedKernel, setSelectedKernel] = useState<'edge_h' | 'edge_v' | 'sharpen' | 'blur'>('edge_h');
   const [residualEnabled, setResidualEnabled] = useState<boolean>(true);
   const [activeCell, setActiveCell] = useState<{ r: number; c: number }>({ r: 2, c: 2 });
-  const [subTab, setSubTab] = useState<'visual' | 'code' | 'table' | 'analogy' | 'quiz' | 'first_principles'>('visual');
+  const [subTab, setSubTab] = useState<'visual' | 'theory' | 'build' | 'code' | 'table' | 'analogy' | 'quiz' | 'first_principles'>('visual');
+
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
 
   // 6x6 sample binary image (a cross / plus shape)
@@ -151,20 +156,31 @@ export const CnnResNetLab: React.FC = () => {
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex flex-wrap items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg">
+        <div className="flex flex-wrap items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg overflow-x-auto max-w-full overscroll-x-contain">
           <button onClick={() => setSubTab('visual')} className={tabClass(subTab === 'visual')}>
             Kernel lab
           </button>
-          <button onClick={() => setSubTab('table')} className={tabClass(subTab === 'table')}>
-            Lineage
+          <button
+            onClick={() => setSubTab('theory')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'theory'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Theory</span>
           </button>
-          <button onClick={() => setSubTab('code')} className={tabClass(subTab === 'code')}>
+          <button
+            onClick={() => setSubTab('build')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'build'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
             <Code2 className="w-3.5 h-3.5" />
-            <span>Code</span>
-          </button>
-          <button onClick={() => setSubTab('analogy')} className={tabClass(subTab === 'analogy')}>
-            <HelpCircle className="w-3.5 h-3.5" />
-            <span>Analogy</span>
+            <span>Build from scratch</span>
           </button>
           <button
             onClick={() => setSubTab('first_principles')}
@@ -176,6 +192,17 @@ export const CnnResNetLab: React.FC = () => {
           >
             <Flame className="w-3.5 h-3.5 text-amber-400" />
             <span>First principles</span>
+          </button>
+          <button onClick={() => setSubTab('table')} className={tabClass(subTab === 'table')}>
+            Lineage
+          </button>
+          <button onClick={() => setSubTab('code')} className={tabClass(subTab === 'code')}>
+            <Terminal className="w-3.5 h-3.5" />
+            <span>Reference code</span>
+          </button>
+          <button onClick={() => setSubTab('analogy')} className={tabClass(subTab === 'analogy')}>
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>Analogy</span>
           </button>
           <button onClick={() => setSubTab('quiz')} className={tabClass(subTab === 'quiz')}>
             <Award className="w-3.5 h-3.5" />
@@ -461,6 +488,17 @@ function residualBlock(x: number[], weights: number[][]): number[] {
       {subTab === 'first_principles' && (
         <FirstPrinciplesNotebook dossier={FIRST_PRINCIPLES_DOSSIERS['cnn_resnet']} />
       )}
+
+      {/* SubTab 7: Deep First-Principles Theory */}
+      {subTab === 'theory' && (
+        <TheorySectionView theory={THEORY_DOSSIERS['cnn_resnet']} />
+      )}
+
+      {/* SubTab 8: Interactive Build It Yourself from Scratch Project */}
+      {subTab === 'build' && (
+        <BuildFromScratchLab project={DIY_PROJECTS['cnn_resnet']} />
+      )}
     </div>
   );
 };
+

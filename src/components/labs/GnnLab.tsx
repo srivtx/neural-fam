@@ -4,17 +4,22 @@
  */
 
 import React, { useState } from 'react';
-import { HelpCircle, Code2, Play, CheckCircle2, Share2, Layers, Award, Sparkles, ArrowRight, Flame } from 'lucide-react';
+import { HelpCircle, Code2, Play, CheckCircle2, Share2, Layers, Award, Sparkles, ArrowRight, Flame, BookOpen, Terminal } from 'lucide-react';
 import { CheckpointQuiz } from '../CheckpointQuiz';
 import { FirstPrinciplesNotebook } from '../FirstPrinciplesNotebook';
 import { FIRST_PRINCIPLES_DOSSIERS } from '../../data/firstPrinciplesData';
+import { TheorySectionView } from '../TheorySectionView';
+import { THEORY_DOSSIERS } from '../../data/theoryData';
+import { BuildFromScratchLab } from '../BuildFromScratchLab';
+import { DIY_PROJECTS } from '../../data/diyProjectsData';
 import { LAB_QUIZZES } from '../../data/labQuizzes';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
 
 export const GnnLab: React.FC = () => {
   const [targetNode, setTargetNode] = useState<number>(0);
   const [weightW, setWeightW] = useState<number>(1.2);
-  const [subTab, setSubTab] = useState<'visual' | 'code' | 'analogy' | 'quiz' | 'first_principles'>('visual');
+  const [subTab, setSubTab] = useState<'visual' | 'theory' | 'build' | 'code' | 'analogy' | 'quiz' | 'first_principles'>('visual');
+
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
 
   // 5 Nodes: e.g. a small molecule (Carbon ring with an attached oxygen)
@@ -82,7 +87,7 @@ export const GnnLab: React.FC = () => {
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg overflow-x-auto max-w-full overscroll-x-contain">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
@@ -94,6 +99,39 @@ export const GnnLab: React.FC = () => {
             Message passing
           </button>
           <button
+            onClick={() => setSubTab('theory')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'theory'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Theory</span>
+          </button>
+          <button
+            onClick={() => setSubTab('build')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'build'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Code2 className="w-3.5 h-3.5" />
+            <span>Build from scratch</span>
+          </button>
+          <button
+            onClick={() => setSubTab('first_principles')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'first_principles'
+                ? 'bg-amber-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>First principles</span>
+          </button>
+          <button
             onClick={() => setSubTab('code')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               subTab === 'code'
@@ -101,8 +139,8 @@ export const GnnLab: React.FC = () => {
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            <Code2 className="w-3.5 h-3.5" />
-            <span>Code</span>
+            <Terminal className="w-3.5 h-3.5" />
+            <span>Reference code</span>
           </button>
           <button
             onClick={() => setSubTab('analogy')}
@@ -125,17 +163,6 @@ export const GnnLab: React.FC = () => {
           >
             <Award className="w-3.5 h-3.5" />
             <span>Concept check</span>
-          </button>
-          <button
-            onClick={() => setSubTab('first_principles')}
-            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-              subTab === 'first_principles'
-                ? 'bg-amber-600 text-white font-semibold shadow-xs'
-                : 'text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300'
-            }`}
-          >
-            <Flame className="w-3.5 h-3.5" />
-            <span>First Principles</span>
           </button>
         </div>
       </div>
@@ -425,6 +452,17 @@ export const GnnLab: React.FC = () => {
       {subTab === 'first_principles' && (
         <FirstPrinciplesNotebook dossier={FIRST_PRINCIPLES_DOSSIERS['gnn']} />
       )}
+
+      {/* SubTab 6: Deep First-Principles Theory */}
+      {subTab === 'theory' && (
+        <TheorySectionView theory={THEORY_DOSSIERS['gnn']} />
+      )}
+
+      {/* SubTab 7: Interactive Build It Yourself from Scratch Project */}
+      {subTab === 'build' && (
+        <BuildFromScratchLab project={DIY_PROJECTS['gnn']} />
+      )}
     </div>
   );
 };
+

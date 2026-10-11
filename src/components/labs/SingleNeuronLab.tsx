@@ -4,11 +4,15 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, RotateCcw, HelpCircle, Code2, Sparkles, CheckCircle2, Award, Flame } from 'lucide-react';
+import { Play, RotateCcw, HelpCircle, Code2, Sparkles, CheckCircle2, Award, Flame, BookOpen, Terminal } from 'lucide-react';
 import { CheckpointQuiz, QuizQuestion } from '../CheckpointQuiz';
 import { CodeBlock } from '../CodeBlock';
 import { FirstPrinciplesNotebook } from '../FirstPrinciplesNotebook';
 import { FIRST_PRINCIPLES_DOSSIERS } from '../../data/firstPrinciplesData';
+import { TheorySectionView } from '../TheorySectionView';
+import { THEORY_DOSSIERS } from '../../data/theoryData';
+import { BuildFromScratchLab } from '../BuildFromScratchLab';
+import { DIY_PROJECTS } from '../../data/diyProjectsData';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
 
 export const SingleNeuronLab: React.FC = () => {
@@ -24,8 +28,9 @@ export const SingleNeuronLab: React.FC = () => {
   // Preset problem setups
   const [preset, setPreset] = useState<'custom' | 'and_gate' | 'or_gate'>('custom');
 
-  // Sub-tab: Visual vs Code vs Analogy vs Quiz vs First Principles
-  const [subTab, setSubTab] = useState<'visual' | 'code' | 'analogy' | 'quiz' | 'first_principles'>('visual');
+  // Sub-tab: Visual vs Theory vs Build vs Code vs Analogy vs Quiz vs First Principles
+  const [subTab, setSubTab] = useState<'visual' | 'theory' | 'build' | 'code' | 'analogy' | 'quiz' | 'first_principles'>('visual');
+
 
   // Code runner state
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
@@ -254,7 +259,7 @@ export const SingleNeuronLab: React.FC = () => {
         </div>
 
         {/* Lab Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg overflow-x-auto max-w-full overscroll-x-contain">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
@@ -266,26 +271,26 @@ export const SingleNeuronLab: React.FC = () => {
             Simulation
           </button>
           <button
-            onClick={() => setSubTab('code')}
+            onClick={() => setSubTab('theory')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-              subTab === 'code'
+              subTab === 'theory'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Theory</span>
+          </button>
+          <button
+            onClick={() => setSubTab('build')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'build'
                 ? 'bg-brand-600 text-white font-semibold shadow-xs'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <Code2 className="w-3.5 h-3.5" />
-            <span>Code</span>
-          </button>
-          <button
-            onClick={() => setSubTab('analogy')}
-            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-              subTab === 'analogy'
-                ? 'bg-brand-600 text-white font-semibold shadow-xs'
-                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
-            }`}
-          >
-            <HelpCircle className="w-3.5 h-3.5" />
-            <span>Analogy</span>
+            <span>Build from scratch</span>
           </button>
           <button
             onClick={() => setSubTab('first_principles')}
@@ -297,6 +302,28 @@ export const SingleNeuronLab: React.FC = () => {
           >
             <Flame className="w-3.5 h-3.5 text-amber-400" />
             <span>First principles</span>
+          </button>
+          <button
+            onClick={() => setSubTab('code')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'code'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Terminal className="w-3.5 h-3.5" />
+            <span>Reference code</span>
+          </button>
+          <button
+            onClick={() => setSubTab('analogy')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'analogy'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>Analogy</span>
           </button>
           <button
             onClick={() => setSubTab('quiz')}
@@ -656,6 +683,17 @@ console.log('Prediction:', result); // Output: ${output}`}
       {subTab === 'first_principles' && (
         <FirstPrinciplesNotebook dossier={FIRST_PRINCIPLES_DOSSIERS['perceptron']} />
       )}
+
+      {/* SubTab 6: Deep First-Principles Theory */}
+      {subTab === 'theory' && (
+        <TheorySectionView theory={THEORY_DOSSIERS['perceptron']} />
+      )}
+
+      {/* SubTab 7: Interactive Build It Yourself from Scratch Project */}
+      {subTab === 'build' && (
+        <BuildFromScratchLab project={DIY_PROJECTS['perceptron']} />
+      )}
     </div>
   );
 };
+

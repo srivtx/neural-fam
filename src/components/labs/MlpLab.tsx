@@ -4,11 +4,15 @@
  */
 
 import React, { useState } from 'react';
-import { HelpCircle, Code2, Play, CheckCircle2, AlertTriangle, Layers, Award, Flame } from 'lucide-react';
+import { HelpCircle, Code2, Play, CheckCircle2, AlertTriangle, Layers, Award, Flame, BookOpen, Terminal } from 'lucide-react';
 import { CheckpointQuiz, QuizQuestion } from '../CheckpointQuiz';
 import { CodeBlock } from '../CodeBlock';
 import { FirstPrinciplesNotebook } from '../FirstPrinciplesNotebook';
 import { FIRST_PRINCIPLES_DOSSIERS } from '../../data/firstPrinciplesData';
+import { TheorySectionView } from '../TheorySectionView';
+import { THEORY_DOSSIERS } from '../../data/theoryData';
+import { BuildFromScratchLab } from '../BuildFromScratchLab';
+import { DIY_PROJECTS } from '../../data/diyProjectsData';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
 
 export const MlpLab: React.FC = () => {
@@ -19,7 +23,8 @@ export const MlpLab: React.FC = () => {
     label: '(1, 0)',
     target: 1,
   });
-  const [subTab, setSubTab] = useState<'visual' | 'code' | 'analogy' | 'quiz' | 'first_principles'>('visual');
+  const [subTab, setSubTab] = useState<'visual' | 'theory' | 'build' | 'code' | 'analogy' | 'quiz' | 'first_principles'>('visual');
+
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
 
   const mlpQuizQuestions: QuizQuestion[] = [
@@ -106,7 +111,7 @@ export const MlpLab: React.FC = () => {
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg">
+        <div className="flex items-center gap-1 p-1 bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-lg overflow-x-auto max-w-full overscroll-x-contain">
           <button
             onClick={() => setSubTab('visual')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
@@ -118,26 +123,26 @@ export const MlpLab: React.FC = () => {
             Simulation
           </button>
           <button
-            onClick={() => setSubTab('code')}
+            onClick={() => setSubTab('theory')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-              subTab === 'code'
+              subTab === 'theory'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Theory</span>
+          </button>
+          <button
+            onClick={() => setSubTab('build')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'build'
                 ? 'bg-brand-600 text-white font-semibold shadow-xs'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
             <Code2 className="w-3.5 h-3.5" />
-            <span>Code</span>
-          </button>
-          <button
-            onClick={() => setSubTab('analogy')}
-            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-              subTab === 'analogy'
-                ? 'bg-brand-600 text-white font-semibold shadow-xs'
-                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
-            }`}
-          >
-            <HelpCircle className="w-3.5 h-3.5" />
-            <span>Analogy</span>
+            <span>Build from scratch</span>
           </button>
           <button
             onClick={() => setSubTab('first_principles')}
@@ -149,6 +154,28 @@ export const MlpLab: React.FC = () => {
           >
             <Flame className="w-3.5 h-3.5 text-amber-400" />
             <span>First principles</span>
+          </button>
+          <button
+            onClick={() => setSubTab('code')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'code'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Terminal className="w-3.5 h-3.5" />
+            <span>Reference code</span>
+          </button>
+          <button
+            onClick={() => setSubTab('analogy')}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              subTab === 'analogy'
+                ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>Analogy</span>
           </button>
           <button
             onClick={() => setSubTab('quiz')}
@@ -462,6 +489,17 @@ export const MlpLab: React.FC = () => {
       {subTab === 'first_principles' && (
         <FirstPrinciplesNotebook dossier={FIRST_PRINCIPLES_DOSSIERS['mlp']} />
       )}
+
+      {/* SubTab 6: Deep First-Principles Theory */}
+      {subTab === 'theory' && (
+        <TheorySectionView theory={THEORY_DOSSIERS['mlp']} />
+      )}
+
+      {/* SubTab 7: Interactive Build It Yourself from Scratch Project */}
+      {subTab === 'build' && (
+        <BuildFromScratchLab project={DIY_PROJECTS['mlp']} />
+      )}
     </div>
   );
 };
+
