@@ -124,7 +124,7 @@ export default function App() {
   const sharedUrl = 'https://ais-pre-wtquidnmwlynjc3xzujcc6-371726331409.asia-southeast1.run.app';
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-ink-50 dark:bg-ink-950 text-ink-800 dark:text-ink-100 flex flex-col font-sans transition-colors selection:bg-brand-500/20 selection:text-brand-800 dark:selection:text-brand-200">
+    <div className="min-h-screen w-full max-w-full overflow-x-clip bg-ink-50 dark:bg-ink-950 text-ink-800 dark:text-ink-100 flex flex-col font-sans transition-colors selection:bg-brand-500/20 selection:text-brand-800 dark:selection:text-brand-200">
       {/* Universal Top Bar - Can be toggled / hidden for desktop immersion */}
       {!isNavHidden && (
         <TopNav

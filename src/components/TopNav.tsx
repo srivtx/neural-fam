@@ -62,18 +62,18 @@ export const TopNav: React.FC<TopNavProps> = ({
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/95 dark:bg-ink-950/95 backdrop-blur-md border-b border-ink-200 dark:border-white/10 transition-colors shadow-2xs">
-      <div className="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-6 xl:px-8 py-2 flex items-center justify-between gap-1.5 sm:gap-3 xl:gap-4 overflow-visible">
+      <div className="max-w-7xl w-full mx-auto px-3 sm:px-4 lg:px-6 py-2 flex items-center justify-between gap-2 lg:gap-3 xl:gap-4 overflow-visible">
         {/* Zone 1: Brand wordmark & Quick Search */}
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           <button
             onClick={() => onSelectView('home')}
-            className="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-none shrink-0"
+            className="flex items-center gap-2 text-left group cursor-pointer focus:outline-none shrink-0"
           >
             <div className="w-8 h-8 rounded-lg bg-brand-500/10 dark:bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-brand-600 dark:text-brand-400 group-hover:scale-105 transition-transform shrink-0">
               <Network className="w-4 h-4" />
             </div>
             <div className="flex flex-col">
-              <span className="text-base font-bold tracking-tight text-ink-900 dark:text-white whitespace-nowrap group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+              <span className="text-sm sm:text-base font-bold tracking-tight text-ink-900 dark:text-white whitespace-nowrap group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                 Neural Family
               </span>
               <span className="text-[10px] text-ink-400 dark:text-ink-500 font-mono -mt-1 hidden sm:block">
@@ -86,18 +86,18 @@ export const TopNav: React.FC<TopNavProps> = ({
           <button
             onClick={onOpenSearch}
             title="Search architectures, labs, or formulas (Ctrl+K)"
-            className="hidden md:flex items-center gap-2 px-2.5 py-1 text-xs text-ink-500 dark:text-ink-400 bg-ink-100 hover:bg-ink-200/80 dark:bg-ink-800/80 dark:hover:bg-ink-800 rounded-lg border border-ink-200/60 dark:border-white/10 transition-colors cursor-pointer shrink-0"
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-1 text-xs text-ink-500 dark:text-ink-400 bg-ink-100 hover:bg-ink-200/80 dark:bg-ink-800/80 dark:hover:bg-ink-800 rounded-lg border border-ink-200/60 dark:border-white/10 transition-colors cursor-pointer shrink-0"
           >
             <Search className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
-            <span>Search</span>
+            <span className="hidden xl:inline">Search</span>
             <kbd className="text-[10px] font-mono px-1 py-0.2 rounded bg-white dark:bg-ink-900 border border-ink-200 dark:border-white/10 text-ink-400">
               Ctrl+K
             </kbd>
           </button>
         </div>
 
-        {/* Zone 2: Navigation Links (Responsive compact labels on lg, full on xl) */}
-        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 text-xs font-semibold text-ink-600 dark:text-ink-300 shrink min-w-0 p-0.5 bg-ink-100/70 dark:bg-ink-900/60 rounded-xl border border-ink-200/60 dark:border-white/5">
+        {/* Zone 2: Navigation Links (Responsive compact labels on lg, full on 2xl) */}
+        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 text-xs font-semibold text-ink-600 dark:text-ink-300 shrink-0 p-0.5 bg-ink-100/70 dark:bg-ink-900/60 rounded-xl border border-ink-200/60 dark:border-white/5">
           <button
             onClick={() => onSelectView('home')}
             title="Home (Press 1)"
@@ -119,8 +119,8 @@ export const TopNav: React.FC<TopNavProps> = ({
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            <span className="xl:hidden">Atlas</span>
-            <span className="hidden xl:inline">Tree Atlas</span>
+            <span className="hidden 2xl:inline">Tree Atlas</span>
+            <span className="2xl:hidden">Atlas</span>
           </button>
 
           <button
@@ -132,8 +132,8 @@ export const TopNav: React.FC<TopNavProps> = ({
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            <span className="xl:hidden">Labs</span>
-            <span className="hidden xl:inline">Project Labs</span>
+            <span className="hidden 2xl:inline">Project Labs</span>
+            <span className="2xl:hidden">Labs</span>
           </button>
 
           <button
@@ -145,8 +145,8 @@ export const TopNav: React.FC<TopNavProps> = ({
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            <span className="xl:hidden">Matrix</span>
-            <span className="hidden xl:inline">3-Question Matrix</span>
+            <span className="hidden 2xl:inline">3-Question Matrix</span>
+            <span className="2xl:hidden">Matrix</span>
           </button>
 
           {/* Architecture Synthesis Studio Tab */}
@@ -160,8 +160,8 @@ export const TopNav: React.FC<TopNavProps> = ({
             }`}
           >
             <Compass className="w-3.5 h-3.5" />
-            <span className="xl:hidden">Synthesis</span>
-            <span className="hidden xl:inline">Synthesis Studio</span>
+            <span className="hidden 2xl:inline">Synthesis Studio</span>
+            <span className="2xl:hidden">Synthesis</span>
           </button>
 
           <button
@@ -173,8 +173,8 @@ export const TopNav: React.FC<TopNavProps> = ({
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            <span className="xl:hidden">Code</span>
-            <span className="hidden xl:inline">Code Workshop</span>
+            <span className="hidden 2xl:inline">Code Workshop</span>
+            <span className="2xl:hidden">Code</span>
           </button>
         </nav>
 
@@ -266,7 +266,7 @@ export const TopNav: React.FC<TopNavProps> = ({
                 </span>
               </div>
 
-              <div className="hidden sm:flex items-center gap-1 text-[11px] text-ink-600 dark:text-ink-300 font-medium">
+              <div className="hidden sm:flex lg:hidden 2xl:flex items-center gap-1 text-[11px] text-ink-600 dark:text-ink-300 font-medium">
                 <Trophy className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
                 <span>
                   {stats.unlockedBadgesCount}/{stats.totalBadgesCount}
