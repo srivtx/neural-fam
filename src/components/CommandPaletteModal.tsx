@@ -114,7 +114,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       {
         id: 'nav-questions-graph',
         title: 'Socratic Question Graph (Inquiry Web)',
-        subtitle: 'From electron bandgaps to language and memory buses: 18 interconnected first-principles inquiries',
+        subtitle: 'From electron bandgaps to language and memory buses: 50 interconnected first-principles inquiries',
         category: 'feature',
         badge: 'Inquiry Graph',
         action: () => {

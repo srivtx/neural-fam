@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  * SocraticQuestionGraphView:
- * An interactive, connected graph of 30 first-principles inquiries linking
+ * An interactive, connected graph of 50 first-principles inquiries linking
  * quantum electrons and physical bits to Python VMs, geometric manifolds,
  * gradients, language, memory buses, and frontier AI architectures.
  *

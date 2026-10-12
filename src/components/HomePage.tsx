@@ -405,7 +405,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-emerald-900 dark:text-emerald-200 bg-emerald-100/80 hover:bg-emerald-200/90 dark:bg-emerald-500/20 dark:hover:bg-emerald-500/30 rounded-xl border border-emerald-300 dark:border-emerald-500/40 transition-all cursor-pointer shadow-xs active:scale-95"
             >
               <Network className="w-4 h-4 text-emerald-500" />
-              <span>Socratic Question Graph (18 Inquiries)</span>
+              <span>Socratic Question Graph (50 Inquiries)</span>
             </button>
 
             <button

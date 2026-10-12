@@ -1,8 +1,8 @@
 <p align="center">
   <h1 align="center">Neural Family Tree</h1>
-  <p align="center"><strong>An interactive evolutionary laboratory for artificial neural network architectures.</strong></p>
+  <p align="center"><strong>An interactive evolutionary laboratory and first-principles epistemology engine for artificial neural network architectures.</strong></p>
   <p align="center">
-    From the 1943 McCulloch-Pitts threshold neuron to modern Transformers, Mamba state-space models, and Diffusion networks.
+    From quantum electrons hopping silicon bandgaps to biological action potentials, manifold folding, attention lasers, selective continuous state spaces, and non-equilibrium thermodynamic unity.
   </p>
 </p>
 
@@ -18,10 +18,12 @@
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> &bull;
-  <a href="#key-capabilities">Key Capabilities</a> &bull;
-  <a href="#the-3-question-architectural-taxonomy">3-Question Taxonomy</a> &bull;
-  <a href="#interactive-laboratories">Interactive Labs</a> &bull;
-  <a href="#architecture-synthesis-studio">Synthesis Studio</a> &bull;
+  <a href="#core-architectural-pillars">Core Pillars</a> &bull;
+  <a href="#1-socratic-question-graph">Socratic Question Graph</a> &bull;
+  <a href="#2-theory-thinking-sanctuary">Theory Thinking Sanctuary</a> &bull;
+  <a href="#3-architecture-synthesis-studio">Synthesis Studio</a> &bull;
+  <a href="#4-interactive-laboratories">Interactive Labs</a> &bull;
+  <a href="#keyboard-shortcuts">Shortcuts</a> &bull;
   <a href="#deployment">Deployment</a>
 </p>
 
@@ -29,31 +31,126 @@
 
 ## What is Neural Family Tree?
 
-Most machine learning courses ask students to memorize model acronyms (`CNN`, `RNN`, `Transformer`, `SSM`) as disconnected black boxes.
+Most machine learning resources teach neural architectures as disconnected black-box acronyms (`CNN`, `RNN`, `Transformer`, `Mamba`, `Diffusion`).
 
-**Neural Family Tree** is organized around **inductive biases** and **hardware constraints**:
-1. **Topology & Symmetries:** Does the data live on an ordered 1D stream, a 2D spatial grid, an arbitrary relational graph, or an unordered set?
-2. **Gradient Survival:** How do backpropagation signals travel across 100+ layers without vanishing or exploding? ($y = x + F(x)$)
-3. **Information Bottlenecks:** What forced each paradigm shift? (Perceptron XOR failure &rarr; MLP non-linear manifolds &rarr; Vanishing gradients &rarr; ResNet skips &rarr; Sequential recurrence bottleneck &rarr; Transformer parallel attention &rarr; Quadratic memory wall &rarr; Selective SSMs).
-
-Every concept is backed by an interactive mathematical canvas running client-side tensor calculations, live parameter counters, and copyable PyTorch reference modules.
+**Neural Family Tree** is built on **first-principles physics, geometry, and hardware reality**:
+1. **The Physical Continuum:** Information is never abstract. Before there is a token, there is an electron hopping across a $1.12\text{ eV}$ silicon bandgap. Before there is an embedding vector, there is a voltage potential well.
+2. **Inductive Biases & Symmetries:** Does your data live on an ordered 1D temporal stream, a 2D spatial grid, an arbitrary relational graph, or a continuous Riemannian manifold?
+3. **Hardware Constraints:** Arithmetic is virtually free on Tensor Cores ($>1,000\text{ TFLOP/s}$), but electron transit across macroscopic wires to off-chip HBM is bounded by relativistic propagation delays ($0.152\text{ mm/ps}$) and capacitive heating. Real-world architectures are shapes carved out by the memory bus.
+4. **Epistemic Invariants:** Every paradigm shift resolves an intolerable contradiction:
+   $$\text{Perceptron XOR failure} \longrightarrow \text{MLP non-linear manifolds} \longrightarrow \text{Vanishing gradients} \longrightarrow \text{ResNet skip highways} \longrightarrow \text{Sequential bottlenecks} \longrightarrow \text{Transformer parallel attention} \longrightarrow \text{Quadratic memory wall} \longrightarrow \text{Selective State Spaces (Mamba)} \longrightarrow \text{Thermodynamic Diffusion & Flow Matching}$$
 
 ---
 
-## Key Capabilities
+## Core Pillars & Modules
 
-- **Architecture Synthesis Studio:** Compose custom neural blocks from scratch (Attention, Sliding-Window, Linear Attention, Mamba SSM, Depthwise Convolutions, SwiGLU, and Sparse Mixture of Experts). Live KV-cache memory estimator, GPU roofline simulator, VRAM bounds, and automatic PyTorch `nn.Module` code generation.
-- **9 Progressive Interactive Labs:** From a single McCulloch-Pitts decision boundary to XOR manifold folding, $3\times3$ spatial convolutions, LSTM forget valves, multi-head attention heatmaps, and continuous ODE dynamical flows.
-- **The 3-Question Decision Compass:** Rapidly diagnose the optimal architecture family for any dataset in 30 seconds.
-- **Family Tree Atlas:** Chronological exploration of landmark models with author credits, year of publication, and exact paper references.
-- **PyTorch Code Workshop:** Production-ready reference implementations of modern primitives (Scaled Dot-Product Attention, RoPE, RMSNorm, SwiGLU, Minimal Mamba, and GCN).
-- **Zero-Latency In-Browser Math:** Procedural math engine written in pure TypeScript with zero external Python backend requirements.
+| Module | Focus | Landmark Primitives | Key Interactive Feature |
+| :--- | :--- | :--- | :--- |
+| **Socratic Question Graph** (<kbd>8</kbd>) | 50 interconnected inquiries linking physics to AI | Silicon bits, Python VM, NTK, TC⁰ bounds, memory walls | Damped trackpad pan/zoom, causal spotlight & 12 Wasm Python proofs |
+| **Theory Thinking Sanctuary** (<kbd>7</kbd>) | Epistemology & how theorists invent breakthroughs | 5 Physical Pillars, 11 Leap Patterns, 4 Gedankenexperiments | 7 Real-time HTML5 Canvas physical simulations with live sliders |
+| **Architecture Synthesis Studio** (<kbd>5</kbd>) | Custom block composition & hardware profiling | MHA, GQA, Sliding Window, Mamba, SwiGLU, MoE | Live VRAM estimator, GPU roofline model & PyTorch/JAX code generation |
+| **Interactive Laboratories** (<kbd>3</kbd>) | 9 hands-on visual playgrounds (Levels 0–8) | Single Neuron, XOR, CNN, LSTM, Attention, Mamba, GNN, Diffusion, ODE | Client-side tensor engines, 2D decision planes & continuous vector fields |
+| **3-Question Taxonomy** (<kbd>4</kbd>) | Diagnostic architectural decision matrix | Topology, inductive bias, compute complexity | 30-second architecture selector for production datasets |
+| **Code Reference Workshop** (<kbd>6</kbd>) | Clean reference implementations from scratch | Scaled Dot-Product, RoPE, RMSNorm, Minimal Mamba, GCN | Pure TypeScript procedural verification & copyable PyTorch code |
+| **Tree Atlas** (<kbd>2</kbd>) | Chronological evolutionary lineage graph | 1943 McCulloch-Pitts to 2026 frontier models | Interactive SVG timeline with historical paper citations |
+
+---
+
+## 1. Socratic Question Graph
+
+An interactive web of **50 landmark first-principles inquiries** spanning six cosmological realms:
+
+```
+[Physical Substrate & Potential Wells] ──► [Bytecode & Computation] ──► [Manifold Geometry & Topology]
+                     │                                                               │
+                     ▼                                                               ▼
+        [The Silicon Bus & Hardware Wall] ◄── [Semantic Topology] ◄── [High-Dim Optimization]
+                     │
+                     ▼
+       [The Grand Unification Invariant] (Step 50)
+```
+
+### Highlights:
+- **Damped Trackpad Physics**: Natural two-finger trackpad drag smoothly pans the canvas (`panSpeed = 0.75`). Pinch-to-zoom (`e.ctrlKey || e.metaKey`) continuously scales around cursor focus without page scrolling jitter (`{ passive: false }` event trapping).
+- **Focal Causal Spotlight**: Selecting or hovering any node illuminates its immediate prerequisites and consequences while background edges dim to $0.06$ opacity, turning a 50-node graph into a calm, focused reading experience.
+- **Minimap Radar Navigator**: Picture-in-picture viewport tracker with one-click canvas centering.
+- **12 In-Browser Python WebAssembly Verification Proofs**: Run verified mathematical proofs directly inside the browser using Pyodide (or the high-speed WebAssembly client simulation fallback):
+  - *Proof 01*: Quantum Boltzmann Barrier & Voltage Swing
+  - *Proof 03*: Floating Point Catastrophic Cancellation
+  - *Proof 08*: High-Dimensional Hypersphere Orthogonality (Dirac Collapse at $d=4096$)
+  - *Proof 10*: Exponential Polytope Manifold Folding ($2^L$ regions)
+  - *Proof 17*: Condition Number & Hessian Curvature
+  - *Proof 25*: Attention Softmax Thermal Entropy
+  - *Proof 27*: HBM Roofline Arithmetic Intensity Wall
+  - *Proof 34*: Multi-Head vs Multi-Head Latent Attention (MLA) VRAM Cache
+  - *Proof 42*: Grokking & Phase Transition Dynamics
+  - *Proof 50*: The Grand Unification Invariant
+
+---
+
+## 2. Theory Thinking Sanctuary
+
+An epistemology engine teaching researchers how breakthroughs are actually conceived.
+
+### A. The 7 Real-Time Canvas Physical Simulations
+Interactive 60fps HTML5 Canvas simulators demonstrating the physical mechanisms underlying machine learning:
+
+1. **Quantum Electron Bandgap**: Silicon periodic crystal lattice interference creating a $1.12\text{ eV}$ forbidden bandgap between valence and conduction bands, enabling physical bi-stability (the binary bit).
+2. **Thermodynamic Entropy & Langevin Reversal**: Non-equilibrium Brownian thermal dispersion and its exact time-reversal via score matching ($\nabla_x \log p_t(x)$).
+3. **Content-Addressable Attention Beam**: Dynamic query spotlights casting laser beams to key vectors scaled by $1/\sqrt{d_k}$ with thermal entropy controls.
+4. **High-Dimensional Hypersphere Orthogonality**: Hypersphere $\mathbb{S}^{d-1}$ projection and live cosine similarity histogram showing the Dirac delta collapse $\delta(0)$ at $d=4096$ ($\text{Var} = 1/d$).
+5. **Continuous Neural ODEs & Invertible Flows**: Intertwined 2D spirals untangling continuously over time $t \in [0, 1]$ through a velocity vector field $v(x, y, t)$, with interactive time scrubber and Pontryagin Adjoint reverse flow ($O(1)$ memory).
+6. **3D Saddle Point & Momentum Escape**: Quartic loss saddle surface comparing frozen Vanilla SGD ($\|\nabla L\| \approx 0$) vs Heavy-Ball Momentum / Langevin particles escaping along the negative curvature eigenvector.
+7. **Grokking Phase Transitions**: Dual-pane visualizer showing the weight spectrum circle spontaneously crystallizing into symmetric Fourier harmonics in $\mathbb{Z}_p$ alongside the training/validation loss cliff drop.
+
+### B. Four Pure-Scratch Gedankenexperiments (Thought Experiments)
+Axiomatic step-by-step mathematical proofs accompanied by physical interpretations and silicon reality checks:
+1. **The Infinite Width Limit (Neural Tangent Kernel Paradox)**: Why infinite capacity destroys representation learning, linearizing deep networks into static kernel machines.
+2. **The Speed-of-Light Memory Wall (SRAM vs HBM Electron Transit)**: Why floating-point arithmetic is free, but moving charge across macroscopic copper traces chokes inference.
+3. **The Landauer Reversibility Limit (Flow Matching vs Non-Equilibrium Entropy)**: Why stochastic Wiener noise incurs an irreducible thermodynamic penalty over straight-line flow matching.
+4. **Continuous Depth & The Adjoint Memory Invariant (Pontryagin Maximum Principle)**: Why continuous depth eliminates the $O(L)$ activation RAM bottleneck in backpropagation.
+
+### C. The 11 Universal Cognitive Leap Patterns
+Discoverable research templates (Continuous Relaxation, Dual Space Inversion, Capacity Normalization, Group Symmetries, Hamiltonian Momentum, Thermodynamic Phase Transitions, Selective Continuous State Spaces, etc.).
+
+### D. The Invention Gym
+Interactive research challenges (Quadratic Context Wall, GNN Over-Smoothing, Catastrophic Forgetting, Reasoning Test-Time Compute Barrier) where you test cross-disciplinary metaphors and synthesize architectural invariants.
+
+---
+
+## 3. Architecture Synthesis Studio
+
+Design custom neural blocks from scratch and benchmark them against real hardware workloads:
+
+- **Configurable Primitives**: Stack any combination of MHA, Grouped-Query Attention (GQA), Sliding Window Attention, Minimal Mamba SSM, Depthwise Convolutions, SwiGLU, and Sparse Mixture of Experts (MoE).
+- **Head-to-Head Battle (Compare Mode)**: Compare any two architectures side-by-side (e.g. MHA Transformer vs Hybrid SSM-MoE/Jamba) across context lengths from $512$ to $131,072$ tokens. Computes the analytical memory crossover point where quadratic attention exceeds linear state-space overhead.
+- **Hardware Targets**: NVIDIA H100 (80GB), A100 (80GB), RTX 4090 (24GB), T4 (16GB), Apple Silicon (16GB/36GB), and Edge Microcontrollers (512KB).
+- **Roofline Feasibility Engine**: Evaluates arithmetic intensity ($\text{FLOPs} / \text{Byte}$) against hardware memory bandwidth to diagnose memory-bound vs compute-bound bottlenecks.
+- **Scaling Laws & Training Economics**: Computes Chinchilla-optimal token sizing ($D \approx 20P$), total pre-training FLOPs ($6PD$), required H100 GPU cluster count for a 14-day training run, and estimated cloud budget in USD.
+- **Multi-Framework Code Generation**: Generates copyable, production-ready PyTorch `nn.Module` classes, JAX/Flax architectures, HuggingFace `config.json` specifications, and Mermaid architecture diagrams.
+- **Shareable URL Blueprints**: Architecture configurations are serialized directly into URL hash parameters for zero-backend team sharing.
+
+---
+
+## 4. Interactive Laboratories
+
+| Level | Laboratory | Core Invariant | Key Visualizer |
+| :---: | :--- | :--- | :--- |
+| **0** | **Single Neuron** | $y = \sigma(W x + b)$ | 2D decision boundary with live weight and bias sliders |
+| **1** | **MLP & XOR Space Warping** | $h = \text{ReLU}(W_1 x + b_1)$ | Non-linear geometric manifold deformation folding XOR space |
+| **2** | **CNN & ResNet Highways** | $y = x + F(x)$ | $3\times3$ spatial convolution kernels and residual gradient flow |
+| **3** | **RNN & LSTM Memory** | $C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t$ | Sequence timeline with dynamic forget/input valve gauges |
+| **4** | **Transformers & Attention** | $\text{Softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$ | Winograd coreference resolution, multi-head projections, $N \times N$ heatmaps & Shannon entropy |
+| **5** | **State-Space Models & Mamba** | $h_{t+1} = \bar{A}h_t + \bar{B}(x_t) x_t$ | Continuous discretization and selective token-dependent filtering |
+| **6** | **Graph Neural Networks** | $h_v^{(k)} = \text{AGG}\left(\{h_u : u \in \mathcal{N}(v)\}\right)$ | Relational message passing and over-smoothing depth stress test |
+| **7** | **Diffusion & Generative Models** | $q(x_t \mid x_{t-1}), \; p_\theta(x_{t-1} \mid x_t)$ | Variance schedule scrubber, animated trajectory, and Tweedie denoising reconstruction |
+| **8** | **Neural ODEs & Continuous Systems** | $\frac{dh(t)}{dt} = f(h, t, \theta)$ | Continuous vector field trajectories with adaptive numerical integration |
 
 ---
 
 ## The 3-Question Architectural Taxonomy
 
-Every neural network architecture answers three engineering questions:
+Every modern architecture answers three physical and geometric constraints:
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -74,52 +171,41 @@ Every neural network architecture answers three engineering questions:
 └────────────────────────────────────────────────────────┘
 ```
 
-| Family | Topology | Routing Primitive | Complexity | Landmark Example |
+| Family | Topology | Routing Primitive | Complexity | Landmark Architecture |
 | :--- | :--- | :--- | :--- | :--- |
 | **Feedforward** | Fixed vector | Dense matrix multiplication | $O(d^2)$ | MLP, Rosenblatt Perceptron |
 | **Convolutional** | 2D/3D Grid | Sliding localized kernels | $O(N \cdot k)$ | ConvNeXt, ResNet-50 |
 | **Sequential** | 1D Ordered | Recurrent hidden state update | $O(N)$ (sequential) | LSTM, GRU |
-| **Attention** | Any token set | Scaled pairwise dot-product | $O(N^2)$ | Transformer, LLaMA 3 |
-| **State-Space (SSM)** | Continuous sequence | Discretized linear state dynamics | $O(N)$ (parallel) | Mamba-2, S4 |
+| **Attention** | Token set | Scaled pairwise dot-product | $O(N^2)$ | Transformer, LLaMA 3 |
+| **State-Space (SSM)** | Continuous sequence | Selective continuous state dynamics | $O(N)$ (parallel) | Mamba-2, S4 |
 | **Graph Networks** | Arbitrary topology | Topological message passing | $O(\|E\|)$ | GCN, AlphaFold-2 |
-| **Generative** | Continuous manifold | Denoising diffusion / Latent bottleneck | Adaptive steps | DDPM, VAE |
+| **Generative** | Continuous manifold | Denoising diffusion / Optimal transport | Adaptive steps | DDPM, Flow Matching |
+| **Continuous ODEs** | Continuous time | Learned velocity vector field | $O(1)$ memory | Neural ODEs, FFJORD |
 
 ---
 
-## Architecture Synthesis Studio
+## Keyboard Shortcuts
 
-The studio allows you to design custom hybrid architectures and test them against realistic hardware workloads:
-
-- **Head-to-Head Battle (Compare Mode):** Compare any two architectures side-by-side (e.g. MHA Transformer vs. Hybrid SSM/Jamba) across sequence lengths from $512$ to $131,072$ tokens. Computes the analytical memory crossover point where quadratic attention exceeds linear SSM state overhead.
-- **Configurable Primitives:** Stack any combination of MHA, Grouped-Query Attention (GQA), Sliding Window Attention, Mamba SSM, 1D Convolutions, SwiGLU, and Mixture of Experts (MoE).
-- **Hardware Targets:** Verify memory feasibility against NVIDIA H100 (80GB), A100 (80GB), RTX 4090 (24GB), T4 (16GB), Laptop GPUs (8GB), or Microcontrollers (512KB).
-- **Live Memory Profiler:** Real-time breakdown of model weights, KV-cache footprint across sequence lengths, and activation buffers.
-- **Roofline Feasibility Engine:** Evaluates arithmetic intensity ($\text{FLOPs} / \text{Byte}$) against GPU memory bandwidth to identify memory-bound vs. compute-bound regimes.
-- **Scaling Laws & Training Economics:** Compute Chinchilla-optimal token requirements ($D \approx 20P$), total pre-training FLOPs ($6PD$), required H100 cluster sizing for a 14-day run, and estimated cloud training budget in USD.
-- **Multi-Framework Code Export:** Generates executable PyTorch modules, JAX/Flax architectures, HuggingFace `config.json` definitions, and Mermaid dataflow diagrams.
-- **Shareable URL Blueprints:** Architecture designs are encoded directly into the URL hash for zero-backend team sharing.
-
----
-
-## Interactive Laboratories
-
-| Level | Laboratory | Core Formula | Key Visualizer |
-| :---: | :--- | :--- | :--- |
-| **0** | **Single Neuron** | $y = \sigma(W x + b)$ | 2D decision boundary with live weight and bias sliders |
-| **1** | **MLP & XOR Space Warping** | $h = \text{ReLU}(W_1 x + b_1)$ | Non-linear geometric surface deformation separating XOR |
-| **2** | **CNN & ResNet Highways** | $y = x + F(x)$ | Interactive $3\times3$ filter convolution and residual gradient flow |
-| **3** | **RNN & LSTM Memory** | $C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t$ | Sequence timeline with dynamic forget and input gate valves |
-| **4** | **Transformers & Attention** | $\text{Softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$ | Winograd schema coreference selector, multi-head projection, $N \times N$ heatmap, and Shannon entropy |
-| **5** | **State-Space Models & Mamba** | $h_{t+1} = \bar{A}h_t + \bar{B}x_t$ | Continuous discretization and input-dependent selective filtering |
-| **6** | **Graph Neural Networks** | $h_v^{(k)} = \text{AGG}\left(\{h_u : u \in \mathcal{N}(v)\}\right)$ | Relational message passing and over-smoothing depth stress test |
-| **7** | **Diffusion & Generative Models** | $q(x_t \mid x_{t-1}), \; p_\theta(x_{t-1} \mid x_t)$ | Cosine/linear variance schedule scrubber, animated trajectory, and Tweedie reconstruction $\hat{x}_0$ |
-| **8** | **Neural ODEs & Continuous Systems** | $\frac{dh(t)}{dt} = f(h, t, \theta)$ | Continuous vector field trajectories with adaptive Euler steps |
+| Key | Destination / Action |
+| :---: | :--- |
+| <kbd>1</kbd> | **Home Overview** & Evolutionary Timeline |
+| <kbd>2</kbd> | **Tree Atlas** (Chronological model catalog) |
+| <kbd>3</kbd> | **Project Laboratories** (Levels 0–8) |
+| <kbd>4</kbd> | **3-Question Taxonomy Matrix** |
+| <kbd>5</kbd> | **Architecture Synthesis Studio** |
+| <kbd>6</kbd> | **PyTorch Code Reference Workshop** |
+| <kbd>7</kbd> | **Theory Thinking Sanctuary** (Epistemology & Physical Simulations) |
+| <kbd>8</kbd> | **Socratic Question Graph** (50 Inquiries & Python Wasm Proofs) |
+| <kbd>Ctrl</kbd> + <kbd>K</kbd> / <kbd>Cmd</kbd> + <kbd>K</kbd> | **Global Command Palette** & Instant Fuzzy Search |
+| <kbd>?</kbd> | **Architectural Glossary & Analogies** |
+| <kbd>F</kbd> | **Focus Mode** (Toggle Top Navigation Bar) |
+| <kbd>Esc</kbd> | Close any active modal or search palette |
 
 ---
 
 ## Quick Start
 
-### Using Bun (Recommended)
+### Using Bun (Fastest)
 
 ```bash
 # Clone the repository
@@ -140,7 +226,22 @@ npm install
 npm run dev
 ```
 
-Open your browser to `http://localhost:3000`.
+Open `http://localhost:3000` in your browser.
+
+---
+
+## Verification & Typecheck
+
+```bash
+# TypeScript compiler verification (Strict mode)
+npm run typecheck
+
+# Production build bundle
+npm run build
+
+# Preview production build locally
+npm run preview
+```
 
 ---
 
@@ -150,33 +251,7 @@ Open your browser to `http://localhost:3000`.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsrivtx%2Fneural-fam)
 
-The application builds as a clean, static single-page application with zero server dependencies:
-
-```bash
-# Production build
-npm run build
-
-# Preview production output locally
-npm run preview
-```
-
-Output is compiled to the `dist/` folder, ready for immediate deployment on Vercel, Cloudflare Pages, Netlify, or AWS S3.
-
----
-
-## Keyboard Shortcuts
-
-| Shortcut | Destination / Action |
-| :---: | :--- |
-| <kbd>1</kbd> | Home Overview & Evolutionary Timeline |
-| <kbd>2</kbd> | Tree Atlas (Chronological model catalog) |
-| <kbd>3</kbd> | Interactive Project Laboratories |
-| <kbd>4</kbd> | 3-Question Architectural Taxonomy Matrix |
-| <kbd>5</kbd> | Architecture Synthesis Studio |
-| <kbd>6</kbd> | PyTorch Code Reference Workshop |
-| <kbd>Ctrl</kbd> + <kbd>K</kbd> | Global Search & Command Palette |
-| <kbd>?</kbd> | Architectural Glossary & Analogies |
-| <kbd>F</kbd> | Focus Mode (Toggle Top Navigation) |
+The project compiles to an ultra-fast, zero-backend static single-page application ready for deployment on Vercel, Cloudflare Pages, Netlify, or AWS S3.
 
 ---
 
@@ -184,9 +259,11 @@ Output is compiled to the `dist/` folder, ready for immediate deployment on Verc
 
 - **Framework:** React 19 + TypeScript 5.8
 - **Bundler:** Vite 8.3
-- **Styling:** Tailwind CSS 4.3 (warm paper/ink neutrals, semantic family tokens)
+- **Math Typesetting:** KaTeX 0.19 (Serverless client-side mathematical typesetting)
+- **WebAssembly Python:** Pyodide engine for verified mathematical proofs
+- **Styling:** Tailwind CSS 4.3 (Dark cosmic ink aesthetic, responsive breakpoints)
 - **Icons:** Lucide React
-- **Audio:** Client-synthesized Web Audio API feedback (with mute toggle)
+- **Audio Synthesis:** Web Audio API procedural sound synthesis (with mute toggle)
 
 ---
 
