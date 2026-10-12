@@ -20,6 +20,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import { MathView } from './MathView';
 
 interface TheoreticalBedrockViewerProps {
   content: string;
@@ -352,13 +353,12 @@ export function renderInlineContent(text: string): React.ReactNode {
   return tokens.map((token, idx) => {
     switch (token.type) {
       case 'math': {
-        const cleaned = cleanLatex(token.value);
         return (
           <span
             key={idx}
-            className="font-mono text-[11px] px-1 py-0.5 mx-0.5 rounded bg-brand-500/10 text-brand-700 dark:text-brand-300 font-semibold border border-brand-500/15 inline-block select-all"
+            className="px-1 py-0.5 mx-0.5 rounded bg-brand-500/10 text-brand-700 dark:text-brand-300 font-semibold border border-brand-500/15 inline-block select-all"
           >
-            {cleaned}
+            <MathView math={token.value} display={false} />
           </span>
         );
       }
@@ -770,8 +770,8 @@ const FormulaCallout: React.FC<{ formula: string; label?: string }> = ({
           <span>{copied ? 'Copied' : 'Copy'}</span>
         </button>
       </div>
-      <div className="p-3 sm:p-4 text-center overflow-x-auto font-mono text-xs sm:text-[13px] font-semibold tracking-wide text-brand-200 select-all whitespace-pre-wrap leading-relaxed">
-        {cleaned}
+      <div className="p-3 sm:p-4 text-center overflow-x-auto text-xs sm:text-[13px] font-semibold tracking-wide text-brand-200 select-all leading-relaxed">
+        <MathView math={formula} display={true} className="text-brand-200" />
       </div>
     </div>
   );

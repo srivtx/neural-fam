@@ -32,6 +32,7 @@ export const ARCHITECTURE_MODULES = [
   { id: 'gnn', level: '6', title: 'Graph Networks', tag: 'Message Passing' },
   { id: 'generative', level: '7', title: 'Diffusion & VAE', tag: 'Generative' },
   { id: 'specialized', level: '8', title: 'Neural ODEs', tag: 'Specialized' },
+  { id: 'moe_mla', level: '9', title: 'MoE & MLA', tag: '2024–2026 Frontiers' },
 ];
 
 export const BADGES: BadgeDefinition[] = [
@@ -216,6 +217,26 @@ export const BADGES: BadgeDefinition[] = [
     }),
   },
   {
+    id: 'badge_moe_mla',
+    title: 'Frontier Architect',
+    tagline: 'Sparse MoE & Subspace MLA',
+    category: 'architecture',
+    moduleId: 'moe_mla',
+    moduleLabel: 'Module 9 · MoE & MLA Frontiers',
+    tier: 'Diamond',
+    xpReward: 350,
+    iconName: 'Cpu',
+    accentColor: '#10b981',
+    description: 'Mastered sparse top-k routing, auxiliary load balancing losses, and DeepSeek Multi-Head Latent Attention KV-cache subspace compression.',
+    requirement: 'Complete Module 9: MoE and MLA frontier lab.',
+    checkUnlocked: (p) => p.completedLabs.includes('moe_mla') || p.solvedQuizzes.includes('moe_mla'),
+    getProgress: (p) => ({
+      current: p.completedLabs.includes('moe_mla') || p.solvedQuizzes.includes('moe_mla') ? 1 : 0,
+      total: 1,
+      label: p.completedLabs.includes('moe_mla') || p.solvedQuizzes.includes('moe_mla') ? 'Completed' : '0/1 Completed',
+    }),
+  },
+  {
     id: 'badge_quiz_champion',
     title: 'Checkpoint Explorer',
     tagline: 'Theory and mechanics',
@@ -254,25 +275,25 @@ export const BADGES: BadgeDefinition[] = [
   {
     id: 'badge_grandmaster',
     title: 'Atlas Explorer',
-    tagline: 'All nine architecture modules completed',
+    tagline: 'All ten architecture modules completed',
     category: 'mastery',
     tier: 'Diamond',
-    xpReward: 500,
+    xpReward: 600,
     iconName: 'Trophy',
     accentColor: '#f59e0b',
-    description: 'Completed all 9 neural architecture modules from the 1958 Perceptron to continuous Neural ODEs.',
-    requirement: 'Complete all 9 architecture modules across the platform.',
+    description: 'Completed all 10 neural architecture modules from the 1958 Perceptron to 2024–2026 MoE and MLA frontiers.',
+    requirement: 'Complete all 10 architecture modules across the platform.',
     checkUnlocked: (p) => {
-      const allModules = ['perceptron', 'mlp', 'cnn_resnet', 'rnn_lstm', 'transformer', 'ssm_mamba', 'gnn', 'generative', 'specialized'];
+      const allModules = ['perceptron', 'mlp', 'cnn_resnet', 'rnn_lstm', 'transformer', 'ssm_mamba', 'gnn', 'generative', 'specialized', 'moe_mla'];
       return allModules.every((id) => p.completedLabs.includes(id) || p.solvedQuizzes.includes(id));
     },
     getProgress: (p) => {
-      const allModules = ['perceptron', 'mlp', 'cnn_resnet', 'rnn_lstm', 'transformer', 'ssm_mamba', 'gnn', 'generative', 'specialized'];
+      const allModules = ['perceptron', 'mlp', 'cnn_resnet', 'rnn_lstm', 'transformer', 'ssm_mamba', 'gnn', 'generative', 'specialized', 'moe_mla'];
       const completed = allModules.filter((id) => p.completedLabs.includes(id) || p.solvedQuizzes.includes(id)).length;
       return {
         current: completed,
-        total: 9,
-        label: `${completed}/9 modules complete`,
+        total: allModules.length,
+        label: `${completed}/${allModules.length} modules complete`,
       };
     },
   },
@@ -294,7 +315,7 @@ export interface UserStats {
 }
 
 export function computeUserStats(progress: LearningProgress): UserStats {
-  const allModules = ['perceptron', 'mlp', 'cnn_resnet', 'rnn_lstm', 'transformer', 'ssm_mamba', 'gnn', 'generative', 'specialized'];
+  const allModules = ['perceptron', 'mlp', 'cnn_resnet', 'rnn_lstm', 'transformer', 'ssm_mamba', 'gnn', 'generative', 'specialized', 'moe_mla'];
   const completedModulesCount = allModules.filter(
     (id) => p_hasModule(progress, id)
   ).length;

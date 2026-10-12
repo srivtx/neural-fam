@@ -234,6 +234,17 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
           onClose();
         },
       },
+      {
+        id: 'lab-moe-mla',
+        title: 'Level 9: MoE & MLA Frontiers (DeepSeek & Mixtral)',
+        subtitle: 'Sparse routing, auxiliary load balance & Multi-Head Latent Attention KV-cache compression',
+        category: 'lab',
+        badge: 'Level 9',
+        action: () => {
+          onSelectLab('moe_mla');
+          onClose();
+        },
+      },
     ];
 
     // Add nodes from NETWORK_NODES

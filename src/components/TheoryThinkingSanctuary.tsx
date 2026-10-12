@@ -42,6 +42,8 @@ import {
   PAPER_DECONSTRUCTIONS,
   INVENTION_GYM_EXERCISES,
 } from '../data/epistemologyData';
+import { TheoryPhysicalSimCanvas } from './TheoryPhysicalSimCanvas';
+import { MathView } from './MathView';
 import { soundFX } from '../utils/audio';
 
 type ActiveSection = 'continuum' | 'patterns' | 'deconstructions' | 'gym';
@@ -185,6 +187,9 @@ export const TheoryThinkingSanctuary: React.FC = () => {
         </div>
       </div>
 
+      {/* Interactive Invariant Canvas */}
+      <TheoryPhysicalSimCanvas />
+
       {/* SECTION 1: THE PHYSICAL CONTINUUM */}
       {activeSection === 'continuum' && (
         <div className="space-y-6 animate-fade-in">
@@ -250,7 +255,7 @@ export const TheoryThinkingSanctuary: React.FC = () => {
                     Governing Law: {activePillar.governingPhysicalLaw}
                   </div>
                   <div className="text-brand-300 text-sm sm:text-base font-bold py-1 overflow-x-auto no-scrollbar">
-                    {activePillar.mathematicalEquation}
+                    <MathView math={activePillar.mathematicalEquation} display={true} className="text-brand-300" />
                   </div>
                   <p className="text-[11px] text-ink-400 font-sans text-left leading-relaxed">
                     {activePillar.equationExplanation}
@@ -419,7 +424,7 @@ export const TheoryThinkingSanctuary: React.FC = () => {
                     The Mathematical Invariant
                   </div>
                   <div className="text-brand-300 text-sm sm:text-base font-bold py-1 overflow-x-auto no-scrollbar">
-                    {activePattern.keyFormula}
+                    <MathView math={activePattern.keyFormula} display={true} className="text-brand-300" />
                   </div>
                   <p className="text-[11px] text-ink-400 font-sans text-left leading-relaxed">
                     {activePattern.formulaExplanation}
@@ -543,7 +548,7 @@ export const TheoryThinkingSanctuary: React.FC = () => {
                     The Formal Equation
                   </div>
                   <div className="text-brand-300 text-sm sm:text-base font-bold py-1 overflow-x-auto no-scrollbar">
-                    {activePaper.formalEquation}
+                    <MathView math={activePaper.formalEquation} display={true} className="text-brand-300" />
                   </div>
                   <p className="text-[11px] text-ink-400 font-sans text-left leading-relaxed">
                     Differentiable Relaxation: {activePaper.theDifferentiableRelaxation}
@@ -709,7 +714,7 @@ export const TheoryThinkingSanctuary: React.FC = () => {
                         The Synthesized Architectural Invariant: {activeGym.theBreakthroughArchitectureName}
                       </div>
                       <div className="text-brand-300 text-sm sm:text-base font-bold py-1 overflow-x-auto no-scrollbar">
-                        {activeGym.suggestedMathematicalInvariant}
+                        <MathView math={activeGym.suggestedMathematicalInvariant} display={true} className="text-brand-300" />
                       </div>
                       <p className="text-[11px] text-ink-400 font-sans text-left leading-relaxed">
                         <strong>Differentiable Relaxation:</strong> {activeGym.differentiableRelaxationPrompt}

@@ -9,6 +9,7 @@ import { NETWORK_NODES } from '../data/familyTreeData';
 import { FIRST_PRINCIPLES_DOSSIERS } from '../data/firstPrinciplesData';
 import { NetworkFamilyNode, FamilyCategory } from '../types';
 import { InteractiveTreeCanvas } from './InteractiveTreeCanvas';
+import { MathView } from './MathView';
 
 interface TreeAtlasProps {
   onOpenLab: (labId: string) => void;
@@ -187,8 +188,8 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
                     </div>
 
                     {/* Mathematical Formula Banner */}
-                    <div className="p-2.5 bg-ink-50 dark:bg-ink-950/90 rounded-lg border border-ink-200/60 dark:border-white/5 font-mono text-xs text-brand-700 dark:text-brand-300 truncate">
-                      {node.mathFormula}
+                    <div className="p-2.5 bg-ink-50 dark:bg-ink-950/90 rounded-lg border border-ink-200/60 dark:border-white/5 text-xs text-brand-700 dark:text-brand-300 overflow-x-auto no-scrollbar">
+                      <MathView math={node.mathFormula} display={false} />
                     </div>
                   </div>
 
@@ -256,8 +257,8 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
                   <h4 className="text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-brand-400 font-sans">
                     Mathematical notation
                   </h4>
-                  <div className="text-brand-800 dark:text-brand-300 font-bold mb-2">
-                    {selectedNode.mathFormula}
+                  <div className="text-brand-800 dark:text-brand-300 font-bold mb-2 overflow-x-auto no-scrollbar">
+                    <MathView math={selectedNode.mathFormula} display={true} />
                   </div>
                   <div className="space-y-1">
                     {selectedNode.mathBreakdown.map((item, idx) => (

@@ -9,6 +9,7 @@ import { NETWORK_NODES } from '../data/familyTreeData';
 import { PYTORCH_SNIPPETS } from '../data/pytorchSnippets';
 import { markTestRun } from '../utils/progressStore';
 import { CodeBlock } from './CodeBlock';
+import { MathView } from './MathView';
 import { soundFX } from '../utils/audio';
 
 export const CodeWorkshop: React.FC = () => {
@@ -139,7 +140,7 @@ export const CodeWorkshop: React.FC = () => {
         {/* Invariant One-Liner */}
         <div className="text-xs text-ink-500 dark:text-ink-400 font-mono hidden md:flex items-center gap-1.5">
           <span className="text-brand-600 dark:text-brand-400 font-bold">Formula:</span>
-          <span>{currentNode.mathFormula}</span>
+          <MathView math={currentNode.mathFormula} display={false} className="text-brand-700 dark:text-brand-300" />
         </div>
 
         {/* Edit vs Syntax View Toggle (in TS mode) */}

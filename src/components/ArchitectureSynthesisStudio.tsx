@@ -58,6 +58,9 @@ import {
   generateJaxModule,
   generateHuggingFaceConfig,
   generateMermaidDiagram,
+  generateTikZDiagram,
+  generateLatexSpecification,
+  generateBibtexBibliography,
   traceTensorPipeline,
   calculateTrainingEconomics,
   encodeDesignToHash,
@@ -65,6 +68,7 @@ import {
 } from '../studio/calculator';
 import { CodeBlock } from './CodeBlock';
 import { FIRST_PRINCIPLES_DOSSIERS } from '../data/firstPrinciplesData';
+import { RooflineOomProfiler } from './studio/RooflineOomProfiler';
 import { soundFX } from '../utils/audio';
 import { copyTextToClipboard } from '../utils/clipboard';
 
@@ -75,8 +79,8 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
   // Studio Composer State
   const [design, setDesign] = useState<Design>(() => cloneDesign(PRESETS[1].design)); // Start with Llama 3 8B
   const [workload, setWorkload] = useState<Workload>(() => ({ ...DEFAULT_WORKLOAD, seqLen: 4096 }));
-  const [activeTab, setActiveTab] = useState<'blueprint' | 'tensor_flow' | 'economics' | 'code' | 'params' | 'first_principles'>('blueprint');
-  const [codeFramework, setCodeFramework] = useState<'pytorch' | 'jax' | 'hf' | 'mermaid'>('pytorch');
+  const [activeTab, setActiveTab] = useState<'blueprint' | 'tensor_flow' | 'economics' | 'roofline' | 'code' | 'params' | 'first_principles'>('blueprint');
+  const [codeFramework, setCodeFramework] = useState<'pytorch' | 'jax' | 'hf' | 'mermaid' | 'tikz' | 'latex' | 'bibtex'>('pytorch');
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const [copiedShareLink, setCopiedShareLink] = useState<boolean>(false);
 
@@ -106,6 +110,9 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
   const jaxCode = useMemo(() => generateJaxModule(design, workload), [design, workload]);
   const hfConfig = useMemo(() => generateHuggingFaceConfig(design, workload), [design, workload]);
   const mermaidDiagram = useMemo(() => generateMermaidDiagram(design), [design]);
+  const tikzCode = useMemo(() => generateTikZDiagram(design, analysis), [design, analysis]);
+  const latexSpec = useMemo(() => generateLatexSpecification(design, analysis), [design, analysis]);
+  const bibtexCode = useMemo(() => generateBibtexBibliography(design), [design]);
   const tensorPipeline = useMemo(() => traceTensorPipeline(design, workload), [design, workload]);
   const economics = useMemo(() => calculateTrainingEconomics(design, workload, 14), [design, workload]);
 
@@ -1145,6 +1152,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
                   { id: 'blueprint', label: 'Dataflow Blueprint', icon: Workflow },
                   { id: 'tensor_flow', label: 'Tensor Dimension Flow', icon: Eye },
                   { id: 'economics', label: 'Scaling & Economics', icon: DollarSign },
+                  { id: 'roofline', label: 'Roofline & Memory Profiler', icon: Cpu },
                   { id: 'code', label: 'Multi-Framework Code', icon: FileCode2 },
                   { id: 'params', label: 'Parameter Matrix', icon: Layers },
                   { id: 'first_principles', label: 'First Principles & Invariants', icon: Flame },
@@ -1359,6 +1367,11 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
               </div>
             )}
 
+            {/* TAB: Visual Roofline & Memory Profiler */}
+            {activeTab === 'roofline' && (
+              <RooflineOomProfiler design={design} workload={workload} analysis={analysis} />
+            )}
+
             {/* TAB 4: Multi-Framework Code & Export */}
             {activeTab === 'code' && (
               <div className="space-y-4 py-1">
@@ -1367,8 +1380,11 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
                     {[
                       { id: 'pytorch', label: 'PyTorch (nn.Module)' },
                       { id: 'jax', label: 'JAX / Flax' },
-                      { id: 'hf', label: 'HuggingFace config.json' },
-                      { id: 'mermaid', label: 'Mermaid.js Diagram' },
+                      { id: 'hf', label: 'HuggingFace config' },
+                      { id: 'mermaid', label: 'Mermaid' },
+                      { id: 'tikz', label: 'LaTeX TikZ Diagram' },
+                      { id: 'latex', label: 'Paper Spec (.tex)' },
+                      { id: 'bibtex', label: 'BibTeX Citations' },
                     ].map((f) => (
                       <button
                         key={f.id}
@@ -1376,9 +1392,9 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
                           setCodeFramework(f.id as any);
                           soundFX.playTap();
                         }}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                           codeFramework === f.id
-                            ? 'bg-ink-900 text-white dark:bg-white dark:text-ink-900'
+                            ? 'bg-ink-900 text-white dark:bg-white dark:text-ink-900 shadow-xs'
                             : 'bg-ink-100 dark:bg-ink-800 text-ink-600 dark:text-ink-300 hover:bg-ink-200'
                         }`}
                       >
@@ -1388,7 +1404,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
                   </div>
 
                   <span className="text-[11px] font-mono text-ink-500">
-                    Production drop-in code
+                    Production & publication drop-in
                   </span>
                 </div>
 
@@ -1424,6 +1440,30 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
                     code={mermaidDiagram}
                     language="Mermaid Diagram"
                     filename="architecture_diagram.mmd"
+                  />
+                )}
+
+                {codeFramework === 'tikz' && (
+                  <CodeBlock
+                    code={tikzCode}
+                    language="LaTeX / TikZ"
+                    filename={`${design.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_diagram.tex`}
+                  />
+                )}
+
+                {codeFramework === 'latex' && (
+                  <CodeBlock
+                    code={latexSpec}
+                    language="LaTeX Methodology Section"
+                    filename={`${design.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_methodology.tex`}
+                  />
+                )}
+
+                {codeFramework === 'bibtex' && (
+                  <CodeBlock
+                    code={bibtexCode}
+                    language="BibTeX"
+                    filename="references.bib"
                   />
                 )}
               </div>

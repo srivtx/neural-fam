@@ -239,4 +239,40 @@ export const LAB_QUIZZES: Record<string, { title: string; questions: QuizQuestio
       },
     ],
   },
+
+  moe_mla: {
+    title: 'Level 9: Mixture-of-Experts and Multi-Head Latent Attention Frontiers',
+    questions: [
+      {
+        question: 'Why is an auxiliary load balancing loss L_balance = α * E * Σ(f_i * P_i) indispensable in Sparse MoE training?',
+        options: [
+          'Without it, routing collapses into a winner-take-all feedback loop where only 1 or 2 experts receive all tokens while the rest starve.',
+          'It forces all expert weights to remain orthogonal to prevent catastrophic forgetting.',
+          'It converts sparse softmax top-k routing into a dense feedforward matrix.',
+        ],
+        correctIndex: 0,
+        explanation: 'Due to positive feedback, early initialized favorite experts receive slightly better gradients, attracting more tokens. The auxiliary balance loss penalizes correlation between dispatch frequency f_i and routing probability P_i to enforce uniform expert utilization.',
+      },
+      {
+        question: 'How does Multi-Head Latent Attention (MLA) reduce KV-cache memory by >90% compared to standard MHA?',
+        options: [
+          'It projects Key and Value states into a low-rank latent compressed vector c_t^(KV) and keeps rotary coordinates decoupled, caching only the low-rank latent vector.',
+          'It quantizes all Key and Value tensors to 1-bit binary representations.',
+          'It drops 90% of past tokens randomly from the attention window.',
+        ],
+        correctIndex: 0,
+        explanation: 'DeepSeek MLA compresses Keys and Values into a single low-rank latent vector c_t^(KV) (e.g. 512 dimensions) instead of caching 128 multi-head KV matrices. During inference, projection weights can even be absorbed into query projections, so only c_t^(KV) and a small decoupled RoPE vector need to be cached.',
+      },
+      {
+        question: 'What happens during inference when an expert exceeds its designated Capacity Factor in a Sparse MoE system?',
+        options: [
+          'Tokens exceeding the capacity threshold are either dropped (bypassing expert compute via residual connection) or incur execution latency stalls.',
+          'The model immediately throws a CUDA Out-Of-Memory kernel crash.',
+          'The router switches dynamically back to standard dense MLP mode.',
+        ],
+        correctIndex: 0,
+        explanation: 'Expert capacity defines a static tensor buffer size. When more tokens are routed to an expert than its buffer capacity, the excess tokens are dropped and passed through the residual stream without expert transformation, degrading quality if load balancing is neglected.',
+      },
+    ],
+  },
 };

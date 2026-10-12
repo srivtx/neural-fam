@@ -13,6 +13,7 @@ import { SsmMambaLab } from './labs/SsmMambaLab';
 import { GnnLab } from './labs/GnnLab';
 import { GenerativeLab } from './labs/GenerativeLab';
 import { SpecializedLab } from './labs/SpecializedLab';
+import { MoeMlaFrontierLab } from './labs/MoeMlaFrontierLab';
 import { ErrorBoundary } from './ErrorBoundary';
 
 interface ProjectLabsHubProps {
@@ -34,6 +35,7 @@ export const ProjectLabsHub: React.FC<ProjectLabsHubProps> = ({
     { id: 'gnn', level: '6', title: 'Graph Networks', tag: 'Message Passing' },
     { id: 'generative', level: '7', title: 'Diffusion & VAE', tag: 'Generative' },
     { id: 'specialized', level: '8', title: 'Neural ODEs', tag: 'Frontiers' },
+    { id: 'moe_mla', level: '9', title: 'MoE & MLA', tag: '2024–2026' },
   ];
 
   return (
@@ -81,6 +83,7 @@ export const ProjectLabsHub: React.FC<ProjectLabsHubProps> = ({
           {activeLabId === 'gnn' && <GnnLab />}
           {activeLabId === 'generative' && <GenerativeLab />}
           {activeLabId === 'specialized' && <SpecializedLab />}
+          {activeLabId === 'moe_mla' && <MoeMlaFrontierLab />}
         </div>
       </ErrorBoundary>
     </div>
