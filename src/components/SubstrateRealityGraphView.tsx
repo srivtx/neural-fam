@@ -88,8 +88,8 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   // Pan & Zoom State for Canvas
-  const [zoom, setZoom] = useState<number>(1.0);
-  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 30, y: 30 });
+  const [zoom, setZoom] = useState<number>(0.65);
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 60, y: 30 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const touchStartDistRef = useRef<number | null>(null);
@@ -212,10 +212,10 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
       const targetNode = SUBSTRATE_REALITY_NODES[targetIndex];
       handleSelectNode(targetNode.id);
 
-      // Pan canvas toward new node
+      // Pan canvas toward new node with comfortable offset
       setPan({
-        x: -targetNode.x * zoom + 350,
-        y: -targetNode.y * zoom + 250,
+        x: -targetNode.x * zoom + 400,
+        y: -targetNode.y * zoom + 280,
       });
     },
     [selectedNodeId, zoom, handleSelectNode]
@@ -301,8 +301,8 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
   }, []);
 
   const handleResetView = () => {
-    setZoom(1.0);
-    setPan({ x: 30, y: 30 });
+    setZoom(0.65);
+    setPan({ x: 60, y: 30 });
     soundFX.playTap();
   };
 
@@ -316,14 +316,28 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
       if (n.y > maxY) maxY = n.y;
     });
     return {
-      minX: minX - 100,
-      maxX: maxX + 220,
-      minY: minY - 80,
-      maxY: maxY + 180,
-      width: maxX - minX + 320,
-      height: maxY - minY + 260,
+      minX: minX - 140,
+      maxX: maxX + 260,
+      minY: minY - 100,
+      maxY: maxY + 220,
+      width: maxX - minX + 400,
+      height: maxY - minY + 320,
     };
   }, []);
+
+  const handleFitView = useCallback(() => {
+    if (!canvasContainerRef.current) return;
+    const rect = canvasContainerRef.current.getBoundingClientRect();
+    const padding = 50;
+    const scaleX = (rect.width - padding * 2) / graphBounds.width;
+    const scaleY = (rect.height - padding * 2) / graphBounds.height;
+    const fitZoom = Math.min(1.0, Math.max(0.32, Math.min(scaleX, scaleY)));
+    const centerX = rect.width / 2 - (graphBounds.minX + graphBounds.width / 2) * fitZoom;
+    const centerY = rect.height / 2 - (graphBounds.minY + graphBounds.height / 2) * fitZoom;
+    setZoom(parseFloat(fitZoom.toFixed(2)));
+    setPan({ x: Math.round(centerX), y: Math.round(centerY) });
+    soundFX.playTap();
+  }, [graphBounds]);
 
   return (
     <div className="w-full flex flex-col space-y-4">
@@ -562,7 +576,13 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
                 >
                   <ZoomOut className="w-3.5 h-3.5" />
                 </button>
-                <div className="w-px h-3 bg-white/10 mx-0.5" />
+                <button
+                  onClick={handleFitView}
+                  title="Fit Entire Graph to View"
+                  className="p-1 rounded text-ink-400 hover:text-white cursor-pointer"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
                 <button
                   onClick={handleResetView}
                   title="Reset Canvas Position"
@@ -643,31 +663,43 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
                 {/* Transformed Canvas Plane */}
                 <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
                   {/* Background Grid Pattern */}
-                  <g opacity="0.12">
-                    {Array.from({ length: 25 }).map((_, i) => (
+                  <g opacity="0.08">
+                    {Array.from({ length: 30 }).map((_, i) => (
                       <line
                         key={`grid-x-${i}`}
-                        x1={i * 80 - 400}
-                        y1={-300}
-                        x2={i * 80 - 400}
-                        y2={1300}
+                        x1={i * 100 - 300}
+                        y1={-200}
+                        x2={i * 100 - 300}
+                        y2={2300}
                         stroke="#94a3b8"
                         strokeWidth="1"
                         strokeDasharray="2,6"
                       />
                     ))}
-                    {Array.from({ length: 20 }).map((_, i) => (
+                    {Array.from({ length: 26 }).map((_, i) => (
                       <line
                         key={`grid-y-${i}`}
-                        x1={-400}
-                        y1={i * 80 - 200}
-                        x2={1600}
-                        y2={i * 80 - 200}
+                        x1={-300}
+                        y1={i * 100 - 200}
+                        x2={2400}
+                        y2={i * 100 - 200}
                         stroke="#94a3b8"
                         strokeWidth="1"
                         strokeDasharray="2,6"
                       />
                     ))}
+                  </g>
+
+                  {/* Realm Ambient Tier Horizontal Watermarks */}
+                  <g opacity="0.16" className="select-none pointer-events-none" fontFamily="monospace" fontWeight="bold" fontSize="13" letterSpacing="3">
+                    <text x="80" y="45" fill="#06b6d4">TIER 1: QUANTUM ATOMS & CONDENSED MATTER SUBSTRATE</text>
+                    <text x="80" y="305" fill="#3b82f6">TIER 2: MAXWELL FIELDS & CAPACITIVE CHARGE STORAGE</text>
+                    <text x="80" y="565" fill="#10b981">TIER 3: CLOSED CIRCUITS, SWITCHES & CLOCK SYNCHRONIZATION</text>
+                    <text x="80" y="825" fill="#f59e0b">TIER 4: TOPOLOGICAL ARITHMETIC & BISTABLE REGISTERS</text>
+                    <text x="80" y="1085" fill="#ec4899">TIER 5A: MONOLITHIC SCALING & INTERCONNECTS</text>
+                    <text x="80" y="1345" fill="#ec4899">TIER 5B: ADVANCED FABRICATION, MEMORY WALL & PARALLEL SILICON</text>
+                    <text x="80" y="1605" fill="#8b5cf6">TIER 6A: SOFTWARE TOWERS & OS MEMORY TRANSLATION</text>
+                    <text x="80" y="1865" fill="#8b5cf6">TIER 6B: THERMODYNAMICS & PHILOSOPHICAL COMPUTATION</text>
                   </g>
 
                   {/* EDGES: Causal Interconnections between Inquiries */}
@@ -789,25 +821,26 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
                           {/* Title Label Card below Node */}
                           <g transform="translate(0, 36)">
                             <rect
-                              x={-80}
+                              x={-85}
                               y={0}
-                              width={160}
-                              height={28}
-                              rx={6}
+                              width={170}
+                              height={30}
+                              rx={8}
                               fill="#0f172a"
-                              stroke={isSelected ? node.realmColor : '#1e293b'}
-                              strokeWidth={isSelected ? 1.5 : 1}
-                              opacity={0.92}
+                              stroke={isSelected ? node.realmColor : isNeighbor ? '#475569' : '#1e293b'}
+                              strokeWidth={isSelected ? 2 : 1}
+                              opacity={0.95}
                             />
                             <text
                               textAnchor="middle"
-                              y={17}
-                              fill={isSelected ? '#ffffff' : '#cbd5e1'}
-                              fontSize="9.5"
-                              fontWeight={isSelected ? 'bold' : 'normal'}
+                              y={19}
+                              fill={isSelected ? '#ffffff' : isNeighbor ? '#f1f5f9' : '#cbd5e1'}
+                              fontSize="10"
+                              fontFamily="sans-serif"
+                              fontWeight={isSelected ? 'bold' : isNeighbor ? '600' : 'normal'}
                             >
-                              {node.question.length > 28
-                                ? `${node.question.slice(0, 26)}...`
+                              {node.question.length > 25
+                                ? `${node.question.slice(0, 24)}...`
                                 : node.question}
                             </text>
                           </g>

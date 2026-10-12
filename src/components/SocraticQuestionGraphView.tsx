@@ -599,12 +599,12 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
   ];
 
   // SVG Canvas dimensions with ample margins to prevent clipping
-  const svgWidth = 1100;
-  const svgHeight = 1140;
+  const svgWidth = 1560;
+  const svgHeight = 1640;
 
   // Minimap dimensions
   const minimapWidth = 170;
-  const minimapHeight = 176;
+  const minimapHeight = 178;
 
   const handleMinimapClick = (e: React.MouseEvent<SVGSVGElement>) => {
     e.stopPropagation();
@@ -1022,29 +1022,29 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                 {/* Transformed Content Group (Pan + Zoom) */}
                 <g
                   transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}
-                  style={{ transformOrigin: '550px 570px', transition: isDragging ? 'none' : 'transform 0.15s ease-out' }}
+                  style={{ transformOrigin: '780px 820px', transition: isDragging ? 'none' : 'transform 0.15s ease-out' }}
                 >
                   {/* Constellation Realm Ambient Hulls */}
-                  <ellipse cx="280" cy="100" rx="260" ry="90" fill="url(#realmGlowPhysics)" opacity="0.4" />
-                  <ellipse cx="720" cy="100" rx="240" ry="90" fill="url(#realmGlowComputation)" opacity="0.4" />
-                  <ellipse cx="500" cy="220" rx="460" ry="90" fill="url(#realmGlowGeometry)" opacity="0.35" />
-                  <ellipse cx="500" cy="360" rx="460" ry="90" fill="url(#realmGlowOptimization)" opacity="0.35" />
-                  <ellipse cx="500" cy="500" rx="460" ry="90" fill="url(#realmGlowLanguage)" opacity="0.35" />
-                  <ellipse cx="500" cy="640" rx="460" ry="90" fill="url(#realmGlowHardware)" opacity="0.35" />
-                  <ellipse cx="500" cy="780" rx="460" ry="90" fill="url(#realmGlowOptimization)" opacity="0.35" />
-                  <ellipse cx="500" cy="920" rx="460" ry="90" fill="url(#realmGlowHardware)" opacity="0.35" />
-                  <ellipse cx="530" cy="1040" rx="260" ry="80" fill="url(#realmGlowPhysics)" opacity="0.5" />
+                  <ellipse cx="440" cy="130" rx="380" ry="110" fill="url(#realmGlowPhysics)" opacity="0.4" />
+                  <ellipse cx="1180" cy="130" rx="340" ry="110" fill="url(#realmGlowComputation)" opacity="0.4" />
+                  <ellipse cx="760" cy="300" rx="720" ry="110" fill="url(#realmGlowGeometry)" opacity="0.35" />
+                  <ellipse cx="760" cy="500" rx="720" ry="110" fill="url(#realmGlowOptimization)" opacity="0.35" />
+                  <ellipse cx="760" cy="700" rx="720" ry="110" fill="url(#realmGlowLanguage)" opacity="0.35" />
+                  <ellipse cx="760" cy="900" rx="720" ry="110" fill="url(#realmGlowHardware)" opacity="0.35" />
+                  <ellipse cx="760" cy="1100" rx="720" ry="110" fill="url(#realmGlowOptimization)" opacity="0.35" />
+                  <ellipse cx="760" cy="1300" rx="720" ry="110" fill="url(#realmGlowHardware)" opacity="0.35" />
+                  <ellipse cx="760" cy="1500" rx="420" ry="110" fill="url(#realmGlowPhysics)" opacity="0.5" />
 
                   {/* Realm Typographic Faint Watermarks in Background */}
-                  <text x="60" y="55" fill="rgba(6,182,212,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">PHYSICAL SUBSTRATE & POTENTIAL WELLS</text>
-                  <text x="560" y="55" fill="rgba(59,130,246,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">BYTECODE & COMPUTATION</text>
-                  <text x="60" y="195" fill="rgba(139,92,246,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">MANIFOLD GEOMETRY & TOPOLOGY</text>
-                  <text x="60" y="335" fill="rgba(245,158,11,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">HIGH-DIM DYNAMICS & LOSS SURFACES</text>
-                  <text x="60" y="475" fill="rgba(236,72,153,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">SEMANTIC TOPOLOGY & ATTENTION</text>
-                  <text x="60" y="615" fill="rgba(16,185,129,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">SILICON BUS & HARDWARE WALL</text>
-                  <text x="60" y="755" fill="rgba(245,158,11,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">OVERPARAMETERIZATION & NTK MANIFOLD</text>
-                  <text x="60" y="895" fill="rgba(59,130,246,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">TC0 BOUNDS, REUSE & REVERSIBILITY</text>
-                  <text x="240" y="1015" fill="rgba(6,182,212,0.12)" fontSize="18" fontFamily="monospace" fontWeight="bold" letterSpacing="6">THE GRAND UNIFICATION INVARIANT</text>
+                  <text x="80" y="50" fill="rgba(6,182,212,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">PHYSICAL SUBSTRATE & POTENTIAL WELLS</text>
+                  <text x="920" y="50" fill="rgba(59,130,246,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">BYTECODE & COMPUTATION</text>
+                  <text x="80" y="250" fill="rgba(139,92,246,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">MANIFOLD GEOMETRY & TOPOLOGY</text>
+                  <text x="80" y="450" fill="rgba(245,158,11,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">HIGH-DIM DYNAMICS & LOSS SURFACES</text>
+                  <text x="80" y="650" fill="rgba(236,72,153,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">SEMANTIC TOPOLOGY & ATTENTION</text>
+                  <text x="80" y="850" fill="rgba(16,185,129,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">SILICON BUS & HARDWARE WALL</text>
+                  <text x="80" y="1050" fill="rgba(245,158,11,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">OVERPARAMETERIZATION & NTK MANIFOLD</text>
+                  <text x="80" y="1250" fill="rgba(59,130,246,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">TC0 BOUNDS, REUSE & REVERSIBILITY</text>
+                  <text x="420" y="1450" fill="rgba(6,182,212,0.12)" fontSize="18" fontFamily="monospace" fontWeight="bold" letterSpacing="6">THE GRAND UNIFICATION INVARIANT</text>
 
                   {/* Render All Graph Edges */}
                   {SOCRATIC_QUESTION_NODES.map((sourceNode) => {
