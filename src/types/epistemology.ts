@@ -74,3 +74,23 @@ export interface InventionGymExercise {
   theBreakthroughArchitectureName: string;
   hardwareRealityCheck: string;
 }
+
+export interface ThoughtExperimentDerivationStep {
+  step: number;
+  axiom: string;
+  mathematicalStatement: string;
+  physicalInterpretation: string;
+}
+
+export interface ThoughtExperiment {
+  id: string;
+  title: string;
+  subtitle: string;
+  paradoxPrompt: string;
+  physicalDomain: string;
+  brokenIntuition: string;
+  pureScratchDerivation: ThoughtExperimentDerivationStep[];
+  theSynthesis: string;
+  hardwareImplication: string;
+  interactiveHypothesisPrompt: string;
+}

@@ -41,12 +41,13 @@ import {
   COGNITIVE_LEAP_PATTERNS,
   PAPER_DECONSTRUCTIONS,
   INVENTION_GYM_EXERCISES,
+  THOUGHT_EXPERIMENTS,
 } from '../data/epistemologyData';
 import { TheoryPhysicalSimCanvas } from './TheoryPhysicalSimCanvas';
 import { MathView } from './MathView';
 import { soundFX } from '../utils/audio';
 
-type ActiveSection = 'continuum' | 'patterns' | 'deconstructions' | 'gym';
+type ActiveSection = 'continuum' | 'patterns' | 'deconstructions' | 'gym' | 'gedanken';
 
 export const TheoryThinkingSanctuary: React.FC = () => {
   const [activeSection, setActiveSection] = useState<ActiveSection>('continuum');
@@ -59,10 +60,14 @@ export const TheoryThinkingSanctuary: React.FC = () => {
   const [selectedMetaphorId, setSelectedMetaphorId] = useState<string | null>(null);
   const [isRevealed, setIsRevealed] = useState<boolean>(false);
 
+  // Gedanken State
+  const [selectedGedankenId, setSelectedGedankenId] = useState<string>(THOUGHT_EXPERIMENTS[0].id);
+
   const activePillar = PHYSICAL_PILLARS.find((p) => p.id === selectedPillarId) || PHYSICAL_PILLARS[0];
   const activePattern = COGNITIVE_LEAP_PATTERNS.find((p) => p.id === selectedPatternId) || COGNITIVE_LEAP_PATTERNS[0];
   const activePaper = PAPER_DECONSTRUCTIONS.find((p) => p.id === selectedPaperId) || PAPER_DECONSTRUCTIONS[0];
   const activeGym = INVENTION_GYM_EXERCISES.find((g) => g.id === selectedGymId) || INVENTION_GYM_EXERCISES[0];
+  const activeGedanken = THOUGHT_EXPERIMENTS.find((g) => g.id === selectedGedankenId) || THOUGHT_EXPERIMENTS[0];
 
   const handleTabChange = (section: ActiveSection) => {
     setActiveSection(section);
@@ -159,7 +164,7 @@ export const TheoryThinkingSanctuary: React.FC = () => {
               }`}
             >
               <Lightbulb className="w-4 h-4" />
-              2. The 7 Universal Leap Patterns
+              2. The 11 Universal Leap Patterns
             </button>
             <button
               onClick={() => handleTabChange('deconstructions')}
@@ -182,6 +187,17 @@ export const TheoryThinkingSanctuary: React.FC = () => {
             >
               <Target className="w-4 h-4" />
               4. The Invention Gym
+            </button>
+            <button
+              onClick={() => handleTabChange('gedanken')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
+                activeSection === 'gedanken'
+                  ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25 scale-[1.02]'
+                  : 'bg-white/5 hover:bg-white/10 text-ink-300 border border-white/5'
+              }`}
+            >
+              <Brain className="w-4 h-4" />
+              5. Gedankenexperiments (Pure-Scratch Epistemology)
             </button>
           </div>
         </div>
@@ -321,7 +337,7 @@ export const TheoryThinkingSanctuary: React.FC = () => {
         </div>
       )}
 
-      {/* SECTION 2: THE 7 UNIVERSAL LEAP PATTERNS */}
+      {/* SECTION 2: THE 11 UNIVERSAL LEAP PATTERNS */}
       {activeSection === 'patterns' && (
         <div className="space-y-6 animate-fade-in">
           {/* Pattern Picker */}
@@ -340,7 +356,7 @@ export const TheoryThinkingSanctuary: React.FC = () => {
                 >
                   <div>
                     <span className="text-[10px] font-mono font-bold text-brand-600 dark:text-brand-400">
-                      Jump Pattern 0{pattern.number}
+                      Jump Pattern {pattern.number < 10 ? `0${pattern.number}` : pattern.number}
                     </span>
                     <h3 className="text-xs sm:text-sm font-bold text-ink-900 dark:text-white mt-0.5 line-clamp-1">
                       {pattern.name}
@@ -735,6 +751,161 @@ export const TheoryThinkingSanctuary: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* SECTION 5: GEDANKENEXPERIMENTS (PURE-SCRATCH EPISTEMOLOGY) */}
+      {activeSection === 'gedanken' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Gedankenexperiment Selector */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {THOUGHT_EXPERIMENTS.map((exp, idx) => {
+              const isSelected = exp.id === selectedGedankenId;
+              return (
+                <button
+                  key={exp.id}
+                  onClick={() => {
+                    setSelectedGedankenId(exp.id);
+                    soundFX.playTap();
+                  }}
+                  className={`text-left p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
+                    isSelected
+                      ? 'bg-brand-50 dark:bg-brand-950/40 border-brand-500 shadow-xs ring-1 ring-brand-500/30'
+                      : 'bg-surface dark:bg-ink-900 border-ink-200 dark:border-white/10 hover:border-brand-500/40'
+                  }`}
+                >
+                  <div>
+                    <span className="text-[10px] font-mono font-bold text-brand-600 dark:text-brand-400">
+                      Gedanken 0{idx + 1}
+                    </span>
+                    <h3 className="text-xs sm:text-sm font-bold text-ink-900 dark:text-white mt-1 line-clamp-2">
+                      {exp.title}
+                    </h3>
+                  </div>
+                  <div className="mt-3 text-[10px] font-medium text-brand-600 dark:text-brand-300 flex items-center gap-1">
+                    Explore Derivation <ArrowRight className="w-3 h-3" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Active Gedankenexperiment Workbench */}
+          <div className="bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+            {/* Title & Domain Header */}
+            <div className="border-b border-ink-200/60 dark:border-white/10 pb-4">
+              <div className="flex items-center gap-2 text-xs font-mono font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">
+                <Brain className="w-4 h-4" />
+                <span>First-Principles Gedankenexperiment · {activeGedanken.physicalDomain}</span>
+              </div>
+              <h2 className="text-xl sm:text-3xl font-extrabold text-ink-900 dark:text-white mt-1">
+                {activeGedanken.title}
+              </h2>
+              <p className="text-xs sm:text-sm font-medium text-brand-700 dark:text-brand-300 italic mt-1">
+                "{activeGedanken.subtitle}"
+              </p>
+            </div>
+
+            {/* The Paradox & Shattered Intuition Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  The Apparent Physical Paradox
+                </span>
+                <p className="text-xs sm:text-sm text-ink-800 dark:text-ink-200 leading-relaxed font-medium">
+                  {activeGedanken.paradoxPrompt}
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  The Shattered Intuition
+                </span>
+                <p className="text-xs sm:text-sm text-rose-950 dark:text-rose-200 leading-relaxed">
+                  {activeGedanken.brokenIntuition}
+                </p>
+              </div>
+            </div>
+
+            {/* 5-Step Pure-Scratch Axiomatic Derivation Chain */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-ink-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                  <Workflow className="w-4 h-4 text-emerald-500" />
+                  Pure Scratch Axiomatic Derivation (Step-by-Step Mathematical Flow)
+                </h3>
+                <span className="text-[10px] text-ink-500 font-mono">
+                  {activeGedanken.pureScratchDerivation.length} Physical Axioms
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {activeGedanken.pureScratchDerivation.map((step) => {
+                  return (
+                    <div
+                      key={step.step}
+                      className="p-4 rounded-xl border bg-ink-950/70 border-ink-800 space-y-2 transition-all shadow-inner"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold text-emerald-400 flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-[10px]">
+                            {step.step}
+                          </span>
+                          {step.axiom}
+                        </span>
+                        <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded bg-white/5 text-ink-400 font-mono">
+                          Axiomatic Step {step.step}
+                        </span>
+                      </div>
+
+                      <div className="bg-ink-950 border border-ink-800/80 rounded-lg p-3 text-center font-mono overflow-x-auto no-scrollbar">
+                        <MathView math={step.mathematicalStatement} display={true} className="text-brand-300 text-xs sm:text-sm" />
+                      </div>
+
+                      <p className="text-xs text-ink-300 leading-relaxed font-sans px-1">
+                        <strong className="text-ink-100">Physical Meaning:</strong> {step.physicalInterpretation}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* The Epistemological Synthesis & Hardware Invariant */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <div className="p-5 rounded-xl bg-brand-500/10 border border-brand-500/30 space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  The Epistemological Synthesis
+                </span>
+                <p className="text-xs sm:text-sm text-ink-800 dark:text-ink-200 leading-relaxed font-medium">
+                  {activeGedanken.theSynthesis}
+                </p>
+              </div>
+              <div className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <Cpu className="w-3.5 h-3.5" />
+                  Hardware Reality Check (Physical Silicon Invariant)
+                </span>
+                <p className="text-xs sm:text-sm text-emerald-950 dark:text-emerald-200 leading-relaxed">
+                  {activeGedanken.hardwareImplication}
+                </p>
+              </div>
+            </div>
+
+            {/* Interactive Researcher Reflection Prompt */}
+            <div className="p-4 rounded-xl bg-ink-900 border border-ink-800 space-y-2">
+              <span className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                <HelpCircle className="w-3.5 h-3.5" />
+                Researcher Thought Experiment Challenge
+              </span>
+              <p className="text-xs sm:text-sm text-ink-200 italic leading-relaxed">
+                "{activeGedanken.interactiveHypothesisPrompt}"
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
