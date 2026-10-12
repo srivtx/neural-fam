@@ -10,7 +10,7 @@
  * Supports pan, zoom, split/full-canvas view modes, and deep chain-of-thought derivations.
  */
 
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import {
   Network,
   Sparkles,
@@ -96,10 +96,26 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const touchStartDistRef = useRef<number | null>(null);
+  const touchStartZoomRef = useRef<number>(1.0);
+
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
   const activeNode = useMemo(() => {
     return SOCRATIC_QUESTION_NODES.find((n) => n.id === selectedNodeId) || SOCRATIC_QUESTION_NODES[0];
   }, [selectedNodeId]);
+
+  // Focused causal neighborhood (active node + its immediate prerequisites and consequences)
+  const activeNeighborIds = useMemo(() => {
+    const focusId = hoveredNodeId || selectedNodeId;
+    const node = SOCRATIC_QUESTION_NODES.find((n) => n.id === focusId);
+    if (!node) return new Set<string>();
+    return new Set<string>([
+      ...node.connectedQuestionIds,
+      ...node.originQuestionIds,
+      node.id,
+    ]);
+  }, [selectedNodeId, hoveredNodeId]);
 
   const proofNodes = useMemo(() => {
     return SOCRATIC_QUESTION_NODES.filter((n) => !!n.runnablePythonVerification);
@@ -227,12 +243,12 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
 
   // Zoom and Pan Handlers
   const handleZoomIn = () => {
-    setZoom((prev) => Math.min(2.8, parseFloat((prev + 0.2).toFixed(2))));
+    setZoom((prev) => Math.min(2.5, parseFloat((prev + 0.15).toFixed(2))));
     soundFX.playTap();
   };
 
   const handleZoomOut = () => {
-    setZoom((prev) => Math.max(0.45, parseFloat((prev - 0.2).toFixed(2))));
+    setZoom((prev) => Math.max(0.45, parseFloat((prev - 0.15).toFixed(2))));
     soundFX.playTap();
   };
 
@@ -241,6 +257,50 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
     setPan({ x: 0, y: 0 });
     soundFX.playTap();
   };
+
+  // Native wheel listener on canvas container: perfectly differentiates two-finger pan vs pinch zoom
+  useEffect(() => {
+    const container = canvasContainerRef.current;
+    if (!container) return;
+
+    const onWheelNative = (e: WheelEvent) => {
+      e.preventDefault();
+
+      // If user is pinching on trackpad (Mac sends e.ctrlKey = true on pinch) or holding Ctrl/Meta key:
+      if (e.ctrlKey || e.metaKey) {
+        const zoomSensitivity = 0.0035;
+        const zoomDelta = -e.deltaY * zoomSensitivity;
+        const clampedDelta = Math.max(-0.06, Math.min(0.06, zoomDelta));
+        const factor = 1 + clampedDelta;
+
+        const rect = container.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        setZoom((prevZoom) => {
+          const nextZoom = Math.min(2.5, Math.max(0.45, parseFloat((prevZoom * factor).toFixed(3))));
+          const ratio = nextZoom / prevZoom;
+          setPan((prevPan) => ({
+            x: Math.min(600, Math.max(-1000, mouseX - (mouseX - prevPan.x) * ratio)),
+            y: Math.min(600, Math.max(-1000, mouseY - (mouseY - prevPan.y) * ratio)),
+          }));
+          return nextZoom;
+        });
+      } else {
+        // Natural two-finger trackpad drag or wheel: Smooth, buttery Pan!
+        const panSpeed = 0.75;
+        setPan((prev) => ({
+          x: Math.min(600, Math.max(-1000, prev.x - e.deltaX * panSpeed)),
+          y: Math.min(600, Math.max(-1000, prev.y - e.deltaY * panSpeed)),
+        }));
+      }
+    };
+
+    container.addEventListener('wheel', onWheelNative, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', onWheelNative);
+    };
+  }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
@@ -251,19 +311,13 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
     setPan({
-      x: e.clientX - dragStartRef.current.x,
-      y: e.clientY - dragStartRef.current.y,
+      x: Math.min(600, Math.max(-1000, e.clientX - dragStartRef.current.x)),
+      y: Math.min(600, Math.max(-1000, e.clientY - dragStartRef.current.y)),
     });
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
-  };
-
-  const handleWheel = (e: React.WheelEvent) => {
-    // Zoom toward cursor
-    const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
-    setZoom((prev) => Math.min(2.8, Math.max(0.45, parseFloat((prev * zoomFactor).toFixed(2)))));
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -273,19 +327,38 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
         x: e.touches[0].clientX - pan.x,
         y: e.touches[0].clientY - pan.y,
       };
+      touchStartDistRef.current = null;
+    } else if (e.touches.length === 2) {
+      setIsDragging(false);
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      touchStartDistRef.current = dist;
+      touchStartZoomRef.current = zoom;
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || e.touches.length !== 1) return;
-    setPan({
-      x: e.touches[0].clientX - dragStartRef.current.x,
-      y: e.touches[0].clientY - dragStartRef.current.y,
-    });
+    if (e.touches.length === 1 && isDragging) {
+      setPan({
+        x: Math.min(600, Math.max(-1000, e.touches[0].clientX - dragStartRef.current.x)),
+        y: Math.min(600, Math.max(-1000, e.touches[0].clientY - dragStartRef.current.y)),
+      });
+    } else if (e.touches.length === 2 && touchStartDistRef.current) {
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const scale = currentDist / touchStartDistRef.current;
+      const targetZoom = Math.min(2.5, Math.max(0.45, parseFloat((touchStartZoomRef.current * scale).toFixed(2))));
+      setZoom(targetZoom);
+    }
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
+    touchStartDistRef.current = null;
   };
 
   const renderPythonVerificationPanel = () => {
@@ -551,11 +624,13 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
     soundFX.playTap();
   };
 
-  // Render curved edge between two nodes
+  // Render curved edge between two nodes with Focal Spotlight filtering
   const renderEdge = (source: SocraticQuestionNode, target: SocraticQuestionNode) => {
-    const isOutFromActive = selectedNodeId === source.id && target.originQuestionIds.includes(source.id);
-    const isInToActive = selectedNodeId === target.id && source.connectedQuestionIds.includes(target.id);
-    const isTraversed = isOutFromActive || isInToActive;
+    const focusId = hoveredNodeId || selectedNodeId;
+    const isOutFromFocus = focusId === source.id && target.originQuestionIds.includes(source.id);
+    const isInToFocus = focusId === target.id && source.connectedQuestionIds.includes(target.id);
+    const isTraversed = isOutFromFocus || isInToFocus;
+    const isConnectedToFocus = activeNeighborIds.has(source.id) && activeNeighborIds.has(target.id);
 
     const dx = target.x - source.x;
     const dy = target.y - source.y;
@@ -564,12 +639,16 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
     const cx2 = source.x + dx * 0.5;
     const cy2 = target.y;
 
-    const strokeColor = isOutFromActive
+    const strokeColor = isOutFromFocus
       ? '#10b981' // glowing emerald outgoing
-      : isInToActive
+      : isInToFocus
       ? '#0284c7' // sky blue incoming
-      : '#64748b'; // standard edge
+      : isConnectedToFocus
+      ? '#64748b' // soft slate for neighbor edge
+      : '#334155'; // faint ambient background edge
 
+    const strokeWidth = isTraversed ? 2.5 : isConnectedToFocus ? 1.2 : 0.75;
+    const opacity = isTraversed ? 0.95 : isConnectedToFocus ? 0.3 : 0.06;
     const edgePath = `M ${source.x} ${source.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${target.x} ${target.y}`;
 
     return (
@@ -578,23 +657,25 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
           d={edgePath}
           fill="none"
           stroke={strokeColor}
-          strokeWidth={isTraversed ? 2.8 : 1.2}
-          strokeDasharray={isTraversed ? 'none' : '4 3'}
-          className={`transition-all duration-300 ${isTraversed ? 'opacity-95' : 'opacity-25'}`}
+          strokeWidth={strokeWidth}
+          strokeDasharray={isTraversed ? 'none' : '3 3'}
+          className="transition-all duration-300"
+          opacity={opacity}
         />
-        {/* Direction marker dot */}
-        <circle
-          cx={(source.x + target.x) / 2}
-          cy={(source.y + target.y) / 2}
-          r={isTraversed ? 3.5 : 2}
-          fill={strokeColor}
-          className={isTraversed ? 'animate-pulse' : 'opacity-30'}
-        />
-        {/* Animated Signal Pulse along traversed edge */}
+        {/* Traversal Signal Marker and Flowing Particle */}
         {isTraversed && (
-          <circle r="3.2" fill={strokeColor} opacity="0.85">
-            <animateMotion path={edgePath} dur="2.2s" repeatCount="indefinite" />
-          </circle>
+          <>
+            <circle
+              cx={(source.x + target.x) / 2}
+              cy={(source.y + target.y) / 2}
+              r={3}
+              fill={strokeColor}
+              className="animate-pulse"
+            />
+            <circle r="3.2" fill={strokeColor} opacity="0.9">
+              <animateMotion path={edgePath} dur="2.2s" repeatCount="indefinite" />
+            </circle>
+          </>
         )}
       </g>
     );
@@ -884,7 +965,6 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
-              onWheel={handleWheel}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
@@ -972,11 +1052,22 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                     });
                   })}
 
-                  {/* Render All Question Nodes */}
+                  {/* Render All Question Nodes with Focal Spotlight */}
                   {SOCRATIC_QUESTION_NODES.map((node) => {
                     const isSelected = selectedNodeId === node.id;
+                    const isHovered = hoveredNodeId === node.id;
+                    const isNeighbor = activeNeighborIds.has(node.id) && !isSelected;
                     const isMatch = filteredNodes.some((fn) => fn.id === node.id);
                     const isExplored = exploredNodeIds.has(node.id);
+
+                    const nodeRadius = isSelected ? 22 : isHovered ? 20 : isNeighbor ? 17 : 14;
+                    const nodeOpacity = isMatch
+                      ? isSelected || isHovered
+                        ? 1
+                        : isNeighbor
+                        ? 0.9
+                        : 0.4
+                      : 0.12;
 
                     return (
                       <g
@@ -985,19 +1076,21 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                           e.stopPropagation();
                           handleSelectNode(node.id);
                         }}
+                        onMouseEnter={() => setHoveredNodeId(node.id)}
+                        onMouseLeave={() => setHoveredNodeId(null)}
                         className="cursor-pointer transition-all duration-300"
-                        opacity={isMatch ? 1 : 0.25}
+                        opacity={nodeOpacity}
                       >
                         <title>{`#${node.stepNumber}: ${node.question}`}</title>
 
                         {/* Active Halo Pulse */}
-                        {isSelected && (
+                        {(isSelected || isHovered) && (
                           <circle
                             cx={node.x}
                             cy={node.y}
-                            r="34"
+                            r={nodeRadius + 14}
                             fill="url(#nodeGlow)"
-                            className="animate-pulse"
+                            className="animate-pulse opacity-70"
                           />
                         )}
 
@@ -1005,12 +1098,11 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                         <circle
                           cx={node.x}
                           cy={node.y}
-                          r={isSelected ? 22 : 17}
-                          fill={isSelected ? node.realmColor : isExplored ? '#1e293b' : '#0f172a'}
+                          r={nodeRadius}
+                          fill={isSelected ? node.realmColor : isHovered ? '#1e293b' : isNeighbor ? '#1e293b' : isExplored ? '#101726' : '#070b14'}
                           stroke={node.realmColor}
-                          strokeWidth={isSelected ? 3 : isExplored ? 1.8 : 1.2}
-                          strokeDasharray={isExplored ? 'none' : '2 2'}
-                          className="transition-all"
+                          strokeWidth={isSelected ? 3 : isHovered ? 2.2 : isNeighbor ? 1.8 : 1}
+                          className="transition-all duration-200"
                         />
 
                         {/* Node Step Number inside circle */}
@@ -1019,7 +1111,7 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                           y={node.y + 4}
                           textAnchor="middle"
                           fill={isSelected ? '#ffffff' : node.realmColor}
-                          fontSize="10"
+                          fontSize={isSelected ? '10' : '9'}
                           fontFamily="monospace"
                           fontWeight="bold"
                         >
@@ -1029,15 +1121,15 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                         {/* Node Label Below */}
                         <text
                           x={node.x}
-                          y={node.y + 32}
+                          y={node.y + (isSelected ? 34 : 28)}
                           textAnchor="middle"
-                          fill={isSelected ? '#ffffff' : '#94a3b8'}
-                          fontSize="9"
+                          fill={isSelected ? '#ffffff' : isNeighbor || isHovered ? '#e2e8f0' : '#64748b'}
+                          fontSize={isSelected ? '9.5' : '8.5'}
                           fontFamily="sans-serif"
-                          fontWeight={isSelected ? 'bold' : 'normal'}
-                          className="pointer-events-none"
+                          fontWeight={isSelected ? 'bold' : isNeighbor || isHovered ? '600' : 'normal'}
+                          className="pointer-events-none select-none transition-all duration-200"
                         >
-                          {node.question.length > 24 ? `${node.question.slice(0, 23)}...` : node.question}
+                          {node.question.length > 22 ? `${node.question.slice(0, 21)}...` : node.question}
                         </text>
                       </g>
                     );
@@ -1373,8 +1465,16 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                         </p>
 
                         {step.formula && (
-                          <div className="bg-ink-950 border border-ink-800 rounded-lg p-2.5 text-center font-mono my-1 overflow-x-auto no-scrollbar max-w-full">
-                            <MathView math={step.formula} display={true} className="text-brand-300 text-xs sm:text-sm" />
+                          <div className="space-y-1.5 my-2">
+                            <div className="bg-ink-950/90 border border-ink-800/80 rounded-xl p-3 text-center font-mono overflow-x-auto no-scrollbar max-w-full shadow-inner">
+                              <MathView math={step.formula} display={true} className="text-brand-300 text-xs sm:text-sm" />
+                            </div>
+                            <div className="px-2 text-[10.5px] text-ink-400 font-sans flex items-start gap-1.5 leading-relaxed">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 mt-1" />
+                              <span>
+                                <strong className="text-ink-200">First-Principles Mandate:</strong> This mathematical step preserves metric scale and unbroken causal flow, preventing numerical saturation across layers.
+                              </span>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -1431,14 +1531,40 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                     {activeNode.firstPrinciplesReality}
                   </p>
 
-                  {/* Formula Box if Present */}
+                  {/* Formula Box with First-Principles Anatomy */}
                   {activeNode.mathematicalEquation && (
-                    <div className="bg-ink-950 border border-ink-800 rounded-xl p-4 text-center font-mono space-y-1.5 overflow-x-auto no-scrollbar max-w-full">
-                      <div className="text-[10px] uppercase font-bold text-ink-400 tracking-wider">
-                        Governing Formal Invariant
+                    <div className="rounded-2xl border border-ink-800 bg-ink-950/85 p-4.5 space-y-3 font-mono text-xs shadow-lg">
+                      <div className="flex items-center justify-between border-b border-ink-800/80 pb-2.5">
+                        <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                          Axiomatic Governing Invariant
+                        </span>
+                        <span className="text-[10px] text-ink-500 font-mono">Mathematical Bedrock</span>
                       </div>
-                      <div className="text-brand-300 text-sm sm:text-base font-bold py-1 overflow-x-auto no-scrollbar">
+
+                      <div className="text-brand-300 text-sm sm:text-base font-bold py-2 overflow-x-auto no-scrollbar text-center">
                         <MathView math={activeNode.mathematicalEquation} display={true} className="text-brand-300" />
+                      </div>
+
+                      {/* Deep First-Principles Intuition Breakdown */}
+                      <div className="p-3.5 rounded-xl bg-ink-900/90 border border-ink-800/80 text-[11px] font-sans space-y-2 leading-relaxed text-ink-300">
+                        <div className="flex items-center gap-1.5 text-emerald-400 font-mono font-bold text-[11px] uppercase tracking-wider">
+                          <Sigma className="w-3.5 h-3.5" />
+                          <span>Reading the Equation Through Physical Eyes</span>
+                        </div>
+                        <p className="text-ink-200 text-xs">
+                          This equation is not arbitrary software syntax. It is the exact geometric conservation law required to preserve continuous dynamics across discrete physical registers:
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-mono text-[10px]">
+                          <div className="p-2.5 rounded-lg bg-black/60 border border-ink-800 space-y-1">
+                            <span className="text-cyan-400 font-bold block">1. The Dynamic Numerator:</span>
+                            <span className="text-ink-300 font-sans">Drives directional signal accumulation along the steepest descent manifold or token attention affinity.</span>
+                          </div>
+                          <div className="p-2.5 rounded-lg bg-black/60 border border-ink-800 space-y-1">
+                            <span className="text-amber-400 font-bold block">2. The Scale Normalizer:</span>
+                            <span className="text-ink-300 font-sans">Divides by dimension or variance to prevent softmax saturation, gradient explosion, and FP16 register overflow.</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
