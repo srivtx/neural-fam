@@ -76,8 +76,13 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isGuidedMode, setIsGuidedMode] = useState<boolean>(false);
   const [historyTrail, setHistoryTrail] = useState<string[]>(['q_wigner_math']);
+  const [exploredNodeIds, setExploredNodeIds] = useState<Set<string>>(() => new Set(['q_wigner_math']));
+  const [showMinimap, setShowMinimap] = useState<boolean>(true);
   const [dossierTab, setDossierTab] = useState<'cot' | 'dossier' | 'python'>('cot');
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('split');
+
+  // Canvas Viewport Ref
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   // Python Verification Proof State
   const [editedCode, setEditedCode] = useState<Record<string, string>>({});
@@ -95,6 +100,14 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
   const activeNode = useMemo(() => {
     return SOCRATIC_QUESTION_NODES.find((n) => n.id === selectedNodeId) || SOCRATIC_QUESTION_NODES[0];
   }, [selectedNodeId]);
+
+  const proofNodes = useMemo(() => {
+    return SOCRATIC_QUESTION_NODES.filter((n) => !!n.runnablePythonVerification);
+  }, []);
+
+  const explorationPercentage = useMemo(() => {
+    return Math.round((exploredNodeIds.size / SOCRATIC_QUESTION_NODES.length) * 100);
+  }, [exploredNodeIds]);
 
   const filteredNodes = useMemo(() => {
     return SOCRATIC_QUESTION_NODES.filter((n) => {
@@ -120,7 +133,18 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
   const handleSelectNode = (nodeId: string) => {
     setSelectedNodeId(nodeId);
     setHistoryTrail((prev) => (prev[prev.length - 1] === nodeId ? prev : [...prev, nodeId]));
+    setExploredNodeIds((prev) => new Set([...prev, nodeId]));
     soundFX.playTap();
+  };
+
+  const handleUndoPath = () => {
+    if (historyTrail.length > 1) {
+      const newTrail = historyTrail.slice(0, -1);
+      setHistoryTrail(newTrail);
+      const prevId = newTrail[newTrail.length - 1];
+      setSelectedNodeId(prevId);
+      soundFX.playTap();
+    }
   };
 
   const handleNextInGuided = () => {
@@ -482,15 +506,50 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
   const landmarkCheckpoints = [
     { id: 'q_wigner_math', label: '1. Physics & Symmetry', realm: 'physics' },
     { id: 'q_program_vm', label: '4. Python VM & Bytecode', realm: 'computation' },
+    { id: 'q_high_dim_geometry', label: '8. High-Dim Manifolds', realm: 'geometry' },
     { id: 'q_layer_math', label: '10. Origami Layers', realm: 'geometry' },
     { id: 'q_gradient_random', label: '16. High-Dim Gradients', realm: 'optimization' },
     { id: 'q_language_nature', label: '20. Language & Attention', realm: 'language' },
     { id: 'q_memory_bus', label: '25. Silicon Bus Wall', realm: 'hardware' },
+    { id: 'q_diffusion_tweedie', label: '31. Tweedie Score', realm: 'physics' },
+    { id: 'q_grokking_phase', label: '33. Grokking Transition', realm: 'optimization' },
+    { id: 'q_rope_rotary', label: '34. Rotary Complex Plane', realm: 'language' },
+    { id: 'q_speculative_decoding', label: '36. Speculative Invariance', realm: 'computation' },
+    { id: 'q_double_descent_ntk', label: '40. Double Descent & NTK', realm: 'optimization' },
+    { id: 'q_mu_transfer_maximal_update', label: '41. µP Scaling Invariance', realm: 'optimization' },
+    { id: 'q_adam_second_moment_outliers', label: '42. AdamW Decoupled Decay', realm: 'optimization' },
+    { id: 'q_circuit_complexity_tc0', label: '43. TC⁰ Scratchpad Barrier', realm: 'computation' },
+    { id: 'q_the_grand_unification', label: '50. Grand Unification', realm: 'physics' },
   ];
 
   // SVG Canvas dimensions with ample margins to prevent clipping
-  const svgWidth = 1000;
-  const svgHeight = 780;
+  const svgWidth = 1100;
+  const svgHeight = 1140;
+
+  // Minimap dimensions
+  const minimapWidth = 170;
+  const minimapHeight = 176;
+
+  const handleMinimapClick = (e: React.MouseEvent<SVGSVGElement>) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    const normX = Math.max(0, Math.min(1, clickX / rect.width));
+    const normY = Math.max(0, Math.min(1, clickY / rect.height));
+    const targetSvgX = normX * svgWidth;
+    const targetSvgY = normY * svgHeight;
+
+    const container = canvasContainerRef.current;
+    const cw = container ? container.clientWidth : 600;
+    const ch = container ? container.clientHeight : 500;
+
+    setPan({
+      x: cw / 2 - targetSvgX * zoom,
+      y: ch / 2 - targetSvgY * zoom,
+    });
+    soundFX.playTap();
+  };
 
   // Render curved edge between two nodes
   const renderEdge = (source: SocraticQuestionNode, target: SocraticQuestionNode) => {
@@ -511,10 +570,12 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
       ? '#0284c7' // sky blue incoming
       : '#64748b'; // standard edge
 
+    const edgePath = `M ${source.x} ${source.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${target.x} ${target.y}`;
+
     return (
       <g key={`${source.id}-${target.id}`}>
         <path
-          d={`M ${source.x} ${source.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${target.x} ${target.y}`}
+          d={edgePath}
           fill="none"
           stroke={strokeColor}
           strokeWidth={isTraversed ? 2.8 : 1.2}
@@ -529,6 +590,12 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
           fill={strokeColor}
           className={isTraversed ? 'animate-pulse' : 'opacity-30'}
         />
+        {/* Animated Signal Pulse along traversed edge */}
+        {isTraversed && (
+          <circle r="3.2" fill={strokeColor} opacity="0.85">
+            <animateMotion path={edgePath} dur="2.2s" repeatCount="indefinite" />
+          </circle>
+        )}
       </g>
     );
   };
@@ -537,13 +604,16 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
     <div className="space-y-6 max-w-full overflow-hidden">
       {/* Header Banner */}
       <div className="p-6 md:p-8 bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 shadow-xs relative overflow-hidden transition-colors">
-        <div className="max-w-full space-y-3 relative z-10">
+        <div className="max-w-full space-y-4 relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-mono">
               <Network className="w-4 h-4 shrink-0" />
               <span>Socratic First-Principles Graph</span>
               <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold">
                 {SOCRATIC_QUESTION_NODES.length} Interconnected Inquiries
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-bold hidden sm:inline">
+                {proofNodes.length} Python Wasm Proofs
               </span>
             </div>
 
@@ -600,15 +670,36 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-ink-900 dark:text-white break-words">
-            The Ontological Inquiry Web: From Electron to Language & Memory Bus
+            The Ontological Inquiry Web: From Electron to Language, TC⁰ & Thermodynamic Unity
           </h1>
 
           <p className="text-sm text-ink-600 dark:text-ink-300 leading-relaxed max-w-4xl">
-            Every question in artificial intelligence connects unbroken to physical reality: why electrons in silicon potential wells necessitate discrete bits, why Python VM bytecode differs from matrix weights, why vertical layers fold manifolds exponentially better than wide horizontal layers, why high-dimensional gradients defeat the curse of dimensionality, why human language is a serial bottleneck, and why the GPU memory bus bandwidth dictates LLM inference.
+            Every question in artificial intelligence connects unbroken to physical reality: why electrons in silicon potential wells necessitate discrete bits, why Python VM bytecode differs from continuous weights, why vertical layers fold manifolds exponentially better than wide horizontal layers, why high-dimensional gradients defeat the curse of dimensionality, why human language is a serial bottleneck, why the GPU memory bus bandwidth dictates LLM inference, and how non-equilibrium thermodynamics unifies predictive models of reality.
           </p>
 
+          {/* Exploration Progress Meter Bar */}
+          <div className="p-3 rounded-xl bg-ink-100/70 dark:bg-ink-950/70 border border-ink-200 dark:border-white/10 space-y-2">
+            <div className="flex flex-wrap items-center justify-between text-xs font-mono gap-2">
+              <span className="flex items-center gap-2 text-ink-700 dark:text-ink-300 font-bold">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Exploration Trajectory:</span>
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {exploredNodeIds.size} of {SOCRATIC_QUESTION_NODES.length} Inquiries Explored
+                </span>
+              </span>
+              <span className="text-ink-500 font-bold">{explorationPercentage}% Synthesized</span>
+            </div>
+            {/* Progress Bar Track */}
+            <div className="w-full h-1.5 bg-ink-200 dark:bg-ink-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-cyan-500 via-emerald-500 to-indigo-500 transition-all duration-500"
+                style={{ width: `${explorationPercentage}%` }}
+              />
+            </div>
+          </div>
+
           {/* Quick Stats & Controls Bar */}
-          <div className="flex flex-wrap items-center gap-3 pt-2 text-xs">
+          <div className="flex flex-wrap items-center gap-3 pt-1 text-xs">
             <button
               onClick={() => setIsGuidedMode((prev) => !prev)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-bold transition-all cursor-pointer ${
@@ -621,17 +712,28 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
               <span>{isGuidedMode ? 'Guided Tour Active (Step-by-Step)' : 'Start Guided Golden Thread'}</span>
             </button>
 
-            {/* Breadcrumb Trail */}
-            <div className="flex items-center gap-1 text-[11px] font-mono text-ink-500 dark:text-ink-400 overflow-x-auto no-scrollbar py-1 max-w-full">
+            {/* Breadcrumb Trail with Undo Button */}
+            <div className="flex items-center gap-1.5 text-[11px] font-mono text-ink-500 dark:text-ink-400 overflow-x-auto no-scrollbar py-1 max-w-full">
               <span className="font-bold text-ink-700 dark:text-ink-300 shrink-0">Curiosity Path:</span>
+              {historyTrail.length > 1 && (
+                <button
+                  onClick={handleUndoPath}
+                  className="px-1.5 py-0.5 rounded bg-ink-200 dark:bg-ink-800 hover:text-emerald-500 text-[10px] font-bold text-ink-600 dark:text-ink-300 cursor-pointer shrink-0"
+                  title="Step Back in Curiosity Path"
+                >
+                  ↩ Step Back
+                </button>
+              )}
               {historyTrail.slice(-4).map((id, idx) => {
                 const node = SOCRATIC_QUESTION_NODES.find((n) => n.id === id);
                 return (
                   <React.Fragment key={idx}>
-                    {idx > 0 && <span className="shrink-0">→</span>}
+                    {idx > 0 && <span className="shrink-0 text-ink-400">→</span>}
                     <button
                       onClick={() => handleSelectNode(id)}
-                      className="hover:text-emerald-500 underline truncate max-w-[130px] cursor-pointer shrink-0"
+                      className={`hover:text-emerald-500 underline truncate max-w-[130px] cursor-pointer shrink-0 ${
+                        selectedNodeId === id ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''
+                      }`}
                     >
                       #{node?.stepNumber}: {node?.question.split('?')[0]}?
                     </button>
@@ -643,14 +745,14 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
 
           {/* Landmark Fast-Jump Pills */}
           <div className="pt-2 border-t border-ink-200/60 dark:border-white/5 flex flex-wrap items-center gap-2 text-[11px] font-mono">
-            <span className="text-ink-400 font-semibold shrink-0">Fast Jump:</span>
+            <span className="text-ink-400 font-semibold shrink-0">Landmark Jumps:</span>
             {landmarkCheckpoints.map((landmark) => (
               <button
                 key={landmark.id}
                 onClick={() => handleSelectNode(landmark.id)}
                 className={`px-2.5 py-1 rounded-md border text-[11px] transition-all cursor-pointer whitespace-nowrap ${
                   selectedNodeId === landmark.id
-                    ? 'bg-emerald-600 text-white border-emerald-600 font-bold'
+                    ? 'bg-emerald-600 text-white border-emerald-600 font-bold shadow-xs'
                     : 'bg-ink-50 dark:bg-ink-800/60 text-ink-600 dark:text-ink-400 border-ink-200 dark:border-white/10 hover:border-emerald-500'
                 }`}
               >
@@ -718,10 +820,10 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-500 font-mono">
               <div className="flex items-center gap-2">
                 <span className="font-bold text-ink-800 dark:text-ink-200">
-                  Interactive DAG Topology (30 Nodes)
+                  Interactive DAG Topology ({SOCRATIC_QUESTION_NODES.length} Nodes)
                 </span>
                 <span className="text-[11px] text-ink-400 hidden sm:inline">
-                  • Drag to pan • Scroll to zoom
+                  • Drag to pan • Scroll to zoom • Radar to navigate
                 </span>
               </div>
 
@@ -752,6 +854,17 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
                 <button
+                  onClick={() => setShowMinimap((prev) => !prev)}
+                  className={`p-1 rounded cursor-pointer ${
+                    showMinimap
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'text-ink-600 dark:text-ink-300 hover:bg-ink-200 dark:hover:bg-ink-800'
+                  }`}
+                  title={showMinimap ? 'Hide Radar Navigator' : 'Show Radar Navigator'}
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                </button>
+                <button
                   onClick={() => setLayoutMode(layoutMode === 'graph' ? 'split' : 'graph')}
                   className="p-1 rounded text-ink-600 dark:text-ink-300 hover:bg-ink-200 dark:hover:bg-ink-800 cursor-pointer"
                   title={layoutMode === 'graph' ? 'Restore Split View' : 'Maximize Graph'}
@@ -763,6 +876,7 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
 
             {/* Interactive Pan/Zoom SVG Viewport */}
             <div
+              ref={canvasContainerRef}
               className={`w-full overflow-hidden border border-ink-200/60 dark:border-white/5 rounded-xl bg-ink-950 relative select-none ${
                 isDragging ? 'cursor-grabbing' : 'cursor-grab'
               } ${layoutMode === 'graph' ? 'h-[620px] sm:h-[700px]' : 'h-[520px] sm:h-[600px]'}`}
@@ -784,6 +898,30 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                     <stop offset="0%" stopColor="#10b981" stopOpacity="0.7" />
                     <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
                   </radialGradient>
+                  <radialGradient id="realmGlowPhysics" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="realmGlowComputation" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="realmGlowGeometry" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.28" />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="realmGlowOptimization" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.28" />
+                    <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="realmGlowLanguage" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#ec4899" stopOpacity="0.28" />
+                    <stop offset="100%" stopColor="#ec4899" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="realmGlowHardware" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.28" />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+                  </radialGradient>
                   {/* Subtle Spatial Coordinate Grid */}
                   <pattern id="graphGrid" width="50" height="50" patternUnits="userSpaceOnUse">
                     <path
@@ -801,8 +939,30 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                 {/* Transformed Content Group (Pan + Zoom) */}
                 <g
                   transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}
-                  style={{ transformOrigin: '500px 390px', transition: isDragging ? 'none' : 'transform 0.15s ease-out' }}
+                  style={{ transformOrigin: '550px 570px', transition: isDragging ? 'none' : 'transform 0.15s ease-out' }}
                 >
+                  {/* Constellation Realm Ambient Hulls */}
+                  <ellipse cx="280" cy="100" rx="260" ry="90" fill="url(#realmGlowPhysics)" opacity="0.4" />
+                  <ellipse cx="720" cy="100" rx="240" ry="90" fill="url(#realmGlowComputation)" opacity="0.4" />
+                  <ellipse cx="500" cy="220" rx="460" ry="90" fill="url(#realmGlowGeometry)" opacity="0.35" />
+                  <ellipse cx="500" cy="360" rx="460" ry="90" fill="url(#realmGlowOptimization)" opacity="0.35" />
+                  <ellipse cx="500" cy="500" rx="460" ry="90" fill="url(#realmGlowLanguage)" opacity="0.35" />
+                  <ellipse cx="500" cy="640" rx="460" ry="90" fill="url(#realmGlowHardware)" opacity="0.35" />
+                  <ellipse cx="500" cy="780" rx="460" ry="90" fill="url(#realmGlowOptimization)" opacity="0.35" />
+                  <ellipse cx="500" cy="920" rx="460" ry="90" fill="url(#realmGlowHardware)" opacity="0.35" />
+                  <ellipse cx="530" cy="1040" rx="260" ry="80" fill="url(#realmGlowPhysics)" opacity="0.5" />
+
+                  {/* Realm Typographic Faint Watermarks in Background */}
+                  <text x="60" y="55" fill="rgba(6,182,212,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">PHYSICAL SUBSTRATE & POTENTIAL WELLS</text>
+                  <text x="560" y="55" fill="rgba(59,130,246,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">BYTECODE & COMPUTATION</text>
+                  <text x="60" y="195" fill="rgba(139,92,246,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">MANIFOLD GEOMETRY & TOPOLOGY</text>
+                  <text x="60" y="335" fill="rgba(245,158,11,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">HIGH-DIM DYNAMICS & LOSS SURFACES</text>
+                  <text x="60" y="475" fill="rgba(236,72,153,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">SEMANTIC TOPOLOGY & ATTENTION</text>
+                  <text x="60" y="615" fill="rgba(16,185,129,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">SILICON BUS & HARDWARE WALL</text>
+                  <text x="60" y="755" fill="rgba(245,158,11,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">OVERPARAMETERIZATION & NTK MANIFOLD</text>
+                  <text x="60" y="895" fill="rgba(59,130,246,0.07)" fontSize="16" fontFamily="monospace" fontWeight="bold" letterSpacing="4">TC0 BOUNDS, REUSE & REVERSIBILITY</text>
+                  <text x="240" y="1015" fill="rgba(6,182,212,0.12)" fontSize="18" fontFamily="monospace" fontWeight="bold" letterSpacing="6">THE GRAND UNIFICATION INVARIANT</text>
+
                   {/* Render All Graph Edges */}
                   {SOCRATIC_QUESTION_NODES.map((sourceNode) => {
                     return sourceNode.connectedQuestionIds.map((targetId) => {
@@ -816,6 +976,7 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                   {SOCRATIC_QUESTION_NODES.map((node) => {
                     const isSelected = selectedNodeId === node.id;
                     const isMatch = filteredNodes.some((fn) => fn.id === node.id);
+                    const isExplored = exploredNodeIds.has(node.id);
 
                     return (
                       <g
@@ -845,9 +1006,10 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                           cx={node.x}
                           cy={node.y}
                           r={isSelected ? 22 : 17}
-                          fill={isSelected ? node.realmColor : '#1e293b'}
+                          fill={isSelected ? node.realmColor : isExplored ? '#1e293b' : '#0f172a'}
                           stroke={node.realmColor}
-                          strokeWidth={isSelected ? 3 : 1.5}
+                          strokeWidth={isSelected ? 3 : isExplored ? 1.8 : 1.2}
+                          strokeDasharray={isExplored ? 'none' : '2 2'}
                           className="transition-all"
                         />
 
@@ -882,6 +1044,105 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                   })}
                 </g>
               </svg>
+
+              {/* Interactive Radar Minimap Navigator Overlay */}
+              {showMinimap && (
+                <div className="absolute top-3 right-3 z-20 bg-ink-950/85 backdrop-blur-md border border-white/10 rounded-xl p-2 shadow-2xl space-y-1.5 pointer-events-auto">
+                  <div className="flex items-center justify-between text-[10px] font-mono font-bold text-ink-300 px-0.5">
+                    <span className="flex items-center gap-1 text-emerald-400">
+                      <Compass className="w-3 h-3" />
+                      <span>Radar Navigator</span>
+                    </span>
+                    <button
+                      onClick={() => setShowMinimap(false)}
+                      className="text-ink-500 hover:text-white px-1 cursor-pointer"
+                      title="Minimize Radar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <svg
+                    width={minimapWidth}
+                    height={minimapHeight}
+                    viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+                    onClick={handleMinimapClick}
+                    className="rounded-lg bg-black/80 border border-ink-800 cursor-crosshair block"
+                  >
+                    {/* Simplified Minimap Edges */}
+                    {SOCRATIC_QUESTION_NODES.map((sourceNode) => {
+                      return sourceNode.connectedQuestionIds.map((targetId) => {
+                        const targetNode = SOCRATIC_QUESTION_NODES.find((n) => n.id === targetId);
+                        if (!targetNode) return null;
+                        return (
+                          <line
+                            key={`mm-${sourceNode.id}-${targetId}`}
+                            x1={sourceNode.x}
+                            y1={sourceNode.y}
+                            x2={targetNode.x}
+                            y2={targetNode.y}
+                            stroke="#475569"
+                            strokeWidth="1.2"
+                            opacity="0.35"
+                          />
+                        );
+                      });
+                    })}
+
+                    {/* Minimap Node Dots */}
+                    {SOCRATIC_QUESTION_NODES.map((n) => {
+                      const isSel = n.id === selectedNodeId;
+                      const isExplored = exploredNodeIds.has(n.id);
+                      return (
+                        <circle
+                          key={`mm-dot-${n.id}`}
+                          cx={n.x}
+                          cy={n.y}
+                          r={isSel ? 18 : isExplored ? 10 : 7}
+                          fill={isSel ? '#ffffff' : n.realmColor}
+                          stroke={isSel ? n.realmColor : 'none'}
+                          strokeWidth={isSel ? 4 : 0}
+                          opacity={isSel ? 1 : isExplored ? 0.9 : 0.45}
+                        />
+                      );
+                    })}
+
+                    {/* Real-time Viewport Camera Box */}
+                    <rect
+                      x={Math.max(0, -pan.x / zoom)}
+                      y={Math.max(0, -pan.y / zoom)}
+                      width={Math.min(svgWidth, (canvasContainerRef.current?.clientWidth || 600) / zoom)}
+                      height={Math.min(svgHeight, (canvasContainerRef.current?.clientHeight || 500) / zoom)}
+                      fill="rgba(16, 185, 129, 0.12)"
+                      stroke="#10b981"
+                      strokeWidth="3.5"
+                      strokeDasharray="6 4"
+                      className="pointer-events-none"
+                    />
+                  </svg>
+
+                  <div className="flex items-center justify-between text-[9px] font-mono text-ink-400 px-0.5">
+                    <span>Click anywhere to center</span>
+                    <button
+                      onClick={handleResetView}
+                      className="text-emerald-400 hover:underline cursor-pointer"
+                    >
+                      Reset View
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Minimized Radar Toggle Button */}
+              {!showMinimap && (
+                <button
+                  onClick={() => setShowMinimap(true)}
+                  className="absolute top-3 right-3 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-ink-950/80 backdrop-blur-md border border-white/10 text-[10px] font-mono font-bold text-emerald-400 hover:text-white cursor-pointer shadow-lg"
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>Radar</span>
+                </button>
+              )}
 
               {/* Floating Pan/Zoom Indicator Badge */}
               <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-ink-900/80 backdrop-blur-xs px-2.5 py-1 rounded-lg border border-white/10 text-[10px] text-ink-300 font-mono pointer-events-none">
@@ -970,7 +1231,7 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                     backgroundColor: `${activeNode.realmColor}10`,
                   }}
                 >
-                  {activeNode.realmLabel} • Step {activeNode.stepNumber} of 30
+                  {activeNode.realmLabel} • Step {activeNode.stepNumber} of {SOCRATIC_QUESTION_NODES.length}
                 </span>
 
                 <div className="flex items-center gap-2">
@@ -1057,7 +1318,7 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
               >
                 <Terminal className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">
-                  Python Proof (Wasm){activeNode.runnablePythonVerification ? ' •' : ''}
+                  Python Proofs ({proofNodes.length}){activeNode.runnablePythonVerification ? ' •' : ''}
                 </span>
               </button>
             </div>
@@ -1248,7 +1509,7 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                         Select a Landmark Inquiry for Python Wasm Proof
                       </h3>
                       <p className="text-xs text-ink-400 max-w-md mx-auto">
-                        This node does not have a dedicated landmark verification script. Select one of the 6 fundamental inquiries equipped with live in-browser WebAssembly proofs:
+                        This node does not have a dedicated landmark verification script. Select one of the {proofNodes.length} fundamental inquiries equipped with live in-browser WebAssembly proofs:
                       </p>
                     </div>
 
