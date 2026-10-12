@@ -255,6 +255,11 @@ export function cleanLatex(input: string): string {
   s = s.replace(/\\prime/g, '′');
   s = s.replace(/\\star/g, '★');
   s = s.replace(/\\circ/g, '∘');
+  s = s.replace(/\\hbar/g, 'ℏ');
+  s = s.replace(/\\hslash/g, 'ℏ');
+  s = s.replace(/\\top/g, '⊤');
+  s = s.replace(/\\bot/g, '⊥');
+  s = s.replace(/\\ell/g, 'ℓ');
 
   // Clean spacing around ∂ and Δ
   s = s.replace(/∂\s+/g, '∂');

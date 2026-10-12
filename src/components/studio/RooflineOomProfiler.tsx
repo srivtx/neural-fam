@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Design, Workload, GpuSpec, GPUS } from '../../studio/model';
 import { Analysis } from '../../studio/calculator';
+import { MathView } from '../MathView';
 
 interface RooflineOomProfilerProps {
   design: Design;
@@ -138,8 +139,8 @@ export const RooflineOomProfiler: React.FC<RooflineOomProfilerProps> = ({
                 Log-Log plot: Arithmetic Intensity (FLOPs/Byte) vs Attainable TFLOPS
               </p>
             </div>
-            <span className="text-[10px] font-mono text-ink-400">
-              Knee $I^* = {Math.round(kneeIntensity)}$ FLOPs/B
+            <span className="text-[10px] font-mono text-ink-400 flex items-center gap-1">
+              Knee <MathView math="I^*" /> = {Math.round(kneeIntensity)} FLOPs/B
             </span>
           </div>
 

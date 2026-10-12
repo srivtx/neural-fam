@@ -24,6 +24,7 @@ import {
 import { FirstPrinciplesDossier } from '../types/firstPrinciples';
 import { soundFX } from '../utils/audio';
 import { markLabCompleted } from '../utils/progressStore';
+import { MathView } from './MathView';
 
 interface FirstPrinciplesNotebookProps {
   dossier: FirstPrinciplesDossier;
@@ -336,7 +337,7 @@ export const FirstPrinciplesNotebook: React.FC<FirstPrinciplesNotebookProps> = (
 
             {/* Formula Presentation */}
             <div className="p-4 rounded-xl bg-surface dark:bg-ink-900 border border-brand-300/80 dark:border-brand-500/30 font-mono text-center text-base sm:text-lg font-bold text-brand-900 dark:text-brand-200 overflow-x-auto no-scrollbar shadow-2xs">
-              {dossier.invariant.governingEquation}
+              <MathView math={dossier.invariant.governingEquation} display={true} className="text-brand-900 dark:text-brand-200" />
             </div>
 
             <p className="text-xs sm:text-[13px] text-ink-700 dark:text-ink-200 leading-relaxed font-sans">
@@ -371,7 +372,7 @@ export const FirstPrinciplesNotebook: React.FC<FirstPrinciplesNotebookProps> = (
                 Analytical Invariant Formulation:
               </div>
               <div className="p-2.5 bg-ink-50 dark:bg-ink-950 rounded-lg font-mono text-brand-700 dark:text-brand-300 text-xs overflow-x-auto no-scrollbar">
-                {dossier.invariant.identityDerivativeFormula}
+                <MathView math={dossier.invariant.identityDerivativeFormula} display={true} className="text-brand-700 dark:text-brand-300" />
               </div>
               {dossier.invariant.proofSketch && (
                 <p className="text-ink-600 dark:text-ink-400 text-[11px] leading-relaxed italic">

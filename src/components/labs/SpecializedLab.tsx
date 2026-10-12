@@ -14,6 +14,7 @@ import { BuildFromScratchLab } from '../BuildFromScratchLab';
 import { DIY_PROJECTS } from '../../data/diyProjectsData';
 import { LAB_QUIZZES } from '../../data/labQuizzes';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
+import { MathView } from '../MathView';
 
 export const SpecializedLab: React.FC = () => {
   const [stepSizeDt, setStepSizeDt] = useState<number>(0.2);
@@ -224,7 +225,7 @@ export const SpecializedLab: React.FC = () => {
             </div>
 
             <div className="p-3 bg-ink-50 dark:bg-ink-900/80 rounded-lg border border-ink-200 dark:border-white/5 text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
-              <strong>Continuous Depth Insight:</strong> In standard networks, you must choose 18, 50, or 101 layers before training. In Neural ODEs, network depth is a continuous time variable $t \in [0, T]$. You can test with a fast, coarse step size ($dt=0.3$) for low latency on mobile, or fine $dt=0.05$ for maximum accuracy on cloud servers—without re-training the network.
+              <strong>Continuous Depth Insight:</strong> In standard networks, you must choose 18, 50, or 101 layers before training. In Neural ODEs, network depth is a continuous time variable <MathView math="t \in [0, T]" />. You can test with a fast, coarse step size (<MathView math="dt=0.3" />) for low latency on mobile, or fine <MathView math="dt=0.05" /> for maximum accuracy on cloud servers—without re-training the network.
             </div>
           </div>
 

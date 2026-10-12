@@ -14,6 +14,7 @@ import { BuildFromScratchLab } from '../BuildFromScratchLab';
 import { DIY_PROJECTS } from '../../data/diyProjectsData';
 import { LAB_QUIZZES } from '../../data/labQuizzes';
 import { markLabCompleted, markTestRun } from '../../utils/progressStore';
+import { MathView } from '../MathView';
 
 
 // Target 8x8 pattern grids
@@ -446,7 +447,7 @@ export const GenerativeLab: React.FC = () => {
               <div className="flex items-center justify-between w-full text-xs">
                 <span className="font-semibold text-ink-900 dark:text-white flex items-center gap-1.5">
                   <Eye className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
-                  <span>Noisy Latent State $x_t$</span>
+                  <span>Noisy Latent State <MathView math="x_t" /></span>
                 </span>
                 <span className="font-mono text-ink-500 text-[11px]">8×8 pixel grid</span>
               </div>
@@ -530,7 +531,7 @@ export const GenerativeLab: React.FC = () => {
               <div className="p-3 bg-brand-50 dark:bg-brand-950/20 rounded-lg border border-brand-300/80 dark:border-brand-500/30 text-xs text-ink-700 dark:text-ink-300 space-y-1">
                 <span className="font-bold text-brand-800 dark:text-brand-300 block">The Denoising Trick:</span>
                 <p>
-                  By decomposing generation into dozens of tiny Gaussian noise subtractions, the neural network only ever solves a smooth convex regression problem: <em>predicting Gaussian noise vector $\epsilon$</em>.
+                  By decomposing generation into dozens of tiny Gaussian noise subtractions, the neural network only ever solves a smooth convex regression problem: <em>predicting Gaussian noise vector <MathView math="\epsilon" /></em>.
                 </p>
               </div>
             </div>
@@ -655,7 +656,7 @@ export const GenerativeLab: React.FC = () => {
           </p>
           <div className="p-4 bg-ink-50 dark:bg-ink-900/80 rounded-lg border border-ink-200 dark:border-white/5 space-y-2 text-xs text-ink-600 dark:text-ink-300">
             <p>
-              <strong className="text-brand-700 dark:text-brand-400 font-semibold">The Forward Process ($t=0 \to T$):</strong> Over 60 seconds, the ink droplet dissolves and diffuses until the entire glass is an indistinct, hazy light blue (pure random noise).
+              <strong className="text-brand-700 dark:text-brand-400 font-semibold">The Forward Process (<MathView math="t=0 \to T" />):</strong> Over 60 seconds, the ink droplet dissolves and diffuses until the entire glass is an indistinct, hazy light blue (pure random noise).
             </p>
             <p>
               <strong className="text-brand-800 dark:text-brand-300 font-medium">The Reverse Process (Neural Denoising):</strong> Diffusion models learn to reverse this process. The neural network estimates the added noise and subtracts it step by step until the sharp image is recovered.

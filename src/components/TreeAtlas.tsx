@@ -329,8 +329,8 @@ export const TreeAtlas: React.FC<TreeAtlasProps> = ({ onOpenLab }) => {
                         <p className="text-ink-600 dark:text-ink-400 leading-relaxed">
                           {dossier.invariant.plainEnglishSummary}
                         </p>
-                        <div className="font-mono text-[11px] p-2 bg-ink-100/70 dark:bg-ink-950/80 rounded border border-ink-200/50 dark:border-white/5 text-brand-700 dark:text-brand-300 font-bold">
-                          {dossier.invariant.governingEquation}
+                        <div className="font-mono text-[11px] p-2 bg-ink-100/70 dark:bg-ink-950/80 rounded border border-ink-200/50 dark:border-white/5 text-brand-700 dark:text-brand-300 font-bold overflow-x-auto no-scrollbar">
+                          <MathView math={dossier.invariant.governingEquation} display={true} className="text-brand-700 dark:text-brand-300 font-bold" />
                         </div>
                       </div>
                     </div>

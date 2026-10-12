@@ -20,6 +20,7 @@ import {
   Flame,
 } from 'lucide-react';
 import { TheoryDossier } from '../types/theory';
+import { MathView } from './MathView';
 
 interface TheorySectionViewProps {
   theory: TheoryDossier;
@@ -241,7 +242,7 @@ export const TheorySectionView: React.FC<TheorySectionViewProps> = ({ theory }) 
                   <div className="px-5 pb-5 pt-1 space-y-3 text-xs border-t border-ink-100 dark:border-white/5">
                     {/* Formula Banner */}
                     <div className="p-3 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 font-mono text-xs sm:text-sm text-brand-700 dark:text-brand-300 overflow-x-auto no-scrollbar shadow-2xs font-semibold">
-                      {step.formula}
+                      <MathView math={step.formula} display={true} className="text-brand-700 dark:text-brand-300" />
                     </div>
 
                     <p className="text-ink-700 dark:text-ink-300 leading-relaxed">
@@ -275,7 +276,7 @@ export const TheorySectionView: React.FC<TheorySectionViewProps> = ({ theory }) 
           </div>
 
           <div className="p-4 bg-surface dark:bg-ink-950 rounded-xl border border-brand-500/20 text-center font-mono text-sm sm:text-base font-bold text-brand-700 dark:text-brand-300 overflow-x-auto no-scrollbar shadow-xs">
-            {theory.firstPrinciplesDerivation.finalGoverningEquation}
+            <MathView math={theory.firstPrinciplesDerivation.finalGoverningEquation} display={true} className="text-brand-700 dark:text-brand-300" />
           </div>
 
           <p className="text-xs text-ink-600 dark:text-ink-400 leading-relaxed">

@@ -24,6 +24,7 @@ import {
   Info,
 } from 'lucide-react';
 import { soundFX } from '../utils/audio';
+import { MathView } from './MathView';
 
 type SimMode = 'quantum' | 'thermodynamic' | 'attention';
 
@@ -561,7 +562,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
             <div className="text-[11px] text-ink-500 dark:text-ink-400 flex items-center gap-1.5">
               <Info className="w-4 h-4 text-amber-500 shrink-0" />
               <span>
-                Forward diffusion slowly destroys semantic structure with Gaussian noise. Reversing time (Score Matching) pulls particles back along the learned gradient vector field ∇_x log p(x).
+                Forward diffusion slowly destroys semantic structure with Gaussian noise. Reversing time (Score Matching) pulls particles back along the learned gradient vector field <MathView math="\nabla_x \log p(x)" />.
               </span>
             </div>
           </div>
@@ -571,7 +572,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div className="space-y-1.5">
               <div className="flex justify-between font-medium">
-                <span className="text-ink-600 dark:text-ink-300">Lattice Temperature (Thermal Energy k_B*T):</span>
+                <span className="text-ink-600 dark:text-ink-300 flex items-center gap-1">Lattice Temperature (Thermal Energy <MathView math="k_B T" />):</span>
                 <span className="font-mono text-brand-600 dark:text-brand-400">{thermalTemp} Kelvin</span>
               </div>
               <input

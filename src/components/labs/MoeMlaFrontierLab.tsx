@@ -825,8 +825,8 @@ export const MoeMlaFrontierLab: React.FC = () => {
                 </div>
               </div>
 
-              <div className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
-                Low-rank joint KV compression ($d_c=512$) + Decoupled RoPE ($d_R=64$) + Matrix Absorption!
+              <div className="text-xs text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-1.5 flex-wrap">
+                <span>Low-rank joint KV compression (</span><MathView math="d_c=512" /><span>) + Decoupled RoPE (</span><MathView math="d_R=64" /><span>) + Matrix Absorption!</span>
               </div>
             </div>
           </div>
