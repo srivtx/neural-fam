@@ -2612,7 +2612,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
             onClick={() => handleModeChange('thermodynamic')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               mode === 'thermodynamic'
-                ? 'bg-brand-500 text-white shadow-xs'
+                ? 'bg-amber-600 text-white font-bold shadow-md shadow-amber-600/30 ring-1 ring-amber-400/50'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
@@ -2624,7 +2624,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
             onClick={() => handleModeChange('quantum')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               mode === 'quantum'
-                ? 'bg-brand-500 text-white shadow-xs'
+                ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-600/30 ring-1 ring-blue-400/50'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
@@ -2636,7 +2636,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
             onClick={() => handleModeChange('attention')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               mode === 'attention'
-                ? 'bg-brand-500 text-white shadow-xs'
+                ? 'bg-pink-600 text-white font-bold shadow-md shadow-pink-600/30 ring-1 ring-pink-400/50'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
@@ -2648,7 +2648,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
             onClick={() => handleModeChange('geometry')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               mode === 'geometry'
-                ? 'bg-brand-500 text-white shadow-xs'
+                ? 'bg-cyan-600 text-white font-bold shadow-md shadow-cyan-600/30 ring-1 ring-cyan-400/50'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
@@ -2660,7 +2660,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
             onClick={() => handleModeChange('neural_ode')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               mode === 'neural_ode'
-                ? 'bg-brand-500 text-white shadow-xs'
+                ? 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/30 ring-1 ring-emerald-400/50'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
@@ -2672,7 +2672,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
             onClick={() => handleModeChange('saddle_escape')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               mode === 'saddle_escape'
-                ? 'bg-brand-500 text-white shadow-xs'
+                ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-600/30 ring-1 ring-purple-400/50'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
@@ -2684,7 +2684,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
             onClick={() => handleModeChange('grokking')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               mode === 'grokking'
-                ? 'bg-brand-500 text-white shadow-xs'
+                ? 'bg-violet-600 text-white font-bold shadow-md shadow-violet-600/30 ring-1 ring-violet-400/50'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
@@ -3497,77 +3497,97 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
           {/* Card 1: Governing Invariant */}
-          <div className="p-3.5 rounded-xl bg-surface dark:bg-ink-950/70 border border-indigo-500/20 dark:border-indigo-500/30 flex flex-col justify-between space-y-2">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-500 dark:text-indigo-400">
-                <Shield className="w-3.5 h-3.5 shrink-0" />
-                1. Governing Invariant
+          <div className="p-4 rounded-xl bg-surface dark:bg-ink-950/80 border border-indigo-500/25 dark:border-indigo-500/35 hover:border-indigo-500/50 transition-all flex flex-col justify-between space-y-2.5 shadow-xs group">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-xs font-bold text-indigo-500 dark:text-indigo-400">
+                  <Shield className="w-3.5 h-3.5 shrink-0" />
+                  1. Governing Invariant
+                </span>
+                <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  Symmetry
+                </span>
               </div>
-              <div className="font-semibold text-xs text-ink-900 dark:text-white">
+              <div className="font-bold text-xs text-ink-900 dark:text-white group-hover:text-indigo-400 transition-colors">
                 {currentDossier.invariant.title}
               </div>
-              <div className="p-1.5 rounded bg-indigo-500/5 dark:bg-indigo-950/30 border border-indigo-500/15 text-[11px]">
-                <MathView math={currentDossier.invariant.equation} />
+              <div className="p-2.5 rounded-lg bg-ink-900/90 dark:bg-black/60 border border-indigo-500/20 text-center font-mono overflow-x-auto no-scrollbar shadow-inner">
+                <MathView math={currentDossier.invariant.equation} display={true} className="text-indigo-300 text-xs sm:text-[13px]" />
               </div>
             </div>
-            <p className="text-[11px] text-ink-600 dark:text-ink-300 leading-relaxed pt-1">
+            <p className="text-[11px] text-ink-600 dark:text-ink-300 leading-relaxed pt-2 border-t border-ink-100 dark:border-white/5">
               {currentDossier.invariant.explanation}
             </p>
           </div>
 
           {/* Card 2: Dynamic Force */}
-          <div className="p-3.5 rounded-xl bg-surface dark:bg-ink-950/70 border border-amber-500/20 dark:border-amber-500/30 flex flex-col justify-between space-y-2">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-500 dark:text-amber-400">
-                <Zap className="w-3.5 h-3.5 shrink-0" />
-                2. Dynamic Force
+          <div className="p-4 rounded-xl bg-surface dark:bg-ink-950/80 border border-amber-500/25 dark:border-amber-500/35 hover:border-amber-500/50 transition-all flex flex-col justify-between space-y-2.5 shadow-xs group">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-xs font-bold text-amber-500 dark:text-amber-400">
+                  <Zap className="w-3.5 h-3.5 shrink-0" />
+                  2. Dynamic Force
+                </span>
+                <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  Gradient
+                </span>
               </div>
-              <div className="font-semibold text-xs text-ink-900 dark:text-white">
+              <div className="font-bold text-xs text-ink-900 dark:text-white group-hover:text-amber-400 transition-colors">
                 {currentDossier.force.title}
               </div>
-              <div className="p-1.5 rounded bg-amber-500/5 dark:bg-amber-950/30 border border-amber-500/15 text-[11px]">
-                <MathView math={currentDossier.force.equation} />
+              <div className="p-2.5 rounded-lg bg-ink-900/90 dark:bg-black/60 border border-amber-500/20 text-center font-mono overflow-x-auto no-scrollbar shadow-inner">
+                <MathView math={currentDossier.force.equation} display={true} className="text-amber-300 text-xs sm:text-[13px]" />
               </div>
             </div>
-            <p className="text-[11px] text-ink-600 dark:text-ink-300 leading-relaxed pt-1">
+            <p className="text-[11px] text-ink-600 dark:text-ink-300 leading-relaxed pt-2 border-t border-ink-100 dark:border-white/5">
               {currentDossier.force.explanation}
             </p>
           </div>
 
           {/* Card 3: Scale Normalizer */}
-          <div className="p-3.5 rounded-xl bg-surface dark:bg-ink-950/70 border border-cyan-500/20 dark:border-cyan-500/30 flex flex-col justify-between space-y-2">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-500 dark:text-cyan-400">
-                <Gauge className="w-3.5 h-3.5 shrink-0" />
-                3. Scale Normalizer
+          <div className="p-4 rounded-xl bg-surface dark:bg-ink-950/80 border border-cyan-500/25 dark:border-cyan-500/35 hover:border-cyan-500/50 transition-all flex flex-col justify-between space-y-2.5 shadow-xs group">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-xs font-bold text-cyan-500 dark:text-cyan-400">
+                  <Gauge className="w-3.5 h-3.5 shrink-0" />
+                  3. Scale Normalizer
+                </span>
+                <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  Variance
+                </span>
               </div>
-              <div className="font-semibold text-xs text-ink-900 dark:text-white">
+              <div className="font-bold text-xs text-ink-900 dark:text-white group-hover:text-cyan-400 transition-colors">
                 {currentDossier.normalizer.title}
               </div>
-              <div className="p-1.5 rounded bg-cyan-500/5 dark:bg-cyan-950/30 border border-cyan-500/15 text-[11px]">
-                <MathView math={currentDossier.normalizer.equation} />
+              <div className="p-2.5 rounded-lg bg-ink-900/90 dark:bg-black/60 border border-cyan-500/20 text-center font-mono overflow-x-auto no-scrollbar shadow-inner">
+                <MathView math={currentDossier.normalizer.equation} display={true} className="text-cyan-300 text-xs sm:text-[13px]" />
               </div>
             </div>
-            <p className="text-[11px] text-ink-600 dark:text-ink-300 leading-relaxed pt-1">
+            <p className="text-[11px] text-ink-600 dark:text-ink-300 leading-relaxed pt-2 border-t border-ink-100 dark:border-white/5">
               {currentDossier.normalizer.explanation}
             </p>
           </div>
 
           {/* Card 4: Physical Conservation Law */}
-          <div className="p-3.5 rounded-xl bg-surface dark:bg-ink-950/70 border border-emerald-500/20 dark:border-emerald-500/30 flex flex-col justify-between space-y-2">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-500 dark:text-emerald-400">
-                <Layers className="w-3.5 h-3.5 shrink-0" />
-                4. Conservation Law
+          <div className="p-4 rounded-xl bg-surface dark:bg-ink-950/80 border border-emerald-500/25 dark:border-emerald-500/35 hover:border-emerald-500/50 transition-all flex flex-col justify-between space-y-2.5 shadow-xs group">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-500 dark:text-emerald-400">
+                  <Layers className="w-3.5 h-3.5 shrink-0" />
+                  4. Conservation Law
+                </span>
+                <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Capacity
+                </span>
               </div>
-              <div className="font-semibold text-xs text-ink-900 dark:text-white">
+              <div className="font-bold text-xs text-ink-900 dark:text-white group-hover:text-emerald-400 transition-colors">
                 {currentDossier.conservationLaw.title}
               </div>
-              <div className="p-1.5 rounded bg-emerald-500/5 dark:bg-emerald-950/30 border border-emerald-500/15 text-[11px]">
-                <MathView math={currentDossier.conservationLaw.equation} />
+              <div className="p-2.5 rounded-lg bg-ink-900/90 dark:bg-black/60 border border-emerald-500/20 text-center font-mono overflow-x-auto no-scrollbar shadow-inner">
+                <MathView math={currentDossier.conservationLaw.equation} display={true} className="text-emerald-300 text-xs sm:text-[13px]" />
               </div>
             </div>
-            <p className="text-[11px] text-ink-600 dark:text-ink-300 leading-relaxed pt-1">
+            <p className="text-[11px] text-ink-600 dark:text-ink-300 leading-relaxed pt-2 border-t border-ink-100 dark:border-white/5">
               {currentDossier.conservationLaw.explanation}
             </p>
           </div>

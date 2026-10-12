@@ -221,13 +221,13 @@ export const TheoryThinkingSanctuary: React.FC = () => {
                   <button
                     key={pillar.id}
                     onClick={() => handlePillarSelect(pillar.id)}
-                    className={`flex flex-col text-left p-3 rounded-xl border transition-all cursor-pointer ${
+                    className={`flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-brand-50 dark:bg-brand-950/40 border-brand-500 text-brand-900 dark:text-brand-300 shadow-xs'
+                        ? 'bg-brand-500/10 dark:bg-brand-950/50 border-brand-500 text-brand-900 dark:text-brand-300 shadow-md shadow-brand-500/10 ring-2 ring-brand-500/30 scale-[1.01]'
                         : 'bg-ink-50 dark:bg-ink-800/50 border-ink-200/60 dark:border-white/5 text-ink-600 dark:text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800'
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-1.5">
                       <span className="text-[10px] font-mono font-bold text-brand-600 dark:text-brand-400">
                         Pillar 0{idx + 1}
                       </span>
@@ -266,14 +266,14 @@ export const TheoryThinkingSanctuary: React.FC = () => {
                 </div>
 
                 {/* Governing Equation Box */}
-                <div className="bg-ink-950 border border-ink-800 rounded-xl p-4 font-mono text-center space-y-2">
-                  <div className="text-[10px] uppercase font-bold text-ink-400 tracking-wider">
+                <div className="bg-ink-950/95 border border-brand-500/30 rounded-2xl p-4 sm:p-5 font-mono text-center space-y-2 shadow-inner">
+                  <div className="text-[10px] uppercase font-bold text-brand-400 tracking-wider">
                     Governing Law: {activePillar.governingPhysicalLaw}
                   </div>
-                  <div className="text-brand-300 text-sm sm:text-base font-bold py-1 overflow-x-auto no-scrollbar">
+                  <div className="text-brand-300 text-sm sm:text-base font-bold py-1.5 overflow-x-auto no-scrollbar">
                     <MathView math={activePillar.mathematicalEquation} display={true} className="text-brand-300" />
                   </div>
-                  <p className="text-[11px] text-ink-400 font-sans text-left leading-relaxed">
+                  <p className="text-[11px] text-ink-300 font-sans text-left leading-relaxed pt-2 border-t border-ink-800/80">
                     {activePillar.equationExplanation}
                   </p>
                 </div>
@@ -355,9 +355,14 @@ export const TheoryThinkingSanctuary: React.FC = () => {
                   }`}
                 >
                   <div>
-                    <span className="text-[10px] font-mono font-bold text-brand-600 dark:text-brand-400">
-                      Jump Pattern {pattern.number < 10 ? `0${pattern.number}` : pattern.number}
-                    </span>
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="text-[10px] font-mono font-bold text-brand-600 dark:text-brand-400">
+                        Jump {pattern.number < 10 ? `0${pattern.number}` : pattern.number}
+                      </span>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-ink-200/60 dark:bg-ink-800 text-ink-500 dark:text-ink-400 truncate max-w-[120px] border border-ink-300/40 dark:border-white/5">
+                        {pattern.originatingField.split('&')[0].trim()}
+                      </span>
+                    </div>
                     <h3 className="text-xs sm:text-sm font-bold text-ink-900 dark:text-white mt-0.5 line-clamp-1">
                       {pattern.name}
                     </h3>
@@ -539,7 +544,7 @@ export const TheoryThinkingSanctuary: React.FC = () => {
                 </div>
 
                 {/* Step-by-Step Unwritten Mental Path */}
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   <span className="text-xs font-bold text-ink-900 dark:text-white uppercase tracking-wider block">
                     The Unwritten Step-by-Step Cognitive Leap:
                   </span>
@@ -547,9 +552,12 @@ export const TheoryThinkingSanctuary: React.FC = () => {
                     {activePaper.unwrittenMentalPath.map((step, sIdx) => (
                       <div
                         key={sIdx}
-                        className="p-3 rounded-xl bg-ink-50 dark:bg-ink-800/40 border border-ink-200/60 dark:border-white/5 text-xs text-ink-700 dark:text-ink-300 leading-relaxed font-mono"
+                        className="flex items-start gap-3 p-3.5 rounded-xl bg-ink-50 dark:bg-ink-800/40 border-l-4 border-l-brand-500 border border-ink-200/60 dark:border-white/5 text-xs text-ink-700 dark:text-ink-300 leading-relaxed font-mono shadow-xs"
                       >
-                        {step}
+                        <span className="w-5 h-5 rounded-md bg-brand-500/15 text-brand-600 dark:text-brand-400 font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5 border border-brand-500/25">
+                          {sIdx + 1}
+                        </span>
+                        <span className="flex-1">{step}</span>
                       </div>
                     ))}
                   </div>
@@ -827,42 +835,45 @@ export const TheoryThinkingSanctuary: React.FC = () => {
             </div>
 
             {/* 5-Step Pure-Scratch Axiomatic Derivation Chain */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between border-b border-ink-200/60 dark:border-white/10 pb-2">
                 <h3 className="text-xs font-bold text-ink-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                   <Workflow className="w-4 h-4 text-emerald-500" />
                   Pure Scratch Axiomatic Derivation (Step-by-Step Mathematical Flow)
                 </h3>
-                <span className="text-[10px] text-ink-500 font-mono">
+                <span className="text-[10px] text-brand-600 dark:text-brand-400 font-mono font-semibold px-2 py-0.5 rounded bg-brand-500/10 border border-brand-500/20">
                   {activeGedanken.pureScratchDerivation.length} Physical Axioms
                 </span>
               </div>
 
-              <div className="space-y-3">
+              <div className="relative pl-6 sm:pl-8 before:absolute before:left-3 sm:before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-linear-to-b before:from-emerald-500 before:via-brand-500 before:to-cyan-500 space-y-4">
                 {activeGedanken.pureScratchDerivation.map((step) => {
                   return (
                     <div
                       key={step.step}
-                      className="p-4 rounded-xl border bg-ink-950/70 border-ink-800 space-y-2 transition-all shadow-inner"
+                      className="relative p-4 sm:p-5 rounded-2xl border bg-surface dark:bg-ink-950/80 border-ink-200 dark:border-white/10 hover:border-brand-500/40 space-y-3 transition-all shadow-xs group"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono font-bold text-emerald-400 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-[10px]">
-                            {step.step}
-                          </span>
+                      {/* Node Bullet */}
+                      <div className="absolute -left-6 sm:-left-8 top-5 w-6 h-6 rounded-full bg-ink-950 border-2 border-emerald-500 flex items-center justify-center text-[10px] font-mono font-bold text-emerald-400 shadow-sm shadow-emerald-500/50">
+                        {step.step}
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs sm:text-sm font-mono font-bold text-ink-900 dark:text-emerald-300">
                           {step.axiom}
                         </span>
-                        <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded bg-white/5 text-ink-400 font-mono">
-                          Axiomatic Step {step.step}
+                        <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded bg-white/5 text-ink-400 font-mono border border-white/5">
+                          Axiomatic Step 0{step.step}
                         </span>
                       </div>
 
-                      <div className="bg-ink-950 border border-ink-800/80 rounded-lg p-3 text-center font-mono overflow-x-auto no-scrollbar">
+                      <div className="bg-ink-900/90 dark:bg-black/70 border border-ink-800 rounded-xl p-3 sm:p-4 text-center font-mono overflow-x-auto no-scrollbar shadow-inner">
                         <MathView math={step.mathematicalStatement} display={true} className="text-brand-300 text-xs sm:text-sm" />
                       </div>
 
-                      <p className="text-xs text-ink-300 leading-relaxed font-sans px-1">
-                        <strong className="text-ink-100">Physical Meaning:</strong> {step.physicalInterpretation}
+                      <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed font-sans pt-1 border-t border-ink-100 dark:border-white/5">
+                        <strong className="text-ink-900 dark:text-ink-100 font-semibold">Physical Meaning:</strong>{' '}
+                        {step.physicalInterpretation}
                       </p>
                     </div>
                   );
