@@ -104,7 +104,7 @@ export const TopNav: React.FC<TopNavProps> = ({
             </div>
           </button>
 
-          {/* Quick Search Button */}
+          {/* Quick Search Button (Desktop) */}
           <button
             onClick={onOpenSearch}
             title="Search architectures, labs, or formulas (Ctrl+K)"
@@ -115,6 +115,16 @@ export const TopNav: React.FC<TopNavProps> = ({
             <kbd className="text-[10px] font-mono px-1 py-0.2 rounded bg-white dark:bg-ink-900 border border-ink-200 dark:border-white/10 text-ink-400">
               Ctrl+K
             </kbd>
+          </button>
+
+          {/* Quick Search Button (Mobile < md) */}
+          <button
+            onClick={onOpenSearch}
+            title="Search architectures, labs, or formulas"
+            aria-label="Search"
+            className="flex md:hidden p-1.5 rounded-lg border border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors cursor-pointer shrink-0"
+          >
+            <Search className="w-4 h-4 text-brand-600 dark:text-brand-400" />
           </button>
         </div>
 

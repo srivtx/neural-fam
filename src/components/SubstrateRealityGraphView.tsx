@@ -92,6 +92,8 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 30, y: 30 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const touchStartDistRef = useRef<number | null>(null);
+  const touchStartZoomRef = useRef<number>(1.0);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
   const activeNode = useMemo(() => {
@@ -236,6 +238,49 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
 
   const handleMouseUp = () => {
     setIsDragging(false);
+  };
+
+  // Mobile Touch pan (1-finger) and pinch-zoom (2-finger)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      if ((e.target as HTMLElement).closest('.interactive-node')) return;
+      setIsDragging(true);
+      dragStartRef.current = {
+        x: e.touches[0].clientX - pan.x,
+        y: e.touches[0].clientY - pan.y,
+      };
+      touchStartDistRef.current = null;
+    } else if (e.touches.length === 2) {
+      setIsDragging(false);
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      touchStartDistRef.current = dist;
+      touchStartZoomRef.current = zoom;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1 && isDragging) {
+      setPan({
+        x: e.touches[0].clientX - dragStartRef.current.x,
+        y: e.touches[0].clientY - dragStartRef.current.y,
+      });
+    } else if (e.touches.length === 2 && touchStartDistRef.current) {
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const scale = currentDist / touchStartDistRef.current;
+      const targetZoom = Math.min(1.8, Math.max(0.45, parseFloat((touchStartZoomRef.current * scale).toFixed(2))));
+      setZoom(targetZoom);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    touchStartDistRef.current = null;
   };
 
   // Damped trackpad wheel pan & pinch zoom
@@ -492,7 +537,9 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
           {/* LEFT / MAIN: SVG GRAPH CANVAS */}
           <div
             className={`relative rounded-2xl bg-ink-950 border border-ink-800/80 overflow-hidden shadow-lg flex flex-col ${
-              layoutMode === 'split' ? 'lg:col-span-7 h-[680px]' : 'w-full h-[750px]'
+              layoutMode === 'split'
+                ? 'lg:col-span-7 h-[460px] sm:h-[580px] lg:h-[680px]'
+                : 'w-full h-[520px] sm:h-[640px] lg:h-[750px]'
             }`}
           >
             {/* Canvas Header & Pan/Zoom Controls HUD */}
@@ -537,6 +584,10 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onWheel={handleWheel}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              style={{ touchAction: 'none' }}
               className="flex-1 w-full h-full cursor-grab active:cursor-grabbing overflow-hidden select-none"
             >
               <svg
@@ -832,7 +883,7 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
           {/* RIGHT / SECONDARY: THE SOCRATIC DOSSIER INSPECTOR */}
           <div
             className={`flex flex-col space-y-4 overflow-y-auto pr-1 ${
-              layoutMode === 'split' ? 'lg:col-span-5 h-[680px]' : 'w-full'
+              layoutMode === 'split' ? 'lg:col-span-5 h-[520px] sm:h-[600px] lg:h-[680px]' : 'w-full'
             }`}
           >
             {/* Active Inquiry Header Card */}

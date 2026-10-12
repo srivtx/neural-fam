@@ -62,12 +62,34 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
   const [station, setStation] = useState<SubstrateSimStation>(initialStation);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const animFrameIdRef = useRef<number | null>(null);
+  const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 320 });
 
   // Sync station if initialStation changes externally
   useEffect(() => {
     setStation(initialStation);
   }, [initialStation]);
+
+  // Responsive Canvas Resize Observer
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateSize = () => {
+      const rect = container.getBoundingClientRect();
+      const w = Math.round(rect.width);
+      const h = Math.round(rect.height || (w < 640 ? 300 : 320));
+      if (w > 0) {
+        setDimensions((prev) => (prev.width === w && prev.height === h ? prev : { width: w, height: h }));
+      }
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   // ==========================================
   // STATION 1: FULL ADDER CONDUCTION STATE
@@ -614,28 +636,35 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     ctx.save();
     const cx = w / 2;
     const cy = h / 2;
+    const isMobile = w < 600;
+    const isCompact = w < 440;
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 13px monospace';
-    ctx.fillText('1-BIT CMOS FULL ADDER CONDUCTION CHANNELS', 25, 30);
+    ctx.font = isCompact ? 'bold 11px monospace' : 'bold 13px monospace';
+    ctx.fillText(isCompact ? '1-BIT CMOS FULL ADDER' : '1-BIT CMOS FULL ADDER CONDUCTION CHANNELS', isMobile ? 12 : 25, 26);
+
+    const gateW = isCompact ? 95 : isMobile ? 125 : 160;
+    const gateLeft = cx - gateW / 2;
+    const gateRight = cx + gateW / 2;
 
     // Left Input Lines
     const inputs = [
-      { label: `A = ${a} (${a ? '0.75V' : '0.00V'})`, val: a, y: cy - 60 },
-      { label: `B = ${b} (${b ? '0.75V' : '0.00V'})`, val: b, y: cy },
-      { label: `Cin = ${cin} (${cin ? '0.75V' : '0.00V'})`, val: cin, y: cy + 60 },
+      { label: isCompact ? `A=${a}` : `A = ${a} (${a ? '0.75V' : '0.0V'})`, val: a, y: cy - 55 },
+      { label: isCompact ? `B=${b}` : `B = ${b} (${b ? '0.75V' : '0.0V'})`, val: b, y: cy },
+      { label: isCompact ? `Cin=${cin}` : `Cin = ${cin} (${cin ? '0.75V' : '0.0V'})`, val: cin, y: cy + 55 },
     ];
 
     inputs.forEach((inp) => {
       ctx.fillStyle = inp.val ? '#10b981' : '#64748b';
-      ctx.font = 'bold 11px monospace';
-      ctx.fillText(inp.label, 30, inp.y + 4);
+      ctx.font = isCompact ? 'bold 9px monospace' : 'bold 11px monospace';
+      ctx.fillText(inp.label, isMobile ? 8 : 25, inp.y + 4);
 
       ctx.strokeStyle = inp.val ? '#10b981' : '#334155';
-      ctx.lineWidth = inp.val ? 3 : 1.5;
+      ctx.lineWidth = inp.val ? 2.5 : 1.5;
       ctx.beginPath();
-      ctx.moveTo(150, inp.y);
-      ctx.lineTo(cx - 80, inp.y);
+      const inLineStart = isCompact ? 48 : isMobile ? 75 : 150;
+      ctx.moveTo(inLineStart, inp.y);
+      ctx.lineTo(gateLeft, inp.y);
       ctx.stroke();
     });
 
@@ -643,51 +672,54 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     ctx.fillStyle = '#0f172a';
     ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 2;
-    ctx.fillRect(cx - 70, cy - 90, 160, 180);
-    ctx.strokeRect(cx - 70, cy - 90, 160, 180);
+    ctx.fillRect(gateLeft, cy - 85, gateW, 170);
+    ctx.strokeRect(gateLeft, cy - 85, gateW, 170);
 
     ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 11px monospace';
+    ctx.font = isCompact ? 'bold 8px monospace' : 'bold 10px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('28 CMOS TRANSISTORS', cx + 10, cy - 70);
-    ctx.fillText('CHANNEL TOPOLOGY', cx + 10, cy - 54);
+    ctx.fillText('28 CMOS GATES', cx, cy - 65);
+    ctx.fillText('TOPOLOGY', cx, cy - 50);
 
     // Dynamic Conduction Pathways inside
     const isSumActive = res.sum === 1;
     const isCoutActive = res.cout === 1;
 
     ctx.strokeStyle = isSumActive ? '#10b981' : '#334155';
-    ctx.lineWidth = isSumActive ? 3 : 1.5;
+    ctx.lineWidth = isSumActive ? 2.5 : 1.5;
     ctx.beginPath();
-    ctx.moveTo(cx - 60, cy - 20);
-    ctx.lineTo(cx + 80, cy - 20);
+    ctx.moveTo(gateLeft + 8, cy - 20);
+    ctx.lineTo(gateRight, cy - 20);
     ctx.stroke();
 
     ctx.strokeStyle = isCoutActive ? '#f59e0b' : '#334155';
-    ctx.lineWidth = isCoutActive ? 3 : 1.5;
+    ctx.lineWidth = isCoutActive ? 2.5 : 1.5;
     ctx.beginPath();
-    ctx.moveTo(cx - 60, cy + 30);
-    ctx.lineTo(cx + 80, cy + 30);
+    ctx.moveTo(gateLeft + 8, cy + 25);
+    ctx.lineTo(gateRight, cy + 25);
     ctx.stroke();
 
     // Right Outputs
     ctx.textAlign = 'left';
     ctx.fillStyle = res.sum ? '#10b981' : '#64748b';
-    ctx.font = 'bold 13px monospace';
-    ctx.fillText(`SUM = ${res.sum} (${res.sum ? '0.75V' : '0.00V'})`, cx + 110, cy - 20);
+    ctx.font = isCompact ? 'bold 10px monospace' : 'bold 12px monospace';
+    const sumLabel = isCompact ? `S=${res.sum}` : `SUM=${res.sum}`;
+    ctx.fillText(sumLabel, gateRight + 8, cy - 20);
 
     ctx.fillStyle = res.cout ? '#f59e0b' : '#64748b';
-    ctx.font = 'bold 13px monospace';
-    ctx.fillText(`C_OUT = ${res.cout} (${res.cout ? '0.75V' : '0.00V'})`, cx + 110, cy + 30);
+    ctx.font = isCompact ? 'bold 10px monospace' : 'bold 12px monospace';
+    const coutLabel = isCompact ? `C=${res.cout}` : `C_OUT=${res.cout}`;
+    ctx.fillText(coutLabel, gateRight + 8, cy + 25);
 
     // Interpretive Binary Result Box
     ctx.fillStyle = '#1e293b';
-    ctx.roundRect(cx - 60, cy + 105, 140, 32, 6);
+    const resultBoxW = isCompact ? 110 : 140;
+    ctx.roundRect(cx - resultBoxW / 2, cy + 95, resultBoxW, 26, 6);
     ctx.fill();
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 12px monospace';
+    ctx.font = isCompact ? 'bold 9.5px monospace' : 'bold 11px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(`Binary: ${res.cout}${res.sum}₂ = Decimal ${res.cout * 2 + res.sum}`, cx + 10, cy + 125);
+    ctx.fillText(`${res.cout}${res.sum}₂ = ${res.cout * 2 + res.sum}`, cx, cy + 112);
 
     ctx.restore();
   };
@@ -703,18 +735,18 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     t: number
   ) => {
     ctx.save();
-    const cx = w / 2;
-    const cy = h / 2;
+    const isMobile = w < 600;
+    const isCompact = w < 440;
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 13px monospace';
-    ctx.fillText('DRAM 1T-1C TRENCH CAPACITOR DISCHARGE SCOPE', 25, 30);
+    ctx.font = isCompact ? 'bold 11px monospace' : 'bold 13px monospace';
+    ctx.fillText(isCompact ? 'DRAM 1T-1C DISCHARGE' : 'DRAM 1T-1C TRENCH CAPACITOR DISCHARGE SCOPE', isMobile ? 12 : 25, 26);
 
     // Oscilloscope Grid Frame
-    const scopeX = 40;
-    const scopeY = 50;
-    const scopeW = w - 80;
-    const scopeH = h - 110;
+    const scopeX = isMobile ? 16 : 40;
+    const scopeY = 45;
+    const scopeW = w - scopeX * 2;
+    const scopeH = h - 85;
 
     ctx.fillStyle = '#020617';
     ctx.strokeStyle = '#1e293b';
@@ -734,8 +766,8 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     ctx.setLineDash([]);
 
     ctx.fillStyle = '#ef4444';
-    ctx.font = '10px monospace';
-    ctx.fillText('0.35V Sense Amp Flip Barrier (Data Corruption)', scopeX + 10, vRefY - 5);
+    ctx.font = isCompact ? '8.5px monospace' : '10px monospace';
+    ctx.fillText('0.35V Flip Barrier', scopeX + 8, vRefY - 5);
 
     // Plot Voltage History Waveform
     ctx.strokeStyle = isFlipped ? '#ef4444' : '#10b981';
@@ -751,14 +783,15 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     ctx.stroke();
 
     // Current Voltage readout HUD
+    const hudRight = scopeX + (isMobile ? 10 : scopeW - 230);
     ctx.fillStyle = isFlipped ? '#ef4444' : '#10b981';
-    ctx.font = 'bold 16px monospace';
-    ctx.fillText(`Stored V(t): ${voltage.toFixed(3)} V`, scopeX + scopeW - 240, scopeY + 30);
-    ctx.font = '11px monospace';
+    ctx.font = isCompact ? 'bold 12px monospace' : 'bold 15px monospace';
+    ctx.fillText(`V(t): ${voltage.toFixed(3)} V`, hudRight, scopeY + 22);
+    ctx.font = isCompact ? '9px monospace' : '11px monospace';
     ctx.fillText(
-      isFlipped ? 'STATUS: BIT FLIP CORRUPTION!' : 'STATUS: BIT RETAINED (1)',
-      scopeX + scopeW - 240,
-      scopeY + 50
+      isFlipped ? 'STATUS: CORRUPTED' : 'STATUS: RETAINED (1)',
+      hudRight,
+      scopeY + 38
     );
 
     ctx.restore();
@@ -775,56 +808,58 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     ctx.save();
     const cx = w / 2;
     const cy = h / 2;
+    const isMobile = w < 600;
+    const isCompact = w < 440;
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 13px monospace';
-    ctx.fillText('CROSS-COUPLED INVERTER: DOUBLE-WELL LYAPUNOV POTENTIAL', 25, 30);
+    ctx.font = isCompact ? 'bold 11px monospace' : 'bold 13px monospace';
+    ctx.fillText(isCompact ? 'SRAM DOUBLE-WELL POTENTIAL' : 'CROSS-COUPLED INVERTER: DOUBLE-WELL LYAPUNOV POTENTIAL', isMobile ? 12 : 25, 26);
 
     // Draw Potential Energy Curve: V(x) = x^4 - 2x^2
     ctx.strokeStyle = '#8b5cf6';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    const curveW = 320;
-    const curveH = 110;
-    for (let px = -160; px <= 160; px += 2) {
-      const normX = px / 120; // -1.33 to +1.33
+    const halfW = isCompact ? 110 : isMobile ? 135 : 160;
+    const curveH = isCompact ? 75 : 100;
+    for (let px = -halfW; px <= halfW; px += 2) {
+      const normX = px / (halfW * 0.75); // -1.33 to +1.33
       const potential = (Math.pow(normX, 4) - 2 * Math.pow(normX, 2)) * 0.7;
       const drawX = cx + px;
-      const drawY = cy + 40 + potential * curveH;
-      if (px === -160) ctx.moveTo(drawX, drawY);
+      const drawY = cy + 25 + potential * curveH;
+      if (px === -halfW) ctx.moveTo(drawX, drawY);
       else ctx.lineTo(drawX, drawY);
     }
     ctx.stroke();
 
-    // Stable Attractors labels
+    // Attractor Labels
+    ctx.font = isCompact ? 'bold 9px monospace' : 'bold 10.5px monospace';
     ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 11px monospace';
-    ctx.fillText('Stable Attractor (0.75V = "1")', cx + 60, cy + 120);
+    ctx.fillText(isCompact ? '"1" (0.75V)' : 'Attractor (0.75V = "1")', cx + (isCompact ? 25 : 50), cy + 105);
     ctx.fillStyle = '#ef4444';
-    ctx.fillText('Stable Attractor (0.00V = "0")', cx - 220, cy + 120);
+    ctx.fillText(isCompact ? '"0" (0.00V)' : 'Attractor (0.00V = "0")', cx - halfW + 5, cy + 105);
 
     // Unstable Saddle Point
     ctx.fillStyle = '#eab308';
-    ctx.fillText('Unstable Saddle (0.375V)', cx - 60, cy - 25);
+    ctx.fillText(isCompact ? 'Saddle (0.375V)' : 'Unstable Saddle (0.375V)', cx - 40, cy - 25);
 
     // The State Bead (Voltage Ball)
     const normalizedV = (v - 0.375) / 0.375; // -1 to +1
     const clampedNorm = Math.max(-1.3, Math.min(1.3, normalizedV));
     const beadPotential = (Math.pow(clampedNorm, 4) - 2 * Math.pow(clampedNorm, 2)) * 0.7;
-    const beadX = cx + clampedNorm * 120;
-    const beadY = cy + 40 + beadPotential * curveH;
+    const beadX = cx + clampedNorm * (halfW * 0.75);
+    const beadY = cy + 25 + beadPotential * curveH;
 
     ctx.fillStyle = '#38bdf8';
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(beadX, beadY, 10, 0, Math.PI * 2);
+    ctx.arc(beadX, beadY, isCompact ? 8 : 10, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 12px monospace';
-    ctx.fillText(`Current Node: ${v.toFixed(3)} V`, cx - 60, cy + 155);
+    ctx.font = isCompact ? 'bold 10px monospace' : 'bold 12px monospace';
+    ctx.fillText(`Node: ${v.toFixed(3)} V`, cx - (isCompact ? 40 : 55), cy + 135);
 
     ctx.restore();
   };
@@ -839,61 +874,73 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     t: number
   ) => {
     ctx.save();
-    const cx = w / 2;
-    const cy = h / 2;
+    const isMobile = w < 600;
+    const isCompact = w < 440;
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 13px monospace';
-    ctx.fillText('ELECTRON ENERGY BANDS: WHY METAL & WHY NOT CLAY?', 25, 30);
+    ctx.font = isCompact ? 'bold 11px monospace' : 'bold 13px monospace';
+    ctx.fillText(isCompact ? 'BANDGAPS: METAL VS CLAY' : 'ELECTRON ENERGY BANDS: WHY METAL & WHY NOT CLAY?', isMobile ? 12 : 25, 26);
 
     const materials = [
-      { id: 'metal', label: 'Copper Metal', Eg: 0.0, color: '#eab308' },
-      { id: 'silicon', label: 'Silicon Semiconductor', Eg: 1.12, color: '#06b6d4' },
-      { id: 'clay', label: 'Clay / Stone (Silicate)', Eg: 8.0, color: '#ef4444' },
+      { id: 'metal', label: isCompact ? 'Copper' : 'Copper Metal', Eg: 0.0, color: '#eab308' },
+      { id: 'silicon', label: isCompact ? 'Silicon' : 'Silicon (Si)', Eg: 1.12, color: '#06b6d4' },
+      { id: 'clay', label: isCompact ? 'Clay' : 'Clay (Silicate)', Eg: 8.0, color: '#ef4444' },
     ];
 
+    const margin = isMobile ? 8 : 30;
+    const gap = isMobile ? 6 : 16;
+    const colW = Math.floor((w - margin * 2 - gap * 2) / 3);
+    const boxTop = 45;
+    const boxH = h - 65;
+
     materials.forEach((m, idx) => {
-      const bx = 60 + idx * ((w - 120) / 3);
+      const bx = margin + idx * (colW + gap);
       const isSelected = mat === m.id;
 
       ctx.fillStyle = isSelected ? '#1e293b' : '#0f172a';
       ctx.strokeStyle = isSelected ? m.color : '#334155';
       ctx.lineWidth = isSelected ? 2.5 : 1;
-      ctx.fillRect(bx, 60, 160, h - 120);
-      ctx.strokeRect(bx, 60, 160, h - 120);
+      ctx.fillRect(bx, boxTop, colW, boxH);
+      ctx.strokeRect(bx, boxTop, colW, boxH);
 
       ctx.fillStyle = m.color;
-      ctx.font = 'bold 12px monospace';
-      ctx.fillText(m.label, bx + 10, 85);
+      ctx.font = isCompact ? 'bold 9.5px monospace' : 'bold 11px monospace';
+      ctx.fillText(m.label, bx + 5, boxTop + 18);
 
-      ctx.font = '10px monospace';
+      ctx.font = isCompact ? '8px monospace' : '9.5px monospace';
       ctx.fillStyle = '#94a3b8';
-      ctx.fillText(`Bandgap Eg = ${m.Eg.toFixed(2)} eV`, bx + 10, 105);
+      ctx.fillText(`Eg=${m.Eg.toFixed(1)}eV`, bx + 5, boxTop + 33);
+
+      const innerPad = Math.max(3, Math.floor(colW * 0.06));
+      const innerW = colW - innerPad * 2;
+      const bandH = Math.min(36, Math.floor(boxH * 0.22));
 
       // Conduction Band (Top)
       ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(bx + 15, 125, 130, 45);
+      ctx.fillRect(bx + innerPad, boxTop + 44, innerW, bandH);
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px monospace';
-      ctx.fillText('Conduction Band', bx + 25, 150);
+      ctx.font = isCompact ? 'bold 7.5px monospace' : 'bold 9px monospace';
+      ctx.fillText('Conduction', bx + innerPad + 3, boxTop + 44 + bandH / 2 + 3);
 
       // Forbidden Gap Visual
+      const gapY = boxTop + 44 + bandH + (boxH - 44 - bandH * 2) / 2;
       if (m.Eg > 0) {
         ctx.fillStyle = '#ef4444';
-        ctx.font = 'bold 11px monospace';
-        ctx.fillText(`ΔE = ${m.Eg} eV`, bx + 45, 195);
+        ctx.font = isCompact ? 'bold 8px monospace' : 'bold 9.5px monospace';
+        ctx.fillText(`ΔE=${m.Eg}eV`, bx + innerPad + 2, gapY + 3);
       } else {
         ctx.fillStyle = '#eab308';
-        ctx.font = 'bold 11px monospace';
-        ctx.fillText('OVERLAP (Eg = 0)', bx + 30, 195);
+        ctx.font = isCompact ? 'bold 7.5px monospace' : 'bold 9px monospace';
+        ctx.fillText('OVERLAP', bx + innerPad + 2, gapY + 3);
       }
 
       // Valence Band (Bottom)
+      const valY = boxTop + boxH - bandH - 8;
       ctx.fillStyle = '#64748b';
-      ctx.fillRect(bx + 15, 215, 130, 45);
+      ctx.fillRect(bx + innerPad, valY, innerW, bandH);
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px monospace';
-      ctx.fillText('Valence Band', bx + 30, 240);
+      ctx.font = isCompact ? 'bold 7.5px monospace' : 'bold 9px monospace';
+      ctx.fillText('Valence', bx + innerPad + 3, valY + bandH / 2 + 3);
     });
 
     ctx.restore();
@@ -909,104 +956,64 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     t: number
   ) => {
     ctx.save();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 13px monospace';
-    ctx.fillText('CMOS INVERTER: COMPLEMENTARY SWITCHING & SHOOT-THROUGH CURRENT', 25, 30);
+    const isMobile = w < 600;
+    const isCompact = w < 440;
 
-    const midX = 260;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = isCompact ? 'bold 11px monospace' : 'bold 13px monospace';
+    ctx.fillText(isCompact ? 'CMOS INVERTER DYNAMICS' : 'CMOS INVERTER: COMPLEMENTARY SWITCHING & SHOOT-THROUGH CURRENT', isMobile ? 12 : 25, 26);
+
+    const midX = isCompact ? Math.round(w * 0.44) : isMobile ? Math.round(w * 0.42) : 260;
+    const schemLeft = isMobile ? 8 : 25;
+    const schemW = midX - schemLeft - 6;
+
     // Left: Schematic
     ctx.fillStyle = '#0f172a';
     ctx.strokeStyle = '#334155';
-    ctx.fillRect(30, 45, midX - 40, h - 60);
-    ctx.strokeRect(30, 45, midX - 40, h - 60);
+    ctx.fillRect(schemLeft, 40, schemW, h - 55);
+    ctx.strokeRect(schemLeft, 40, schemW, h - 55);
 
-    ctx.font = 'bold 11px monospace';
+    ctx.font = isCompact ? 'bold 8.5px monospace' : 'bold 10px monospace';
     ctx.fillStyle = '#38bdf8';
-    ctx.fillText('VDD = +1.0 V', 50, 70);
+    ctx.fillText('VDD=1V', schemLeft + 6, 55);
 
-    // Power Rails
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(80, 80);
-    ctx.lineTo(160, 80);
-    ctx.stroke();
-
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(80, h - 35);
-    ctx.lineTo(160, h - 35);
-    ctx.stroke();
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = 'bold 11px monospace';
-    ctx.fillText('GND = 0.0 V', 50, h - 20);
-
-    // Transistor blocks
+    const railCenterX = schemLeft + schemW / 2;
     const pmosConducting = vin < 0.5;
     const nmosConducting = vin >= 0.5;
+    const transW = Math.min(55, schemW - 12);
+    const transX = railCenterX - transW / 2;
 
     // PMOS
     ctx.fillStyle = pmosConducting ? '#065f46' : '#1e293b';
     ctx.strokeStyle = pmosConducting ? '#34d399' : '#475569';
-    ctx.lineWidth = 2;
-    ctx.fillRect(85, 100, 70, 40);
-    ctx.strokeRect(85, 100, 70, 40);
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(transX, 72, transW, 34);
+    ctx.strokeRect(transX, 72, transW, 34);
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 10px monospace';
-    ctx.fillText('P-MOS', 102, 124);
-    // Gate Inversion Bubble
-    ctx.fillStyle = '#38bdf8';
-    ctx.beginPath();
-    ctx.arc(77, 120, 5, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.font = isCompact ? 'bold 8px monospace' : 'bold 9px monospace';
+    ctx.fillText('P-MOS', transX + 5, 93);
 
     // NMOS
     ctx.fillStyle = nmosConducting ? '#1e3a8a' : '#1e293b';
     ctx.strokeStyle = nmosConducting ? '#60a5fa' : '#475569';
-    ctx.lineWidth = 2;
-    ctx.fillRect(85, 180, 70, 40);
-    ctx.strokeRect(85, 180, 70, 40);
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(transX, 145, transW, 34);
+    ctx.strokeRect(transX, 145, transW, 34);
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 10px monospace';
-    ctx.fillText('N-MOS', 102, 204);
+    ctx.font = isCompact ? 'bold 8px monospace' : 'bold 9px monospace';
+    ctx.fillText('N-MOS', transX + 5, 166);
 
     // Central Output Node
     ctx.fillStyle = '#f59e0b';
     ctx.beginPath();
-    ctx.arc(120, 160, 6, 0, Math.PI * 2);
+    ctx.arc(railCenterX, 126, 5, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(120, 160);
-    ctx.lineTo(185, 160);
-    ctx.stroke();
-
-    ctx.fillStyle = '#f59e0b';
-    ctx.font = 'bold 11px monospace';
-    ctx.fillText(`Vout = ${cmosState.vout.toFixed(2)}V`, 190, 164);
-
-    // Input line
-    ctx.strokeStyle = '#a855f7';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(45, 160);
-    ctx.lineTo(70, 160);
-    ctx.lineTo(70, 120);
-    ctx.moveTo(70, 160);
-    ctx.lineTo(85, 200);
-    ctx.stroke();
-    ctx.fillStyle = '#c084fc';
-    ctx.font = 'bold 11px monospace';
-    ctx.fillText(`Vin=${vin.toFixed(2)}V`, 35, 150);
-
     // Right: Oscilloscope & VTC Curve
-    const graphLeft = midX + 20;
-    const graphWidth = w - graphLeft - 30;
-    const graphTop = 55;
-    const graphHeight = h - 90;
+    const graphLeft = midX + 6;
+    const graphWidth = w - graphLeft - (isMobile ? 8 : 20);
+    const graphTop = 45;
+    const graphHeight = h - 75;
 
     ctx.fillStyle = '#090d16';
     ctx.strokeStyle = '#1e293b';
@@ -1017,7 +1024,7 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     ctx.strokeStyle = '#8b5cf6';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
-    for (let x = 0; x <= graphWidth; x += 4) {
+    for (let x = 0; x <= graphWidth; x += 3) {
       const v = x / graphWidth;
       const vo = 1.0 / (1 + Math.exp(16 * (v - 0.5)));
       const px = graphLeft + x;
@@ -1032,7 +1039,7 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     ctx.lineWidth = 1.5;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
-    for (let x = 0; x <= graphWidth; x += 4) {
+    for (let x = 0; x <= graphWidth; x += 3) {
       const v = x / graphWidth;
       const isc = Math.exp(-Math.pow((v - 0.5) / 0.12, 2));
       const px = graphLeft + x;
@@ -1048,35 +1055,18 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     const curY = graphTop + (1.0 - cmosState.vout) * graphHeight;
     ctx.fillStyle = '#fbbf24';
     ctx.beginPath();
-    ctx.arc(curX, curY, 7 + Math.sin(t * 8) * 2, 0, Math.PI * 2);
+    ctx.arc(curX, curY, isCompact ? 6 : 7 + Math.sin(t * 8) * 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Labels & Legends
+    // Legend
     ctx.fillStyle = '#8b5cf6';
-    ctx.font = 'bold 10px monospace';
-    ctx.fillText('— Vout Curve', graphLeft + 15, graphTop + 20);
-
+    ctx.font = isCompact ? '8.5px monospace' : '9.5px monospace';
+    ctx.fillText('— Vout', graphLeft + 8, graphTop + 16);
     ctx.fillStyle = '#ef4444';
-    ctx.fillText('-- I_shoot_through (Crowbar Current)', graphLeft + 15, graphTop + 35);
-
-    // Status Panel at bottom of graph
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '10px monospace';
-    ctx.fillText(`PMOS: ${cmosState.pmosState}`, graphLeft + 15, graphTop + graphHeight - 35);
-    ctx.fillText(`NMOS: ${cmosState.nmosState}`, graphLeft + 15, graphTop + graphHeight - 20);
-
-    if (cmosState.iShootThrough > 10) {
-      ctx.fillStyle = '#f87171';
-      ctx.font = 'bold 10px monospace';
-      ctx.fillText(`⚡ CROWBAR CURRENT ACTIVE: ${cmosState.iShootThrough.toFixed(1)} µA (Short-Circuit Dissipation!)`, graphLeft + 15, graphTop + graphHeight - 5);
-    } else {
-      ctx.fillStyle = '#34d399';
-      ctx.font = 'bold 10px monospace';
-      ctx.fillText(`✓ ZERO STATIC CONDUCTION (I_static ≈ 0 pA - Pure Thermodynamic Efficiency)`, graphLeft + 15, graphTop + graphHeight - 5);
-    }
+    ctx.fillText('-- I_sc', graphLeft + (isCompact ? 55 : 70), graphTop + 16);
 
     ctx.restore();
   };
@@ -1100,19 +1090,20 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     t: number
   ) => {
     ctx.save();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 13px monospace';
-    ctx.fillText('THE ROOFLINE MODEL: WHY HIGH-BANDWIDTH MEMORY & SRAM TILING DICTATE AI COMPUTE', 25, 30);
+    const isMobile = w < 600;
+    const isCompact = w < 440;
 
-    const padL = 60;
-    const padR = 40;
-    const padT = 50;
-    const padB = 45;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = isCompact ? 'bold 11px monospace' : 'bold 13px monospace';
+    ctx.fillText(isCompact ? 'ROOFLINE: SRAM VS HBM' : 'THE ROOFLINE MODEL: WHY HIGH-BANDWIDTH MEMORY & SRAM TILING DICTATE AI COMPUTE', isMobile ? 12 : 25, 26);
+
+    const padL = isCompact ? 35 : isMobile ? 45 : 60;
+    const padR = isMobile ? 12 : 35;
+    const padT = 42;
+    const padB = 38;
     const gw = w - padL - padR;
     const gh = h - padT - padB;
 
-    // Coordinate mapping (log-log):
-    // X: log10(intensity) from log10(0.1) = -1 to log10(1000) = 3 -> range 4
     const minLogX = -1;
     const maxLogX = 3;
     const toX = (val: number) => {
@@ -1120,7 +1111,6 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
       return padL + ((lx - minLogX) / (maxLogX - minLogX)) * gw;
     };
 
-    // Y: log10(TFLOPs) from log10(1) = 0 to log10(2500) ≈ 3.4
     const minLogY = 0;
     const maxLogY = 3.5;
     const toY = (val: number) => {
@@ -1144,8 +1134,8 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     ctx.stroke();
 
     ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 10px monospace';
-    ctx.fillText(`Tensor Core Peak: ${metrics.peakComputeTFlops} TFLOPs (FP16/BF16)`, padL + 10, ceilY - 8);
+    ctx.font = isCompact ? 'bold 8.5px monospace' : 'bold 9.5px monospace';
+    ctx.fillText(`Peak: ${metrics.peakComputeTFlops} TF`, padL + 6, ceilY - 6);
 
     // HBM3e Memory Bandwidth Roofline (Slanted line)
     ctx.strokeStyle = '#f59e0b';
@@ -1160,39 +1150,37 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     ctx.stroke();
 
     ctx.fillStyle = '#f59e0b';
-    ctx.font = 'bold 10px monospace';
-    ctx.fillText(`HBM3e Roofline (3.35 TB/s)`, padL + 15, toY(15));
+    ctx.font = isCompact ? 'bold 8px monospace' : 'bold 9.5px monospace';
+    ctx.fillText(`HBM3e (3.3 TB/s)`, padL + 8, toY(15));
 
     // SRAM / L1 Roofline (19 TB/s)
     ctx.strokeStyle = '#34d399';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
-    const sramRidge = metrics.peakComputeTFlops / metrics.sramBandwidthTBps; // ~105
+    const sramRidge = metrics.peakComputeTFlops / metrics.sramBandwidthTBps;
     ctx.moveTo(toX(0.1), toY(0.1 * metrics.sramBandwidthTBps));
     ctx.lineTo(toX(sramRidge), ceilY);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = '#34d399';
-    ctx.font = 'bold 10px monospace';
-    ctx.fillText(`On-Chip SRAM (19.0 TB/s FlashAttention Zone)`, toX(0.5), toY(80));
-
-    // Benchmarks markers
+    // Benchmark Markers
     const drawBenchmark = (xVal: number, label: string, color: string) => {
       const bx = toX(xVal);
       const by = toY(Math.min(metrics.peakComputeTFlops, xVal * metrics.hbmBandwidthTBps));
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(bx, by, 4, 0, Math.PI * 2);
+      ctx.arc(bx, by, 3.5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.font = '9px monospace';
-      ctx.fillText(label, bx - 20, by + 16);
+      if (!isCompact) {
+        ctx.font = '8px monospace';
+        ctx.fillText(label, bx - 15, by + 14);
+      }
     };
 
-    drawBenchmark(2, 'Naive Attention', '#ef4444');
-    drawBenchmark(150, 'FlashAttention Tiling', '#10b981');
-    drawBenchmark(350, 'Dense GEMM Matrix Math', '#60a5fa');
+    drawBenchmark(2, 'Naive Attn', '#ef4444');
+    drawBenchmark(150, 'FlashAttn', '#10b981');
+    drawBenchmark(350, 'GEMM', '#60a5fa');
 
     // Current Operating Point
     const opX = toX(intensity);
@@ -1200,28 +1188,32 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
 
     ctx.fillStyle = metrics.isMemoryBound ? '#ef4444' : '#10b981';
     ctx.beginPath();
-    ctx.arc(opX, opY, 7 + Math.sin(t * 6) * 2, 0, Math.PI * 2);
+    ctx.arc(opX, opY, isCompact ? 5 : 7 + Math.sin(t * 6) * 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // HUD Status Box
+    // HUD Status Box (Dynamically positioned)
+    const hudW = isCompact ? Math.min(170, gw - 10) : isMobile ? 190 : 230;
+    const hudX = isMobile ? padL + 6 : w - 270;
+    const hudY = isMobile ? padT + gh - 58 : 46;
+    const hudH = isMobile ? 52 : 72;
+
     ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
     ctx.strokeStyle = metrics.isMemoryBound ? '#ef4444' : '#10b981';
-    ctx.lineWidth = 1.5;
-    ctx.fillRect(w - 280, 55, 230, 80);
-    ctx.strokeRect(w - 280, 55, 230, 80);
+    ctx.lineWidth = 1.2;
+    ctx.fillRect(hudX, hudY, hudW, hudH);
+    ctx.strokeRect(hudX, hudY, hudW, hudH);
 
-    ctx.font = 'bold 11px monospace';
+    ctx.font = isCompact ? 'bold 8.5px monospace' : 'bold 9.5px monospace';
     ctx.fillStyle = metrics.isMemoryBound ? '#f87171' : '#34d399';
-    ctx.fillText(metrics.isMemoryBound ? '⚠️ MEMORY BANDWIDTH BOUND' : '⚡ COMPUTE BOUND (SATURATED)', w - 270, 75);
+    ctx.fillText(metrics.isMemoryBound ? '⚠️ MEMORY BOUND' : '⚡ COMPUTE BOUND', hudX + 6, hudY + 14);
 
-    ctx.font = '10px monospace';
+    ctx.font = isCompact ? '8px monospace' : '9px monospace';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(`Arithmetic Intensity: ${intensity.toFixed(1)} FLOPs/B`, w - 270, 95);
-    ctx.fillText(`Attained Performance: ${metrics.attainedHbmTFlops.toFixed(0)} TFLOPs`, w - 270, 110);
-    ctx.fillText(`Tensor Core Utilization: ${metrics.utilizationPct}%`, w - 270, 125);
+    ctx.fillText(`Intensity: ${intensity.toFixed(1)} F/B`, hudX + 6, hudY + 28);
+    ctx.fillText(`Attained: ${metrics.attainedHbmTFlops.toFixed(0)} TF (${metrics.utilizationPct}%)`, hudX + 6, hudY + 42);
 
     ctx.restore();
   };
@@ -1363,11 +1355,11 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
       </div>
 
       {/* HTML5 Canvas Surface */}
-      <div className="w-full h-80 rounded-xl overflow-hidden border border-white/10 relative bg-black">
+      <div ref={containerRef} className="w-full h-72 sm:h-80 rounded-xl overflow-hidden border border-white/10 relative bg-black">
         <canvas
           ref={canvasRef}
-          width={800}
-          height={320}
+          width={dimensions.width}
+          height={dimensions.height}
           className="w-full h-full block"
         />
       </div>
@@ -1377,7 +1369,7 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
       {/* ========================================================= */}
       {station === 'full_adder' && (
         <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-ink-900/80 rounded-xl border border-white/10 text-xs">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <span className="text-ink-400 font-mono">Toggle Input Gates:</span>
             <button
               onClick={() => {
@@ -1422,7 +1414,7 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
 
       {station === 'dram_leakage' && (
         <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-ink-900/80 rounded-xl border border-white/10 text-xs">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-2">
               <span className="text-ink-400 font-mono">Die Temperature:</span>
               <input
@@ -1468,7 +1460,7 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
 
       {station === 'bistable_latch' && (
         <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-ink-900/80 rounded-xl border border-white/10 text-xs">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <span className="text-ink-400 font-mono">Force Voltage:</span>
             <button
               onClick={() => {
@@ -1533,7 +1525,7 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
 
       {station === 'cmos_inverter' && (
         <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-ink-900/80 rounded-xl border border-white/10 text-xs">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-2">
               <span className="text-ink-400 font-mono">Gate Input Voltage (Vin):</span>
               <input
@@ -1547,12 +1539,12 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
                   setInverterVin(val);
                   soundFX.playLogicGateToggle(val > 0.5);
                 }}
-                className="w-32 accent-violet-500"
+                className="w-28 sm:w-32 accent-violet-500"
               />
               <span className="text-violet-300 font-mono font-bold">{inverterVin.toFixed(2)} V</span>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               <button
                 onClick={() => {
                   setInverterVin(0.0);
@@ -1594,7 +1586,7 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
 
       {station === 'roofline_memory_wall' && (
         <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-ink-900/80 rounded-xl border border-white/10 text-xs">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-2">
               <span className="text-ink-400 font-mono">Operational Intensity:</span>
               <input
@@ -1613,12 +1605,12 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
                     soundFX.playClockTick(500);
                   }
                 }}
-                className="w-32 accent-amber-500"
+                className="w-28 sm:w-32 accent-amber-500"
               />
               <span className="text-amber-300 font-mono font-bold">{arithmeticIntensity.toFixed(1)} FLOPs/Byte</span>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               <button
                 onClick={() => {
                   setArithmeticIntensity(2.0);
