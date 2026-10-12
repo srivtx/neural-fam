@@ -29,13 +29,14 @@ import {
   ShieldCheck,
   ChevronRight,
   Filter,
+  Lightbulb,
 } from 'lucide-react';
 import { getProgress, resetProgress, LearningProgress } from '../utils/progressStore';
 import { CheckpointQuiz, QuizQuestion } from './CheckpointQuiz';
 import { soundFX } from '../utils/audio';
 
 interface HomePageProps {
-  onSelectView: (view: 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis') => void;
+  onSelectView: (view: 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology') => void;
   onSelectLab: (labId: string) => void;
   onOpenGlossary: () => void;
   onOpenBadges?: () => void;
@@ -389,6 +390,14 @@ export const HomePage: React.FC<HomePageProps> = ({
             >
               <Compass className="w-4 h-4 text-brand-600 dark:text-brand-400" />
               <span>Architecture Synthesis Studio</span>
+            </button>
+
+            <button
+              onClick={() => onSelectView('epistemology')}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-amber-900 dark:text-amber-200 bg-amber-100/80 hover:bg-amber-200/90 dark:bg-amber-500/20 dark:hover:bg-amber-500/30 rounded-xl border border-amber-300 dark:border-amber-500/40 transition-all cursor-pointer shadow-xs active:scale-95"
+            >
+              <Lightbulb className="w-4 h-4 text-amber-500 fill-amber-500/20" />
+              <span>Theory Thinking: How Breakthroughs Are Made</span>
             </button>
 
             <button

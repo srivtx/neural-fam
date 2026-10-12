@@ -21,14 +21,15 @@ import {
   Share2,
   Compass,
   Download,
+  Lightbulb,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useLearningProgress, USER_PROFILE } from '../utils/progressStore';
 import { computeUserStats } from '../data/badgesData';
 
 interface TopNavProps {
-  activeView: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis';
-  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis') => void;
+  activeView: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology';
+  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology') => void;
   activeLabId: string;
   onSelectLab: (labId: string) => void;
   onOpenGlossary: () => void;
@@ -195,6 +196,20 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             <span className="hidden 2xl:inline">Code Workshop</span>
             <span className="2xl:hidden">Code</span>
+          </button>
+
+          <button
+            onClick={() => onSelectView('epistemology')}
+            title="Theory Thinking: How Breakthroughs Are Conceived (Press 7)"
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+              activeView === 'epistemology'
+                ? 'bg-brand-500 text-white font-bold shadow-xs'
+                : 'text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300'
+            }`}
+          >
+            <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+            <span className="hidden 2xl:inline">Theory Thinking</span>
+            <span className="2xl:hidden">Theory</span>
           </button>
         </nav>
 
@@ -372,6 +387,17 @@ export const TopNav: React.FC<TopNavProps> = ({
           }`}
         >
           Code
+        </button>
+        <button
+          onClick={() => onSelectView('epistemology')}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+            activeView === 'epistemology'
+              ? 'bg-brand-500 text-white font-bold shadow-2xs'
+              : 'text-brand-600 dark:text-brand-400 hover:text-brand-700'
+          }`}
+        >
+          <Lightbulb className="w-3 h-3 text-amber-500" />
+          <span>Theory Thinking</span>
         </button>
       </nav>
     </header>

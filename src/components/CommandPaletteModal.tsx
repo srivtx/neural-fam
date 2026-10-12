@@ -11,7 +11,7 @@ import { LAB_QUIZZES } from '../data/labQuizzes';
 interface CommandPaletteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis') => void;
+  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology') => void;
   onSelectLab: (labId: string) => void;
   onOpenGlossary: () => void;
   onOpenBadges: () => void;
@@ -97,6 +97,17 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         category: 'feature',
         action: () => {
           onSelectView('code');
+          onClose();
+        },
+      },
+      {
+        id: 'nav-epistemology',
+        title: 'Theory Thinking & Epistemology',
+        subtitle: 'How to think like a theory inventor: from quantum electron mechanics to AI breakthroughs',
+        category: 'feature',
+        badge: 'First Principles',
+        action: () => {
+          onSelectView('epistemology');
           onClose();
         },
       },
