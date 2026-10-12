@@ -11,7 +11,7 @@ import { LAB_QUIZZES } from '../data/labQuizzes';
 interface CommandPaletteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology') => void;
+  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph') => void;
   onSelectLab: (labId: string) => void;
   onOpenGlossary: () => void;
   onOpenBadges: () => void;
@@ -108,6 +108,17 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         badge: 'First Principles',
         action: () => {
           onSelectView('epistemology');
+          onClose();
+        },
+      },
+      {
+        id: 'nav-questions-graph',
+        title: 'Socratic Question Graph (Inquiry Web)',
+        subtitle: 'From electron bandgaps to language and memory buses: 18 interconnected first-principles inquiries',
+        category: 'feature',
+        badge: 'Inquiry Graph',
+        action: () => {
+          onSelectView('questions_graph');
           onClose();
         },
       },

@@ -28,8 +28,8 @@ import { useLearningProgress, USER_PROFILE } from '../utils/progressStore';
 import { computeUserStats } from '../data/badgesData';
 
 interface TopNavProps {
-  activeView: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology';
-  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology') => void;
+  activeView: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph';
+  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph') => void;
   activeLabId: string;
   onSelectLab: (labId: string) => void;
   onOpenGlossary: () => void;
@@ -210,6 +210,20 @@ export const TopNav: React.FC<TopNavProps> = ({
             <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
             <span className="hidden 2xl:inline">Theory Thinking</span>
             <span className="2xl:hidden">Theory</span>
+          </button>
+
+          <button
+            onClick={() => onSelectView('questions_graph')}
+            title="Socratic Question Graph: The Ontological Inquiry Web (Press 8)"
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+              activeView === 'questions_graph'
+                ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                : 'text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300'
+            }`}
+          >
+            <Network className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="hidden 2xl:inline">Question Graph</span>
+            <span className="2xl:hidden">Graph</span>
           </button>
         </nav>
 
@@ -398,6 +412,17 @@ export const TopNav: React.FC<TopNavProps> = ({
         >
           <Lightbulb className="w-3 h-3 text-amber-500" />
           <span>Theory Thinking</span>
+        </button>
+        <button
+          onClick={() => onSelectView('questions_graph')}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+            activeView === 'questions_graph'
+              ? 'bg-emerald-600 text-white font-bold shadow-2xs'
+              : 'text-emerald-600 dark:text-emerald-400 hover:text-emerald-700'
+          }`}
+        >
+          <Network className="w-3 h-3 text-emerald-500" />
+          <span>Question Graph</span>
         </button>
       </nav>
     </header>

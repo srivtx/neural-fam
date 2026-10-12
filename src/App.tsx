@@ -16,12 +16,13 @@ import { BadgesMilestonesModal } from './components/BadgesMilestonesModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { ArchitectureSynthesisStudio } from './components/ArchitectureSynthesisStudio';
 import { TheoryThinkingSanctuary } from './components/TheoryThinkingSanctuary';
+import { SocraticQuestionGraphView } from './components/SocraticQuestionGraphView';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { soundFX } from './utils/audio';
 import { Eye, Search, Sliders, Trophy, BookOpen, ExternalLink, ChevronUp } from 'lucide-react';
 
 export default function App() {
-  const [activeView, setActiveView] = useState<'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology'>('home');
+  const [activeView, setActiveView] = useState<'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph'>('home');
   const [activeLabId, setActiveLabId] = useState<string>('perceptron');
   const [isGlossaryOpen, setIsGlossaryOpen] = useState<boolean>(false);
   const [isShareOpen, setIsShareOpen] = useState<boolean>(false);
@@ -86,6 +87,9 @@ export default function App() {
           soundFX.playTap();
         } else if (e.key === '7') {
           setActiveView('epistemology');
+          soundFX.playTap();
+        } else if (e.key === '8') {
+          setActiveView('questions_graph');
           soundFX.playTap();
         } else if (e.key === '?' || (e.shiftKey && e.key === '/')) {
           e.preventDefault();
@@ -216,6 +220,13 @@ export default function App() {
           {activeView === 'code' && <CodeWorkshop />}
 
           {activeView === 'epistemology' && <TheoryThinkingSanctuary />}
+
+          {activeView === 'questions_graph' && (
+            <SocraticQuestionGraphView
+              onOpenLab={handleOpenLab}
+              onOpenView={(v) => setActiveView(v as any)}
+            />
+          )}
         </ErrorBoundary>
       </main>
 
