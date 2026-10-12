@@ -11,7 +11,7 @@ import { LAB_QUIZZES } from '../data/labQuizzes';
 interface CommandPaletteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph') => void;
+  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph' | 'reality_graph') => void;
   onSelectLab: (labId: string) => void;
   onOpenGlossary: () => void;
   onOpenBadges: () => void;
@@ -119,6 +119,28 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         badge: 'Inquiry Graph',
         action: () => {
           onSelectView('questions_graph');
+          onClose();
+        },
+      },
+      {
+        id: 'nav-reality-graph',
+        title: 'Substrate & Reality Graph (Pure Epistemology)',
+        subtitle: 'From electrons, why metal vs clay, voltages & capacitor wells to arithmetic, registers, and Python VMs',
+        category: 'feature',
+        badge: 'Reality Graph',
+        action: () => {
+          onSelectView('reality_graph');
+          onClose();
+        },
+      },
+      {
+        id: 'nav-cosmic-ladder',
+        title: 'The Cosmic Ladder of Scale (10⁰ m → 10⁻⁹ m)',
+        subtitle: 'From Human Token to Sub-3nm Transistor Channel & Landauer limit: 9 orders of magnitude zoom',
+        category: 'feature',
+        badge: 'Cosmic Scale',
+        action: () => {
+          onSelectView('reality_graph');
           onClose();
         },
       },

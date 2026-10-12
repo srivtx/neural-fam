@@ -22,14 +22,15 @@ import {
   Compass,
   Download,
   Lightbulb,
+  Atom,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useLearningProgress, USER_PROFILE } from '../utils/progressStore';
 import { computeUserStats } from '../data/badgesData';
 
 interface TopNavProps {
-  activeView: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph';
-  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph') => void;
+  activeView: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph' | 'reality_graph';
+  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph' | 'reality_graph') => void;
   activeLabId: string;
   onSelectLab: (labId: string) => void;
   onOpenGlossary: () => void;
@@ -224,6 +225,20 @@ export const TopNav: React.FC<TopNavProps> = ({
             <Network className="w-3.5 h-3.5 text-emerald-500" />
             <span className="hidden 2xl:inline">Question Graph</span>
             <span className="2xl:hidden">Graph</span>
+          </button>
+
+          <button
+            onClick={() => onSelectView('reality_graph')}
+            title="Substrate & Reality: From Quantum Wells to Python VMs (Press 9)"
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+              activeView === 'reality_graph'
+                ? 'bg-cyan-600 text-white font-bold shadow-xs'
+                : 'text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300'
+            }`}
+          >
+            <Atom className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden 2xl:inline">Reality Graph</span>
+            <span className="2xl:hidden">Reality</span>
           </button>
         </nav>
 
@@ -423,6 +438,17 @@ export const TopNav: React.FC<TopNavProps> = ({
         >
           <Network className="w-3 h-3 text-emerald-500" />
           <span>Question Graph</span>
+        </button>
+        <button
+          onClick={() => onSelectView('reality_graph')}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+            activeView === 'reality_graph'
+              ? 'bg-cyan-600 text-white font-bold shadow-2xs'
+              : 'text-cyan-600 dark:text-cyan-400 hover:text-cyan-700'
+          }`}
+        >
+          <Atom className="w-3 h-3 text-cyan-400" />
+          <span>Reality Graph</span>
         </button>
       </nav>
     </header>
