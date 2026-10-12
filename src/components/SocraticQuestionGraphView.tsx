@@ -268,9 +268,10 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
 
       // If user is pinching on trackpad (Mac sends e.ctrlKey = true on pinch) or holding Ctrl/Meta key:
       if (e.ctrlKey || e.metaKey) {
-        const zoomSensitivity = 0.0035;
+        // Calibrated gentle zoom sensitivity with tight per-tick clamping
+        const zoomSensitivity = 0.0012;
         const zoomDelta = -e.deltaY * zoomSensitivity;
-        const clampedDelta = Math.max(-0.06, Math.min(0.06, zoomDelta));
+        const clampedDelta = Math.max(-0.025, Math.min(0.025, zoomDelta));
         const factor = 1 + clampedDelta;
 
         const rect = container.getBoundingClientRect();
@@ -287,11 +288,13 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
           return nextZoom;
         });
       } else {
-        // Natural two-finger trackpad drag or wheel: Smooth, buttery Pan!
-        const panSpeed = 0.75;
+        // Natural two-finger trackpad drag or wheel: Silky smooth, calibrated Pan
+        const panSpeed = 0.38;
+        const dx = Math.max(-40, Math.min(40, e.deltaX * panSpeed));
+        const dy = Math.max(-40, Math.min(40, e.deltaY * panSpeed));
         setPan((prev) => ({
-          x: Math.min(600, Math.max(-1000, prev.x - e.deltaX * panSpeed)),
-          y: Math.min(600, Math.max(-1000, prev.y - e.deltaY * panSpeed)),
+          x: Math.min(600, Math.max(-1000, prev.x - dx)),
+          y: Math.min(600, Math.max(-1000, prev.y - dy)),
         }));
       }
     };

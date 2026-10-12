@@ -289,18 +289,66 @@ export const FIRST_PRINCIPLES_SIM_DOSSIERS: Record<SimMode, FirstPrinciplesSimDo
 // GEOMETRY SIMULATION LOGIC
 // =============================================================================
 
-interface GeometryData {
+export type GeometrySubMode = 'equator' | 'shell' | 'distance';
+export type GeometryZoomMode = 'adaptive' | 'global';
+
+export interface GeometryData {
+  dimension: number;
+  sampleCount: number;
   vectors: Float32Array[];
+
+  // 1. Orthogonality & Equator Belt (Levy's Lemma)
   cosineSimilarities: number[];
   mean: number;
   variance: number;
   stdDev: number;
+  theoryVariance: number;
+  equatorBeltProb: number;
+  theoryEquatorBeltProb: number;
   tailProb: number;
   histogram: number[];
   binCenters: number[];
   maxBinCount: number;
+  adaptiveHistogram: number[];
+  adaptiveBinCenters: number[];
+  maxAdaptiveBinCount: number;
+  adaptiveRange: number;
   totalPairs: number;
-  projectedCoords: { x: number; y: number; z: number; cosWithU0: number }[];
+  projectedCoords: {
+    x: number;
+    y: number;
+    z: number;
+    cosWithU0: number;
+    thetaDeg: number;
+    isEquator: boolean;
+  }[];
+
+  // 2. Shell Volume Concentration (The Orange Peel)
+  shellRadii: number[];
+  meanRadius: number;
+  theoryMeanRadius: number;
+  outerShellFraction: number;
+  theoryOuterShellFraction: number;
+  radiusHistogram: number[];
+  radiusBinCenters: number[];
+  maxRadiusBinCount: number;
+  shellSampleCoords: {
+    x: number;
+    y: number;
+    z: number;
+    r: number;
+    isShell: boolean;
+  }[];
+
+  // 3. Pairwise Distance Concentration
+  pairwiseDistances: number[];
+  meanDistance: number;
+  varDistance: number;
+  theoryDistance: number;
+  theoryVarDistance: number;
+  distHistogram: number[];
+  distBinCenters: number[];
+  maxDistBinCount: number;
 }
 
 function sampleUnitSphereVector(d: number): Float32Array {
@@ -364,32 +412,47 @@ function computeGeometrySimulation(d: number, n: number): GeometryData {
   }
 
   const maxProj = Math.min(n, 160);
-  const projectedCoords: { x: number; y: number; z: number; cosWithU0: number }[] = [];
+  const projectedCoords: GeometryData['projectedCoords'] = [];
 
   for (let i = 0; i < maxProj; i++) {
     const v = vectors[i];
     let cosWithU0 = 0;
+    let projX = 0;
     let projY = 0;
-    let projZ = 0;
     for (let k = 0; k < d; k++) {
       cosWithU0 += v[k] * u0[k];
-      projY += v[k] * w1[k];
-      projZ += v[k] * w2[k];
+      projX += v[k] * w1[k];
+      projY += v[k] * w2[k];
     }
     cosWithU0 = Math.max(-1, Math.min(1, cosWithU0));
     const rPerp = Math.sqrt(Math.max(0, 1 - cosWithU0 * cosWithU0));
-    const yzNorm = Math.sqrt(projY * projY + projZ * projZ);
-    const scale = yzNorm > 1e-6 ? rPerp / yzNorm : rPerp > 0 ? rPerp : 0;
+    const xyNorm = Math.sqrt(projX * projX + projY * projY);
+
+    let x = 0;
+    let y = 0;
+    if (d === 2) {
+      x = rPerp * (projX >= 0 ? 1 : -1);
+      y = 0;
+    } else {
+      x = xyNorm > 1e-7 ? (projX / xyNorm) * rPerp : rPerp;
+      y = xyNorm > 1e-7 ? (projY / xyNorm) * rPerp : 0;
+    }
+    const z = cosWithU0;
+    const thetaDeg = Math.acos(cosWithU0) * (180 / Math.PI);
+    const isEquator = Math.abs(cosWithU0) <= 0.05;
 
     projectedCoords.push({
-      x: cosWithU0,
-      y: projY * scale,
-      z: projZ * scale,
+      x,
+      y,
+      z,
       cosWithU0,
+      thetaDeg,
+      isEquator,
     });
   }
 
   const similarities: number[] = [];
+  const pairwiseDistances: number[] = [];
   const maxPairs = 10000;
   const totalPossiblePairs = (n * (n - 1)) / 2;
 
@@ -400,7 +463,9 @@ function computeGeometrySimulation(d: number, n: number): GeometryData {
         const vj = vectors[j];
         let dot = 0;
         for (let k = 0; k < d; k++) dot += vi[k] * vj[k];
-        similarities.push(Math.max(-1, Math.min(1, dot)));
+        dot = Math.max(-1, Math.min(1, dot));
+        similarities.push(dot);
+        pairwiseDistances.push(Math.sqrt(Math.max(0, 2 - 2 * dot)));
       }
     }
   } else {
@@ -412,34 +477,45 @@ function computeGeometrySimulation(d: number, n: number): GeometryData {
       const vj = vectors[j];
       let dot = 0;
       for (let k = 0; k < d; k++) dot += vi[k] * vj[k];
-      similarities.push(Math.max(-1, Math.min(1, dot)));
+      dot = Math.max(-1, Math.min(1, dot));
+      similarities.push(dot);
+      pairwiseDistances.push(Math.sqrt(Math.max(0, 2 - 2 * dot)));
     }
   }
 
   const numPairs = similarities.length;
-  let sum = 0;
-  let sumSq = 0;
-  let tailCount = 0;
+  let sumCos = 0;
+  let sumSqCos = 0;
+  let equatorCount = 0;
+
+  let sumDist = 0;
+  let sumSqDist = 0;
 
   for (let i = 0; i < numPairs; i++) {
     const s = similarities[i];
-    sum += s;
-    sumSq += s * s;
-    if (Math.abs(s) > 0.05) {
-      tailCount++;
+    sumCos += s;
+    sumSqCos += s * s;
+    if (Math.abs(s) <= 0.05) {
+      equatorCount++;
     }
+
+    const dist = pairwiseDistances[i];
+    sumDist += dist;
+    sumSqDist += dist * dist;
   }
 
-  const mean = sum / (numPairs || 1);
-  const variance = Math.max(0, sumSq / (numPairs || 1) - mean * mean);
+  const mean = sumCos / (numPairs || 1);
+  const variance = Math.max(0, sumSqCos / (numPairs || 1) - mean * mean);
   const stdDev = Math.sqrt(variance);
-  const tailProb = tailCount / (numPairs || 1);
+  const equatorBeltProb = equatorCount / (numPairs || 1);
+  const tailProb = 1 - equatorBeltProb;
+  const theoryVariance = 1 / d;
+  const theoryEquatorBeltProb = Math.max(0, 1 - 2 * Math.exp((-d * 0.05 * 0.05) / 2));
 
   const numBins = 50;
   const histogram = new Array(numBins).fill(0);
   const binCenters = new Array(numBins);
   const binWidth = 2.0 / numBins;
-
   for (let b = 0; b < numBins; b++) {
     binCenters[b] = -1.0 + (b + 0.5) * binWidth;
   }
@@ -454,18 +530,135 @@ function computeGeometrySimulation(d: number, n: number): GeometryData {
     }
   }
 
+  const adaptiveRange = Math.max(0.06, Math.min(1.0, 4 / Math.sqrt(d)));
+  const adaptiveHistogram = new Array(numBins).fill(0);
+  const adaptiveBinCenters = new Array(numBins);
+  const adaptiveBinWidth = (2 * adaptiveRange) / numBins;
+  for (let b = 0; b < numBins; b++) {
+    adaptiveBinCenters[b] = -adaptiveRange + (b + 0.5) * adaptiveBinWidth;
+  }
+  let maxAdaptiveBinCount = 0;
+  for (let i = 0; i < numPairs; i++) {
+    const s = similarities[i];
+    if (s >= -adaptiveRange && s <= adaptiveRange) {
+      const binIdx = Math.min(
+        numBins - 1,
+        Math.max(0, Math.floor(((s + adaptiveRange) / (2 * adaptiveRange)) * numBins))
+      );
+      adaptiveHistogram[binIdx]++;
+      if (adaptiveHistogram[binIdx] > maxAdaptiveBinCount) {
+        maxAdaptiveBinCount = adaptiveHistogram[binIdx];
+      }
+    }
+  }
+
+  // Shell volume concentration: sample radii inside solid unit ball
+  const shellRadii: number[] = [];
+  const shellSampleCoords: GeometryData['shellSampleCoords'] = [];
+  let sumR = 0;
+  let outerShellCount = 0;
+
+  for (let i = 0; i < maxProj; i++) {
+    const u = Math.random();
+    const r = Math.pow(u, 1 / d);
+    shellRadii.push(r);
+    sumR += r;
+    const isShell = r >= 0.95;
+    if (isShell) outerShellCount++;
+
+    const base = projectedCoords[i];
+    shellSampleCoords.push({
+      x: base.x * r,
+      y: base.y * r,
+      z: base.z * r,
+      r,
+      isShell,
+    });
+  }
+
+  const meanRadius = sumR / maxProj;
+  const theoryMeanRadius = d / (d + 1);
+  const outerShellFraction = outerShellCount / maxProj;
+  const theoryOuterShellFraction = 1 - Math.pow(0.95, d);
+
+  const numRadiusBins = 30;
+  const radiusHistogram = new Array(numRadiusBins).fill(0);
+  const radiusBinCenters = new Array(numRadiusBins);
+  let maxRadiusBinCount = 0;
+  for (let b = 0; b < numRadiusBins; b++) {
+    radiusBinCenters[b] = (b + 0.5) / numRadiusBins;
+  }
+  for (let i = 0; i < maxProj; i++) {
+    const r = shellRadii[i];
+    const binIdx = Math.min(numRadiusBins - 1, Math.max(0, Math.floor(r * numRadiusBins)));
+    radiusHistogram[binIdx]++;
+    if (radiusHistogram[binIdx] > maxRadiusBinCount) {
+      maxRadiusBinCount = radiusHistogram[binIdx];
+    }
+  }
+
+  // Pairwise distance concentration
+  const meanDistance = sumDist / (numPairs || 1);
+  const varDistance = Math.max(0, sumSqDist / (numPairs || 1) - meanDistance * meanDistance);
+  const theoryDistance = Math.SQRT2;
+  const theoryVarDistance = 1 / (2 * d);
+
+  const numDistBins = 40;
+  const distHistogram = new Array(numDistBins).fill(0);
+  const distBinCenters = new Array(numDistBins);
+  let maxDistBinCount = 0;
+  for (let b = 0; b < numDistBins; b++) {
+    distBinCenters[b] = ((b + 0.5) / numDistBins) * 2.0;
+  }
+  for (let i = 0; i < numPairs; i++) {
+    const dist = pairwiseDistances[i];
+    const binIdx = Math.min(numDistBins - 1, Math.max(0, Math.floor((dist / 2.0) * numDistBins)));
+    distHistogram[binIdx]++;
+    if (distHistogram[binIdx] > maxDistBinCount) {
+      maxDistBinCount = distHistogram[binIdx];
+    }
+  }
+
   return {
+    dimension: d,
+    sampleCount: n,
     vectors,
     cosineSimilarities: similarities,
     mean,
     variance,
     stdDev,
+    theoryVariance,
+    equatorBeltProb,
+    theoryEquatorBeltProb,
     tailProb,
     histogram,
     binCenters,
     maxBinCount: Math.max(1, maxBinCount),
+    adaptiveHistogram,
+    adaptiveBinCenters,
+    maxAdaptiveBinCount: Math.max(1, maxAdaptiveBinCount),
+    adaptiveRange,
     totalPairs: numPairs,
     projectedCoords,
+
+    shellRadii,
+    meanRadius,
+    theoryMeanRadius,
+    outerShellFraction,
+    theoryOuterShellFraction,
+    radiusHistogram,
+    radiusBinCenters,
+    maxRadiusBinCount: Math.max(1, maxRadiusBinCount),
+    shellSampleCoords,
+
+    pairwiseDistances,
+    meanDistance,
+    varDistance,
+    theoryDistance,
+    theoryVarDistance,
+    distHistogram,
+    distBinCenters,
+    maxDistBinCount: Math.max(1, maxDistBinCount),
   };
 }
 
@@ -600,8 +793,14 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
   // High-Dimensional Geometry Controls
   const [dimension, setDimension] = useState<Dimension>(50);
   const [sampleCount, setSampleCount] = useState<number>(120);
+  const [geomSubMode, setGeomSubMode] = useState<GeometrySubMode>('equator');
+  const [geomZoomMode, setGeomZoomMode] = useState<GeometryZoomMode>('adaptive');
   const [resampleTrigger, setResampleTrigger] = useState<number>(0);
   const geomAngleRef = useRef<number>(0);
+  const geomPitchRef = useRef<number>(0.35);
+  const geomYawRef = useRef<number>(0.0);
+  const isDraggingGeomRef = useRef<boolean>(false);
+  const dragStartGeomRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Neural ODE Controls
   const [odeTime, setOdeTime] = useState<number>(0.0);
@@ -986,14 +1185,19 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
       }
 
       // =======================================================================
-      // 4. HIGH-DIMENSIONAL ORTHOGONALITY SIMULATION
+      // 4. HIGH-DIMENSIONAL GEOMETRY SIMULATION (FIRST PRINCIPLES)
       // =======================================================================
       else if (mode === 'geometry') {
         const gData = geomDataRef.current;
         if (isRunning) {
-          geomAngleRef.current += 0.008 * dt;
+          geomAngleRef.current += 0.006 * dt;
         }
         const rot = geomAngleRef.current;
+        const totalYaw = geomYawRef.current + rot;
+        const pitch = geomPitchRef.current;
+
+        const cosY = Math.cos(totalYaw), sinY = Math.sin(totalYaw);
+        const cosP = Math.cos(pitch), sinP = Math.sin(pitch);
 
         const fHeading = 'bold 12px JetBrains Mono, monospace';
         const fSub = '10px JetBrains Mono, monospace';
@@ -1003,260 +1207,632 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
         const cy = h * 0.54;
         const R = Math.min(w * 0.16, h * 0.35);
 
+        // 3D perspective projection helper: yaw around Z, pitch around X
+        const project3D = (x: number, y: number, z: number) => {
+          const rx1 = x * cosY - y * sinY;
+          const ry1 = x * sinY + y * cosY;
+          const rz1 = z;
+
+          const rx2 = rx1;
+          const ry2 = ry1 * cosP - rz1 * sinP;
+          const rz2 = ry1 * sinP + rz1 * cosP;
+
+          const depthScale = 1 / (1 - rz2 * 0.25);
+          return {
+            sx: cx + rx2 * R * depthScale,
+            sy: cy - ry2 * R * depthScale,
+            depth: rz2,
+            scale: depthScale,
+          };
+        };
+
+        // Header Title above 3D Globe
         ctx.textAlign = 'center';
         ctx.font = fHeading;
         ctx.fillStyle = '#38bdf8';
-        ctx.fillText(`HYPERSPHERE S^{${dimension - 1}} 2D PROJECTION`, cx, cy - R - 20);
+        if (geomSubMode === 'equator') {
+          ctx.fillText(`HYPERSPHERE S^{${dimension - 1}} · LEVY EQUATORIAL BELT`, cx, cy - R - 22);
+        } else if (geomSubMode === 'shell') {
+          ctx.fillText(`SOLID BALL B^{${dimension}} · THE ORANGE PEEL PARADOX`, cx, cy - R - 22);
+        } else {
+          ctx.fillText(`METRIC SPACE ℝ^{${dimension}} · PAIRWISE DISTANCE COLLAPSE`, cx, cy - R - 22);
+        }
 
         ctx.font = fSub;
         ctx.fillStyle = '#94a3b8';
-        ctx.fillText(
-          dimension === 4096
-            ? 'Dirac Collapse: All vectors adhere to 90° Equator'
-            : `Dimension d = ${dimension} · Equator Concentration`,
-          cx,
-          cy - R - 6
-        );
+        if (geomSubMode === 'equator') {
+          ctx.fillText(
+            dimension === 4096
+              ? 'Dirac Spike: 100% of vectors locked within 90° ± 0.9° Equator'
+              : `Dimension d = ${dimension} · Equator Belt [−0.05, +0.05] Concentration`,
+            cx,
+            cy - R - 8
+          );
+        } else if (geomSubMode === 'shell') {
+          ctx.fillText(
+            `Solid Unit Ball: ${(gData.outerShellFraction * 100).toFixed(1)}% of volume in outer 5% crust (Theory: ${(gData.theoryOuterShellFraction * 100).toFixed(1)}%)`,
+            cx,
+            cy - R - 8
+          );
+        } else {
+          ctx.fillText(
+            `Loss of Nearest-Neighbor Contrast: All points equidistant at D → √2 (1.4142)`,
+            cx,
+            cy - R - 8
+          );
+        }
 
+        // 3D Sphere Background Globe
         const discGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
-        discGrad.addColorStop(0, 'rgba(30, 41, 59, 0.45)');
-        discGrad.addColorStop(1, 'rgba(15, 23, 42, 0.85)');
+        discGrad.addColorStop(0, 'rgba(15, 23, 42, 0.45)');
+        discGrad.addColorStop(0.75, 'rgba(15, 23, 42, 0.75)');
+        discGrad.addColorStop(1, 'rgba(30, 41, 59, 0.95)');
         ctx.fillStyle = discGrad;
         ctx.beginPath();
         ctx.arc(cx, cy, R, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        // 3D Wireframe Latitudes & Longitudes
         ctx.lineWidth = 1;
-        ctx.setLineDash([3, 4]);
-        [0.25, 0.5, 0.75].forEach((ratio) => {
+        const numLatRings = 5;
+        for (let l = 1; l < numLatRings; l++) {
+          const latAngle = ((l / numLatRings) - 0.5) * Math.PI;
+          const latZ = Math.sin(latAngle);
+          const latR = Math.cos(latAngle);
+
           ctx.beginPath();
-          ctx.arc(cx, cy, R * ratio, 0, Math.PI * 2);
+          ctx.strokeStyle = Math.abs(latZ) < 0.1 ? 'rgba(52, 211, 153, 0.45)' : 'rgba(255, 255, 255, 0.08)';
+          ctx.setLineDash(Math.abs(latZ) < 0.1 ? [] : [2, 4]);
+
+          const steps = 40;
+          for (let s = 0; s <= steps; s++) {
+            const phi = (s / steps) * Math.PI * 2;
+            const pt = project3D(latR * Math.cos(phi), latR * Math.sin(phi), latZ);
+            if (s === 0) ctx.moveTo(pt.sx, pt.sy);
+            else ctx.lineTo(pt.sx, pt.sy);
+          }
           ctx.stroke();
-        });
+        }
         ctx.setLineDash([]);
 
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+        // Outer Sphere Horizon Rim
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.arc(cx, cy, R, 0, Math.PI * 2);
         ctx.stroke();
 
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(cx - R, cy);
-        ctx.lineTo(cx + R, cy);
-        ctx.stroke();
+        // ---------------------------------------------------------------------
+        // SUB-MODE 1: LEVY'S LEMMA EQUATORIAL BELT
+        // ---------------------------------------------------------------------
+        if (geomSubMode === 'equator') {
+          // Glowing Emerald Ribbon for Equatorial Belt [-0.05, +0.05]
+          const beltHalf = 0.05;
+          const steps = 48;
+          ctx.beginPath();
+          for (let s = 0; s <= steps; s++) {
+            const phi = (s / steps) * Math.PI * 2;
+            const rBase = Math.sqrt(1 - beltHalf * beltHalf);
+            const pt = project3D(rBase * Math.cos(phi), rBase * Math.sin(phi), beltHalf);
+            if (s === 0) ctx.moveTo(pt.sx, pt.sy);
+            else ctx.lineTo(pt.sx, pt.sy);
+          }
+          for (let s = steps; s >= 0; s--) {
+            const phi = (s / steps) * Math.PI * 2;
+            const rBase = Math.sqrt(1 - beltHalf * beltHalf);
+            const pt = project3D(rBase * Math.cos(phi), rBase * Math.sin(phi), -beltHalf);
+            ctx.lineTo(pt.sx, pt.sy);
+          }
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(16, 185, 129, 0.22)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(52, 211, 153, 0.6)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
 
-        ctx.strokeStyle = 'rgba(6, 182, 212, 0.65)';
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 3]);
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - R);
-        ctx.lineTo(cx, cy + R);
-        ctx.stroke();
-        ctx.setLineDash([]);
+          // North Pole Reference u0 = (0, 0, 1)
+          const pNorth = project3D(0, 0, 1);
+          const pOrigin = project3D(0, 0, 0);
 
-        ctx.font = fSmall;
-        ctx.fillStyle = '#22d3ee';
-        ctx.textAlign = 'center';
-        ctx.fillText('90° Equator (⊥)', cx, cy - R + 14);
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2.5;
+          ctx.shadowColor = '#d97706';
+          ctx.shadowBlur = 8;
+          ctx.beginPath();
+          ctx.moveTo(pOrigin.sx, pOrigin.sy);
+          ctx.lineTo(pNorth.sx, pNorth.sy);
+          ctx.stroke();
+          ctx.shadowBlur = 0;
 
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 2.5;
-        ctx.shadowColor = '#d97706';
-        ctx.shadowBlur = 8;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + R, cy);
-        ctx.stroke();
-        ctx.shadowBlur = 0;
+          ctx.beginPath();
+          ctx.arc(pNorth.sx, pNorth.sy, 4.5, 0, Math.PI * 2);
+          ctx.fillStyle = '#fbbf24';
+          ctx.fill();
 
-        ctx.beginPath();
-        ctx.arc(cx + R, cy, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#fbbf24';
-        ctx.fill();
+          ctx.font = 'bold 10px JetBrains Mono, monospace';
+          ctx.fillStyle = '#fbbf24';
+          ctx.textAlign = 'left';
+          ctx.fillText('u₀ (North Pole)', pNorth.sx + 7, pNorth.sy + 3);
 
-        ctx.font = 'bold 10px JetBrains Mono, monospace';
-        ctx.fillStyle = '#fbbf24';
-        ctx.textAlign = 'left';
-        ctx.fillText('u₀ (Ref)', cx + R + 6, cy + 4);
+          // Render Projected Points with Depth Sorting
+          const projList = gData.projectedCoords;
+          const renderedPoints = projList.slice(1).map((p, idx) => {
+            const pt = project3D(p.x, p.y, p.z);
+            return { ...p, ...pt, origIdx: idx + 1 };
+          });
 
-        const projList = gData.projectedCoords;
-        for (let i = 1; i < projList.length; i++) {
-          const p = projList[i];
-          const rx = p.x;
-          const ry = p.y * Math.cos(rot) - p.z * Math.sin(rot);
-          const vx = cx + rx * R;
-          const vy = cy - ry * R;
+          // Sort back-to-front
+          renderedPoints.sort((a, b) => a.depth - b.depth);
 
-          if (i < 35) {
+          // Vector rays from origin to first 25 points
+          for (let i = 0; i < Math.min(25, renderedPoints.length); i++) {
+            const p = renderedPoints[i];
             ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.lineTo(vx, vy);
-            ctx.strokeStyle =
-              Math.abs(p.cosWithU0) <= 0.05
-                ? 'rgba(52, 211, 153, 0.22)'
-                : 'rgba(167, 139, 250, 0.15)';
+            ctx.moveTo(pOrigin.sx, pOrigin.sy);
+            ctx.lineTo(p.sx, p.sy);
+            ctx.strokeStyle = p.isEquator
+              ? 'rgba(52, 211, 153, 0.22)'
+              : 'rgba(167, 139, 250, 0.15)';
             ctx.lineWidth = 1;
             ctx.stroke();
           }
 
-          ctx.beginPath();
-          ctx.arc(vx, vy, Math.abs(p.cosWithU0) <= 0.05 ? 2.5 : 2.0, 0, Math.PI * 2);
-          if (Math.abs(p.cosWithU0) <= 0.05) {
-            ctx.fillStyle = '#34d399';
+          // Points
+          for (let i = 0; i < renderedPoints.length; i++) {
+            const p = renderedPoints[i];
+            const isFront = p.depth > 0;
+            const ptRadius = p.isEquator ? (isFront ? 3.0 : 2.0) : (isFront ? 2.2 : 1.5);
+            const alpha = isFront ? 0.95 : 0.45;
+
+            ctx.beginPath();
+            ctx.arc(p.sx, p.sy, ptRadius, 0, Math.PI * 2);
+            if (p.isEquator) {
+              ctx.fillStyle = `rgba(52, 211, 153, ${alpha})`;
+              if (isFront) {
+                ctx.shadowColor = '#10b981';
+                ctx.shadowBlur = 4;
+              }
+              ctx.fill();
+              ctx.shadowBlur = 0;
+            } else {
+              ctx.fillStyle = `rgba(129, 140, 248, ${alpha})`;
+              ctx.fill();
+            }
+          }
+
+          // Angle θ arc for vector v1
+          if (projList.length > 1) {
+            const v1 = projList[1];
+            const p1 = project3D(v1.x, v1.y, v1.z);
+
+            ctx.strokeStyle = '#34d399';
+            ctx.lineWidth = 2;
             ctx.shadowColor = '#10b981';
-            ctx.shadowBlur = 4;
-            ctx.fill();
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.moveTo(pOrigin.sx, pOrigin.sy);
+            ctx.lineTo(p1.sx, p1.sy);
+            ctx.stroke();
             ctx.shadowBlur = 0;
-          } else {
-            ctx.fillStyle = '#818cf8';
+
+            const midX = (pNorth.sx + p1.sx) / 2;
+            const midY = (pNorth.sy + p1.sy) / 2;
+            ctx.font = 'bold 10px JetBrains Mono, monospace';
+            ctx.fillStyle = '#34d399';
+            ctx.textAlign = 'center';
+            ctx.fillText(`θ = ${v1.thetaDeg.toFixed(1)}°`, midX, midY - 6);
+          }
+        }
+
+        // ---------------------------------------------------------------------
+        // SUB-MODE 2: THE ORANGE PEEL PARADOX (RADIAL VOLUME CONCENTRATION)
+        // ---------------------------------------------------------------------
+        else if (geomSubMode === 'shell') {
+          // Inner core sphere boundary at r = 0.95 * R
+          const rInner = R * 0.95;
+          ctx.beginPath();
+          ctx.arc(cx, cy, rInner, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.4)';
+          ctx.beginPath();
+          ctx.arc(cx, cy, rInner, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.font = fSmall;
+          ctx.fillStyle = 'rgba(245, 158, 11, 0.75)';
+          ctx.textAlign = 'center';
+          ctx.fillText('Outer 5% Crust (r ≥ 0.95)', cx, cy - R + 14);
+
+          // Project sampled solid ball points
+          const shellPoints = gData.shellSampleCoords.map((p) => {
+            const pt = project3D(p.x, p.y, p.z);
+            return { ...p, ...pt };
+          });
+          shellPoints.sort((a, b) => a.depth - b.depth);
+
+          for (let i = 0; i < shellPoints.length; i++) {
+            const p = shellPoints[i];
+            const isFront = p.depth > 0;
+            ctx.beginPath();
+            ctx.arc(p.sx, p.sy, p.isShell ? (isFront ? 3.2 : 2.2) : (isFront ? 2.0 : 1.4), 0, Math.PI * 2);
+            if (p.isShell) {
+              ctx.fillStyle = isFront ? '#f59e0b' : 'rgba(245, 158, 11, 0.6)';
+              if (isFront) {
+                ctx.shadowColor = '#d97706';
+                ctx.shadowBlur = 5;
+              }
+              ctx.fill();
+              ctx.shadowBlur = 0;
+            } else {
+              ctx.fillStyle = isFront ? 'rgba(100, 116, 139, 0.5)' : 'rgba(71, 85, 105, 0.3)';
+              ctx.fill();
+            }
+          }
+
+          // Interior Void Callout
+          if (dimension >= 50) {
+            ctx.font = 'bold 9px JetBrains Mono, monospace';
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.65)';
+            ctx.fillText('INTERIOR VOID: NO VOLUME', cx, cy);
+          }
+        }
+
+        // ---------------------------------------------------------------------
+        // SUB-MODE 3: PAIRWISE DISTANCE COLLAPSE (||u - v|| -> √2)
+        // ---------------------------------------------------------------------
+        else {
+          // Render points and connecting distance constellation chords
+          const pts = gData.projectedCoords.map((p) => {
+            const pt = project3D(p.x, p.y, p.z);
+            return { ...p, ...pt };
+          });
+
+          // Draw random distance chords between first 20 pairs
+          ctx.lineWidth = 1;
+          for (let i = 0; i < Math.min(18, pts.length); i++) {
+            for (let j = i + 1; j < Math.min(i + 4, pts.length); j++) {
+              ctx.strokeStyle = 'rgba(6, 182, 212, 0.16)';
+              ctx.beginPath();
+              ctx.moveTo(pts[i].sx, pts[i].sy);
+              ctx.lineTo(pts[j].sx, pts[j].sy);
+              ctx.stroke();
+            }
+          }
+
+          // Primary benchmark pair (vector 1 and vector 2)
+          if (pts.length > 2) {
+            const p1 = pts[1];
+            const p2 = pts[2];
+            const d12 = Math.sqrt(
+              Math.max(
+                0,
+                2 - 2 * (gData.cosineSimilarities[0] !== undefined ? gData.cosineSimilarities[0] : 0)
+              )
+            );
+
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = '#0891b2';
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.moveTo(p1.sx, p1.sy);
+            ctx.lineTo(p2.sx, p2.sy);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            const midX = (p1.sx + p2.sx) / 2;
+            const midY = (p1.sy + p2.sy) / 2;
+            ctx.font = 'bold 10px JetBrains Mono, monospace';
+            ctx.fillStyle = '#22d3ee';
+            ctx.textAlign = 'center';
+            ctx.fillText(`||u - v||₂ = ${d12.toFixed(3)} → √2`, midX, midY - 6);
+          }
+
+          // Draw points
+          for (let i = 0; i < pts.length; i++) {
+            const p = pts[i];
+            ctx.beginPath();
+            ctx.arc(p.sx, p.sy, p.depth > 0 ? 2.6 : 1.8, 0, Math.PI * 2);
+            ctx.fillStyle = p.depth > 0 ? '#38bdf8' : 'rgba(56, 189, 248, 0.4)';
             ctx.fill();
           }
         }
 
-        if (projList.length > 1) {
-          const p1 = projList[1];
-          const r1x = p1.x;
-          const r1y = p1.y * Math.cos(rot) - p1.z * Math.sin(rot);
-          const v1x = cx + r1x * R;
-          const v1y = cy - r1y * R;
-
-          ctx.strokeStyle = '#34d399';
-          ctx.lineWidth = 2;
-          ctx.shadowColor = '#10b981';
-          ctx.shadowBlur = 6;
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
-          ctx.lineTo(v1x, v1y);
-          ctx.stroke();
-          ctx.shadowBlur = 0;
-
-          const thetaDeg = Math.acos(Math.max(-1, Math.min(1, p1.cosWithU0))) * (180 / Math.PI);
-          const arcR = Math.min(36, R * 0.45);
-          const angleCanvas = Math.atan2(v1y - cy, v1x - cx);
-          ctx.beginPath();
-          if (angleCanvas < 0) {
-            ctx.arc(cx, cy, arcR, 0, angleCanvas, true);
-          } else {
-            ctx.arc(cx, cy, arcR, 0, angleCanvas, false);
-          }
-          ctx.strokeStyle = '#34d399';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-
-          const midAng = angleCanvas / 2;
-          const labelDist = arcR + 14;
-          const labelX = cx + Math.cos(midAng) * labelDist;
-          const labelY = cy + Math.sin(midAng) * labelDist;
-          ctx.font = 'bold 10px JetBrains Mono, monospace';
-          ctx.fillStyle = '#34d399';
-          ctx.textAlign = 'center';
-          ctx.fillText(`θ = ${thetaDeg.toFixed(1)}°`, labelX, labelY);
-        }
-
-        // Histograms
+        // =====================================================================
+        // RIGHT PANE: FIRST-PRINCIPLES MATHEMATICAL DIAGNOSTIC DISTRIBUTIONS
+        // =====================================================================
         const px = w * 0.47;
         const pw = w - px - 24;
         const py = h * 0.2;
         const ph = h * 0.58;
 
-        ctx.textAlign = 'left';
-        ctx.font = fHeading;
-        ctx.fillStyle = '#c084fc';
-        ctx.fillText('PAIRWISE COSINE SIMILARITY: cos(θ) = u·v / (||u|| ||v||)', px, py - 20);
-
-        ctx.font = fSub;
-        if (dimension === 4096) {
-          ctx.fillStyle = '#34d399';
-          ctx.fillText(
-            'DIRAC DELTA SPIKE δ(0) · VAR = 1/d = 0.00024 · P(|cos θ| > 0.05) → 0.0%',
-            px,
-            py - 6
-          );
-        } else if (dimension >= 50) {
-          ctx.fillStyle = '#38bdf8';
-          ctx.fillText(
-            `GAUSSIAN CONCENTRATION N(0, 1/d) · Var = ${(1 / dimension).toFixed(4)} · σ = ${(
-              1 / Math.sqrt(dimension)
-            ).toFixed(3)}`,
-            px,
-            py - 6
-          );
-        } else {
-          ctx.fillStyle = '#f59e0b';
-          ctx.fillText(
-            `BROAD ANGULAR DISPERSION · Var = ${(1 / dimension).toFixed(3)} · P(|cos θ| > 0.05) = ${(
-              gData.tailProb * 100
-            ).toFixed(1)}%`,
-            px,
-            py - 6
-          );
-        }
-
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.55)';
+        // Container card
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
         ctx.fillRect(px, py, pw, ph);
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
         ctx.lineWidth = 1;
         ctx.strokeRect(px, py, pw, ph);
 
-        const zx1 = px + ((-0.05 + 1) / 2) * pw;
-        const zx2 = px + ((0.05 + 1) / 2) * pw;
-        const zw = zx2 - zx1;
-        ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
-        ctx.fillRect(zx1, py, zw, ph);
-        ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
-        ctx.strokeRect(zx1, py, zw, ph);
+        // ---------------------------------------------------------------------
+        // RIGHT PANE 1: COSINE SIMILARITY HISTOGRAM
+        // ---------------------------------------------------------------------
+        if (geomSubMode === 'equator') {
+          ctx.textAlign = 'left';
+          ctx.font = fHeading;
+          ctx.fillStyle = '#c084fc';
+          ctx.fillText('PAIRWISE COSINE SIMILARITY: cos(θ) = u·v / (||u|| ||v||)', px, py - 20);
 
-        const cx0 = px + pw / 2;
-        ctx.strokeStyle = 'rgba(6, 182, 212, 0.8)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(cx0, py);
-        ctx.lineTo(cx0, py + ph);
-        ctx.stroke();
-
-        const numBins = 50;
-        const barSlotW = pw / numBins;
-        const barW = Math.max(1, barSlotW - 1);
-        for (let b = 0; b < numBins; b++) {
-          const cnt = gData.histogram[b];
-          const center = gData.binCenters[b];
-          const barFrac = cnt / gData.maxBinCount;
-          const barH = barFrac * (ph - 24);
-          const bx = px + b * barSlotW;
-          const by = py + ph - barH;
-
-          ctx.fillStyle = Math.abs(center) <= 0.05 ? '#10b981' : '#8b5cf6';
-          ctx.fillRect(bx, by, barW, barH);
-        }
-
-        ctx.beginPath();
-        const curvePoints = 120;
-        for (let i = 0; i <= curvePoints; i++) {
-          const t = -1 + (i / curvePoints) * 2;
-          let density = 0;
-          if (dimension === 2) {
-            density = 1 / Math.PI / Math.sqrt(Math.max(0.008, 1 - t * t));
-          } else if (dimension === 3) {
-            density = 0.5;
+          ctx.font = fSub;
+          if (geomZoomMode === 'adaptive') {
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillText(
+              `ADAPTIVE MICRO-ZOOM [−${gData.adaptiveRange.toFixed(3)}, +${gData.adaptiveRange.toFixed(3)}] · σ = 1/√d = ${(1 / Math.sqrt(dimension)).toFixed(4)} · N(0, 1/d)`,
+              px,
+              py - 6
+            );
           } else {
-            density = Math.exp((-dimension * t * t) / 2);
+            ctx.fillStyle = dimension === 4096 ? '#34d399' : '#f59e0b';
+            ctx.fillText(
+              `GLOBAL VIEW [−1, 1] · VAR = 1/d = ${(1 / dimension).toFixed(5)} · BELT MASS = ${(gData.equatorBeltProb * 100).toFixed(1)}%`,
+              px,
+              py - 6
+            );
           }
-          const maxDensity =
-            dimension === 2 ? 1 / Math.PI / Math.sqrt(0.008) : dimension === 3 ? 0.5 : 1.0;
-          const normY = (density / maxDensity) * (ph - 24) * 0.95;
-          const curveX = px + ((t + 1) / 2) * pw;
-          const curveY = py + ph - normY;
 
-          if (i === 0) ctx.moveTo(curveX, curveY);
-          else ctx.lineTo(curveX, curveY);
+          // Active Histogram Selection
+          const isAdaptive = geomZoomMode === 'adaptive';
+          const hist = isAdaptive ? gData.adaptiveHistogram : gData.histogram;
+          const binCenters = isAdaptive ? gData.adaptiveBinCenters : gData.binCenters;
+          const maxCnt = isAdaptive ? gData.maxAdaptiveBinCount : gData.maxBinCount;
+          const nBins = hist.length;
+          const rangeMin = isAdaptive ? -gData.adaptiveRange : -1.0;
+          const rangeMax = isAdaptive ? gData.adaptiveRange : 1.0;
+          const rangeSpan = rangeMax - rangeMin;
+
+          // Highlight Equatorial Belt [-0.05, +0.05]
+          const zx1 = px + ((-0.05 - rangeMin) / rangeSpan) * pw;
+          const zx2 = px + ((0.05 - rangeMin) / rangeSpan) * pw;
+          const cZx1 = Math.max(px, zx1);
+          const cZx2 = Math.min(px + pw, zx2);
+          if (cZx2 > cZx1) {
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
+            ctx.fillRect(cZx1, py, cZx2 - cZx1, ph);
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+            ctx.strokeRect(cZx1, py, cZx2 - cZx1, ph);
+          }
+
+          // Zero line
+          const cx0 = px + ((0 - rangeMin) / rangeSpan) * pw;
+          ctx.strokeStyle = 'rgba(6, 182, 212, 0.75)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(cx0, py);
+          ctx.lineTo(cx0, py + ph);
+          ctx.stroke();
+
+          // Histogram Bars
+          const barSlotW = pw / nBins;
+          const barW = Math.max(1, barSlotW - 1);
+          for (let b = 0; b < nBins; b++) {
+            const cnt = hist[b];
+            const center = binCenters[b];
+            const barFrac = cnt / maxCnt;
+            const barH = barFrac * (ph - 28);
+            const bx = px + b * barSlotW;
+            const by = py + ph - barH;
+
+            ctx.fillStyle = Math.abs(center) <= 0.05 ? '#10b981' : '#8b5cf6';
+            ctx.fillRect(bx, by, barW, barH);
+          }
+
+          // Theoretical Gaussian Overlay
+          ctx.beginPath();
+          const curvePts = 100;
+          for (let i = 0; i <= curvePts; i++) {
+            const t = rangeMin + (i / curvePts) * rangeSpan;
+            let density = 0;
+            if (dimension === 2 && !isAdaptive) {
+              density = 1 / Math.PI / Math.sqrt(Math.max(0.008, 1 - t * t));
+            } else if (dimension === 3 && !isAdaptive) {
+              density = 0.5;
+            } else {
+              // Gaussian N(0, 1/d)
+              density = Math.exp((-dimension * t * t) / 2);
+            }
+            const normY = density * (ph - 28) * 0.95;
+            const curveX = px + ((t - rangeMin) / rangeSpan) * pw;
+            const curveY = py + ph - normY;
+            if (i === 0) ctx.moveTo(curveX, curveY);
+            else ctx.lineTo(curveX, curveY);
+          }
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Telemetry Invariant Badge inside Pane
+          ctx.font = fSmall;
+          ctx.fillStyle = '#e2e8f0';
+          ctx.textAlign = 'right';
+          ctx.fillText(
+            `μ = ${gData.mean.toFixed(4)} | σ² = ${gData.variance.toFixed(5)} (Theory 1/d = ${(1/dimension).toFixed(5)})`,
+            px + pw - 10,
+            py + 18
+          );
+          ctx.fillText(
+            `Equator Belt Mass: ${(gData.equatorBeltProb * 100).toFixed(1)}% (Theory: ${(gData.theoryEquatorBeltProb * 100).toFixed(1)}%)`,
+            px + pw - 10,
+            py + 32
+          );
         }
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+
+        // ---------------------------------------------------------------------
+        // RIGHT PANE 2: THE ORANGE PEEL RADIAL DENSITY HISTOGRAM
+        // ---------------------------------------------------------------------
+        else if (geomSubMode === 'shell') {
+          ctx.textAlign = 'left';
+          ctx.font = fHeading;
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillText('THE ORANGE PEEL PARADOX: RADIAL VOLUME DENSITY p(r) = d · r^{d-1}', px, py - 20);
+
+          ctx.font = fSub;
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillText(
+            `OUTER 5% CRUST (r ≥ 0.95): Measured ${(gData.outerShellFraction * 100).toFixed(1)}% | Theory 1 - 0.95^d = ${(gData.theoryOuterShellFraction * 100).toFixed(1)}%`,
+            px,
+            py - 6
+          );
+
+          // Highlight Outer Crust [0.95, 1.0]
+          const crustX = px + 0.95 * pw;
+          ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
+          ctx.fillRect(crustX, py, pw - (crustX - px), ph);
+          ctx.strokeStyle = 'rgba(245, 158, 11, 0.5)';
+          ctx.strokeRect(crustX, py, pw - (crustX - px), ph);
+
+          // Radial Histogram Bars
+          const nBins = gData.radiusHistogram.length;
+          const barSlotW = pw / nBins;
+          const barW = Math.max(1, barSlotW - 1);
+          for (let b = 0; b < nBins; b++) {
+            const cnt = gData.radiusHistogram[b];
+            const center = gData.radiusBinCenters[b];
+            const barFrac = cnt / gData.maxRadiusBinCount;
+            const barH = barFrac * (ph - 28);
+            const bx = px + b * barSlotW;
+            const by = py + ph - barH;
+
+            ctx.fillStyle = center >= 0.95 ? '#f59e0b' : '#64748b';
+            ctx.fillRect(bx, by, barW, barH);
+          }
+
+          // Theoretical Power Law Density p(r) = r^{d-1}
+          ctx.beginPath();
+          const curvePts = 80;
+          for (let i = 0; i <= curvePts; i++) {
+            const r = i / curvePts;
+            const density = Math.pow(r, Math.min(100, dimension - 1));
+            const normY = density * (ph - 28) * 0.95;
+            const curveX = px + r * pw;
+            const curveY = py + ph - normY;
+            if (i === 0) ctx.moveTo(curveX, curveY);
+            else ctx.lineTo(curveX, curveY);
+          }
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Mean radius marker E[r] = d / (d+1)
+          const meanX = px + gData.meanRadius * pw;
+          ctx.strokeStyle = '#ec4899';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(meanX, py);
+          ctx.lineTo(meanX, py + ph);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Telemetry
+          ctx.font = fSmall;
+          ctx.fillStyle = '#e2e8f0';
+          ctx.textAlign = 'right';
+          ctx.fillText(
+            `Mean Radius: E[r] = ${gData.meanRadius.toFixed(4)} (Theory d/(d+1) = ${gData.theoryMeanRadius.toFixed(4)})`,
+            px + pw - 10,
+            py + 18
+          );
+          ctx.fillText(
+            `Solid Unit Ball Interior: ${dimension >= 100 ? '99.4% to 100% HOLLOW VOID' : 'Uniform to Crust Migration'}`,
+            px + pw - 10,
+            py + 32
+          );
+        }
+
+        // ---------------------------------------------------------------------
+        // RIGHT PANE 3: PAIRWISE DISTANCE COLLAPSE (||u - v|| -> √2)
+        // ---------------------------------------------------------------------
+        else {
+          ctx.textAlign = 'left';
+          ctx.font = fHeading;
+          ctx.fillStyle = '#06b6d4';
+          ctx.fillText('PAIRWISE EUCLIDEAN DISTANCE COLLAPSE: ||u - v||₂ → √2 ≈ 1.4142', px, py - 20);
+
+          ctx.font = fSub;
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillText(
+            `MEAN DISTANCE = ${gData.meanDistance.toFixed(4)} · VAR = ${gData.varDistance.toFixed(5)} (Theory 1/(2d) = ${(1/(2*dimension)).toFixed(5)})`,
+            px,
+            py - 6
+          );
+
+          // Prominent √2 Limit Line
+          const sqrt2X = px + (Math.SQRT2 / 2.0) * pw;
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(sqrt2X, py);
+          ctx.lineTo(sqrt2X, py + ph);
+          ctx.stroke();
+
+          ctx.font = 'bold 9px JetBrains Mono, monospace';
+          ctx.fillStyle = '#10b981';
+          ctx.textAlign = 'center';
+          ctx.fillText('√2 Limit (1.4142)', sqrt2X, py + 14);
+
+          // Distance Histogram Bars across [0, 2]
+          const nBins = gData.distHistogram.length;
+          const barSlotW = pw / nBins;
+          const barW = Math.max(1, barSlotW - 1);
+          for (let b = 0; b < nBins; b++) {
+            const cnt = gData.distHistogram[b];
+            const center = gData.distBinCenters[b];
+            const barFrac = cnt / gData.maxDistBinCount;
+            const barH = barFrac * (ph - 28);
+            const bx = px + b * barSlotW;
+            const by = py + ph - barH;
+
+            ctx.fillStyle = Math.abs(center - Math.SQRT2) < 0.1 ? '#06b6d4' : '#818cf8';
+            ctx.fillRect(bx, by, barW, barH);
+          }
+
+          // Theoretical Gaussian centered at √2 with variance 1/(2d)
+          ctx.beginPath();
+          const curvePts = 80;
+          const varD = 1 / (2 * dimension);
+          for (let i = 0; i <= curvePts; i++) {
+            const dist = (i / curvePts) * 2.0;
+            const diff = dist - Math.SQRT2;
+            const density = Math.exp((-diff * diff) / (2 * varD));
+            const normY = density * (ph - 28) * 0.95;
+            const curveX = px + (dist / 2.0) * pw;
+            const curveY = py + ph - normY;
+            if (i === 0) ctx.moveTo(curveX, curveY);
+            else ctx.lineTo(curveX, curveY);
+          }
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Telemetry
+          ctx.font = fSmall;
+          ctx.fillStyle = '#e2e8f0';
+          ctx.textAlign = 'right';
+          ctx.fillText(
+            `Contrast Ratio: (D_max - D_min) / D_min → 0`,
+            px + pw - 10,
+            py + 28
+          );
+          ctx.fillText(
+            `In d=${dimension}, all ${gData.totalPairs.toLocaleString()} point pairs are mutually equidistant!`,
+            px + pw - 10,
+            py + 42
+          );
+        }
       }
 
       // =======================================================================
@@ -1922,6 +2498,8 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
     dimension,
     sampleCount,
     geomData,
+    geomSubMode,
+    geomZoomMode,
     odeSpeed,
     odeReverse,
     odeSolver,
@@ -2121,7 +2699,28 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
         <canvas
           ref={canvasRef}
           className="w-full h-80 sm:h-96 block cursor-crosshair"
-          title="Interactive Physical Simulation Canvas"
+          title="Interactive Physical Simulation Canvas - Drag to rotate 3D view"
+          onMouseDown={(e) => {
+            if (mode === 'geometry') {
+              isDraggingGeomRef.current = true;
+              dragStartGeomRef.current = { x: e.clientX, y: e.clientY };
+            }
+          }}
+          onMouseMove={(e) => {
+            if (mode === 'geometry' && isDraggingGeomRef.current) {
+              const dx = e.clientX - dragStartGeomRef.current.x;
+              const dy = e.clientY - dragStartGeomRef.current.y;
+              dragStartGeomRef.current = { x: e.clientX, y: e.clientY };
+              geomYawRef.current += dx * 0.01;
+              geomPitchRef.current = Math.max(-1.4, Math.min(1.4, geomPitchRef.current + dy * 0.01));
+            }
+          }}
+          onMouseUp={() => {
+            isDraggingGeomRef.current = false;
+          }}
+          onMouseLeave={() => {
+            isDraggingGeomRef.current = false;
+          }}
         />
 
         {/* Floating Canvas Overlays & Controls */}
@@ -2233,21 +2832,61 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
                   Dimension: <strong className="text-cyan-400">d = {dimension}</strong>
                 </span>
                 <span>·</span>
-                <span>
-                  Variance:{' '}
-                  <strong className="text-purple-400">
-                    1/d = {(1 / dimension).toFixed(dimension >= 100 ? 5 : 3)}
-                  </strong>
-                </span>
-                <span>·</span>
-                <span>
-                  P(|cos θ| &gt; 0.05):{' '}
-                  <strong
-                    className={geomData.tailProb < 0.05 ? 'text-emerald-400' : 'text-amber-400'}
-                  >
-                    {(geomData.tailProb * 100).toFixed(1)}%
-                  </strong>
-                </span>
+                {geomSubMode === 'equator' && (
+                  <>
+                    <span>
+                      Variance:{' '}
+                      <strong className="text-purple-400">
+                        1/d = {(1 / dimension).toFixed(dimension >= 100 ? 5 : 3)}
+                      </strong>
+                    </span>
+                    <span>·</span>
+                    <span>
+                      Equator Belt [−0.05, +0.05]:{' '}
+                      <strong
+                        className={geomData.equatorBeltProb > 0.8 ? 'text-emerald-400' : 'text-amber-400'}
+                      >
+                        {(geomData.equatorBeltProb * 100).toFixed(1)}%
+                      </strong>
+                    </span>
+                  </>
+                )}
+                {geomSubMode === 'shell' && (
+                  <>
+                    <span>
+                      Mean Radius:{' '}
+                      <strong className="text-pink-400">
+                        E[r] = {geomData.meanRadius.toFixed(4)}
+                      </strong>
+                    </span>
+                    <span>·</span>
+                    <span>
+                      Outer 5% Crust:{' '}
+                      <strong
+                        className={geomData.outerShellFraction > 0.8 ? 'text-amber-400' : 'text-cyan-400'}
+                      >
+                        {(geomData.outerShellFraction * 100).toFixed(1)}%
+                      </strong>
+                    </span>
+                  </>
+                )}
+                {geomSubMode === 'distance' && (
+                  <>
+                    <span>
+                      Mean Distance:{' '}
+                      <strong className="text-emerald-400">
+                        ||u−v|| = {geomData.meanDistance.toFixed(4)} (→ √2)
+                      </strong>
+                    </span>
+                    <span>·</span>
+                    <span>
+                      Variance:{' '}
+                      <strong className="text-purple-400">
+                        {(geomData.varDistance).toFixed(5)}
+                      </strong>
+                    </span>
+                  </>
+                )}
               </div>
             )}
             {mode === 'neural_ode' && (
@@ -2442,12 +3081,121 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
 
         {mode === 'geometry' && (
           <div className="space-y-4 text-xs">
+            {/* 3 High-Dimensional First-Principles Sub-Modes */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-ink-500 dark:text-ink-400">
+                Canonical High-Dimensional Phenomenon:
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  onClick={() => {
+                    setGeomSubMode('equator');
+                    soundFX.playTap();
+                  }}
+                  className={`flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    geomSubMode === 'equator'
+                      ? 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/25 ring-2 ring-emerald-400/50'
+                      : 'bg-ink-100 dark:bg-ink-800 text-ink-700 dark:text-ink-300 hover:bg-ink-200 dark:hover:bg-ink-700 border border-ink-200/60 dark:border-white/5'
+                  }`}
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                  1. Equator Belt (Levy's Lemma)
+                </button>
+                <button
+                  onClick={() => {
+                    setGeomSubMode('shell');
+                    soundFX.playTap();
+                  }}
+                  className={`flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    geomSubMode === 'shell'
+                      ? 'bg-amber-600 text-white font-bold shadow-md shadow-amber-600/25 ring-2 ring-amber-400/50'
+                      : 'bg-ink-100 dark:bg-ink-800 text-ink-700 dark:text-ink-300 hover:bg-ink-200 dark:hover:bg-ink-700 border border-ink-200/60 dark:border-white/5'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  2. Orange Peel (Volume Crust)
+                </button>
+                <button
+                  onClick={() => {
+                    setGeomSubMode('distance');
+                    soundFX.playTap();
+                  }}
+                  className={`flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    geomSubMode === 'distance'
+                      ? 'bg-cyan-600 text-white font-bold shadow-md shadow-cyan-600/25 ring-2 ring-cyan-400/50'
+                      : 'bg-ink-100 dark:bg-ink-800 text-ink-700 dark:text-ink-300 hover:bg-ink-200 dark:hover:bg-ink-700 border border-ink-200/60 dark:border-white/5'
+                  }`}
+                >
+                  <Activity className="w-3.5 h-3.5" />
+                  3. Distance Collapse (√2 Metric)
+                </button>
+              </div>
+            </div>
+
+            {/* Sub-mode Specific Explanatory & Zoom Banners */}
+            {geomSubMode === 'equator' && (
+              <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-ink-100 dark:bg-ink-800/80 border border-ink-200/60 dark:border-white/5">
+                <span className="text-[11px] font-mono text-ink-500 dark:text-ink-400 flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-emerald-500" />
+                  Equator Belt: <MathView math="\mathbb{P}(|\cos\theta| \le 0.05)" /> approaches 100% via Levy's Lemma.
+                </span>
+                <div className="flex items-center gap-1.5 bg-ink-200/60 dark:bg-ink-900/60 p-1 rounded-lg">
+                  <button
+                    onClick={() => {
+                      setGeomZoomMode('adaptive');
+                      soundFX.playTap();
+                    }}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-mono transition-all cursor-pointer ${
+                      geomZoomMode === 'adaptive'
+                        ? 'bg-brand-500 text-white font-bold shadow-xs'
+                        : 'text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+                    }`}
+                  >
+                    Adaptive Gaussian (±4σ Zoom)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setGeomZoomMode('global');
+                      soundFX.playTap();
+                    }}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-mono transition-all cursor-pointer ${
+                      geomZoomMode === 'global'
+                        ? 'bg-brand-500 text-white font-bold shadow-xs'
+                        : 'text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+                    }`}
+                  >
+                    Global View ([-1, 1] Dirac Spike)
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {geomSubMode === 'shell' && (
+              <div className="p-2.5 rounded-xl bg-ink-100 dark:bg-ink-800/80 border border-ink-200/60 dark:border-white/5 text-[11px] font-mono text-ink-500 dark:text-ink-300 flex items-center gap-2">
+                <Info className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span>
+                  The Orange Peel Paradox: In <MathView math="d=100" />, a solid unit ball has{' '}
+                  <strong className="text-amber-400">99.4%</strong> of its volume in the outer 5% shell ($1 - 0.95^{100}$). The core is virtually empty void!
+                </span>
+              </div>
+            )}
+
+            {geomSubMode === 'distance' && (
+              <div className="p-2.5 rounded-xl bg-ink-100 dark:bg-ink-800/80 border border-ink-200/60 dark:border-white/5 text-[11px] font-mono text-ink-500 dark:text-ink-300 flex items-center gap-2">
+                <Info className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
+                <span>
+                  Metric Distance Collapse: As <MathView math="d \to 4096" />, all pairwise Euclidean distances collapse to{' '}
+                  <strong className="text-cyan-400">\|u - v\|_2 \to \sqrt{2} \approx 1.4142</strong> with vanishing variance <MathView math="1/(2d)" />. Contrast disappears!
+                </span>
+              </div>
+            )}
+
+            {/* Dimension Selection */}
             <div className="space-y-2">
               <div className="flex items-center justify-between font-medium">
                 <span className="text-ink-600 dark:text-ink-300 flex items-center gap-1.5">
                   <Compass className="w-4 h-4 text-cyan-500 shrink-0" />
-                  Select Dimension (<MathView math="d" />): Watch angles collapse to 90° as{' '}
-                  <MathView math="d \to 4096" />
+                  Select Dimension (<MathView math="d" />):
                 </span>
                 <span className="font-mono text-cyan-600 dark:text-cyan-400 font-bold">
                   d = {dimension}
@@ -2483,6 +3231,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
               </div>
             </div>
 
+            {/* Vector Sampling & 3D Interaction Tip */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 items-end">
               <div className="space-y-1.5">
                 <div className="flex justify-between font-medium">
@@ -2513,6 +3262,11 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
                   Re-sample Geometry
                 </button>
               </div>
+            </div>
+
+            <div className="text-[10px] font-mono text-ink-400 flex items-center justify-between pt-1 border-t border-ink-200/40 dark:border-white/5">
+              <span>🖱️ Drag on 3D Globe to rotate Pitch & Yaw</span>
+              <span>⚡ 60 FPS First-Principles Haar Hypersphere Measure</span>
             </div>
           </div>
         )}

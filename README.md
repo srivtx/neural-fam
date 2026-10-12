@@ -71,7 +71,7 @@ An interactive web of **50 landmark first-principles inquiries** spanning six co
 ```
 
 ### Highlights:
-- **Damped Trackpad Physics**: Natural two-finger trackpad drag smoothly pans the canvas (`panSpeed = 0.75`). Pinch-to-zoom (`e.ctrlKey || e.metaKey`) continuously scales around cursor focus without page scrolling jitter (`{ passive: false }` event trapping).
+- **Calibrated Trackpad Physics**: Natural two-finger trackpad drag smoothly pans the canvas with buttery damping (`panSpeed = 0.38`). Pinch-to-zoom (`e.ctrlKey || e.metaKey`) continuously scales around cursor focus without violent jumps or page jitter (`zoomSensitivity = 0.0012` with passive event trapping).
 - **Focal Causal Spotlight**: Selecting or hovering any node illuminates its immediate prerequisites and consequences while background edges dim to $0.06$ opacity, turning a 50-node graph into a calm, focused reading experience.
 - **Minimap Radar Navigator**: Picture-in-picture viewport tracker with one-click canvas centering.
 - **12 In-Browser Python WebAssembly Verification Proofs**: Run verified mathematical proofs directly inside the browser using Pyodide (or the high-speed WebAssembly client simulation fallback):
@@ -98,7 +98,10 @@ Interactive 60fps HTML5 Canvas simulators demonstrating the physical mechanisms 
 1. **Quantum Electron Bandgap**: Silicon periodic crystal lattice interference creating a $1.12\text{ eV}$ forbidden bandgap between valence and conduction bands, enabling physical bi-stability (the binary bit).
 2. **Thermodynamic Entropy & Langevin Reversal**: Non-equilibrium Brownian thermal dispersion and its exact time-reversal via score matching ($\nabla_x \log p_t(x)$).
 3. **Content-Addressable Attention Beam**: Dynamic query spotlights casting laser beams to key vectors scaled by $1/\sqrt{d_k}$ with thermal entropy controls.
-4. **High-Dimensional Hypersphere Orthogonality**: Hypersphere $\mathbb{S}^{d-1}$ projection and live cosine similarity histogram showing the Dirac delta collapse $\delta(0)$ at $d=4096$ ($\text{Var} = 1/d$).
+4. **High-Dimensional Geometry & Measure Concentration (3 Canonical Phenomena)**:
+   - **Levy's Lemma Equatorial Belt**: 3D perspective hypersphere $\mathbb{S}^{d-1}$ with pitch/yaw trackball drag, glowing equatorial ribbon $[-\epsilon, +\epsilon]$, golden North Pole reference $u_0$, depth-cued points, and dual-mode cosine histogram (Adaptive micro-zoom $[-4\sigma, +4\sigma]$ showing the continuous Gaussian bell curve $\mathcal{N}(0, 1/d)$ vs Global $[-1, 1]$ Dirac delta collapse $\delta(0)$ at $d=4096$).
+   - **The Orange Peel Paradox (Radial Volume Concentration)**: Solid ball $B^d$ uniform sampling ($r \sim U^{1/d}$) demonstrating that $99.4\%$ of volume in $d=100$ resides in the outer $5\%$ crust ($1 - 0.95^{100} = 0.9941$), leaving the interior as a deserted void.
+   - **Metric Distance Collapse to $\sqrt{2}$**: 3D constellation chords and distance histogram proving that all random vectors become equidistant ($\|u - v\|_2 \to \sqrt{2} \approx 1.4142$ with variance $1/(2d)$), causing nearest-neighbor contrast to vanish.
 5. **Continuous Neural ODEs & Invertible Flows**: Intertwined 2D spirals untangling continuously over time $t \in [0, 1]$ through a velocity vector field $v(x, y, t)$, with interactive time scrubber and Pontryagin Adjoint reverse flow ($O(1)$ memory).
 6. **3D Saddle Point & Momentum Escape**: Quartic loss saddle surface comparing frozen Vanilla SGD ($\|\nabla L\| \approx 0$) vs Heavy-Ball Momentum / Langevin particles escaping along the negative curvature eigenvector.
 7. **Grokking Phase Transitions**: Dual-pane visualizer showing the weight spectrum circle spontaneously crystallizing into symmetric Fourier harmonics in $\mathbb{Z}_p$ alongside the training/validation loss cliff drop.
