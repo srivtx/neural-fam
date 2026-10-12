@@ -46,6 +46,7 @@ import {
   HelpCircle,
   Share2,
   ExternalLink,
+  Gauge,
 } from 'lucide-react';
 import {
   SUBSTRATE_REALITY_NODES,
@@ -57,8 +58,12 @@ import {
 } from '../data/substrateRealityGraphData';
 import { MathView } from './MathView';
 import { soundFX } from '../utils/audio';
+import {
+  SubstratePhysicsSimCanvas,
+  SubstrateSimStation,
+} from './SubstratePhysicsSimCanvas';
 
-type LayoutMode = 'split' | 'graph' | 'dossier' | 'cosmic_ladder';
+type LayoutMode = 'split' | 'graph' | 'dossier' | 'cosmic_ladder' | 'simulators';
 
 interface SubstrateRealityGraphViewProps {
   onOpenLab?: (labId: string) => void;
@@ -77,6 +82,7 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
   const [exploredNodeIds, setExploredNodeIds] = useState<Set<string>>(() => new Set(['sub_electron']));
   const [showMinimap, setShowMinimap] = useState<boolean>(true);
   const [selectedCosmicIndex, setSelectedCosmicIndex] = useState<number>(0);
+  const [inspectorTab, setInspectorTab] = useState<'dossier' | 'simulator'>('dossier');
 
   // Canvas Viewport Ref
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -98,6 +104,62 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
   const activeCosmicLevel = useMemo(() => {
     return COSMIC_SCALE_LEVELS[selectedCosmicIndex] || COSMIC_SCALE_LEVELS[0];
   }, [selectedCosmicIndex]);
+
+  const defaultStationForNode = useMemo((): SubstrateSimStation => {
+    if (
+      selectedNodeId === 'sub_charges_doing_math' ||
+      selectedNodeId === 'sub_alu_opcodes' ||
+      selectedNodeId === 'sub_bus_tristate' ||
+      selectedNodeId === 'sub_pipeline_branch_prediction' ||
+      selectedNodeId === 'sub_virtual_memory_tlb'
+    ) {
+      return 'full_adder';
+    }
+    if (selectedNodeId === 'sub_dram_ram' || selectedNodeId === 'sub_charge_storage') {
+      return 'dram_leakage';
+    }
+    if (
+      selectedNodeId === 'sub_registers_latches' ||
+      selectedNodeId === 'sub_why_binary' ||
+      selectedNodeId === 'sub_pll_frequency' ||
+      selectedNodeId === 'sub_fpga_reconfigurable'
+    ) {
+      return 'bistable_latch';
+    }
+    if (
+      selectedNodeId === 'sub_why_not_clay' ||
+      selectedNodeId === 'sub_metal_bonding' ||
+      selectedNodeId === 'sub_silicon_bandgap' ||
+      selectedNodeId === 'sub_why_silicon_not_diamond' ||
+      selectedNodeId === 'sub_sand_to_czochralski_ingot' ||
+      selectedNodeId === 'sub_euv_photolithography'
+    ) {
+      return 'bandgap_comparison';
+    }
+    if (
+      selectedNodeId === 'sub_cmos_complementary' ||
+      selectedNodeId === 'sub_mosfet_field_effect' ||
+      selectedNodeId === 'sub_logic_gates_switches' ||
+      selectedNodeId === 'sub_voltage_definition' ||
+      selectedNodeId === 'sub_pn_junction'
+    ) {
+      return 'cmos_inverter';
+    }
+    if (
+      selectedNodeId === 'sub_hbm_memory_wall' ||
+      selectedNodeId === 'sub_von_neumann_bottleneck' ||
+      selectedNodeId === 'sub_gpu_vs_cpu_silicon' ||
+      selectedNodeId === 'sub_transformer_silicon_tiling' ||
+      selectedNodeId === 'sub_quantization_energy_mechanics' ||
+      selectedNodeId === 'sub_processing_in_memory' ||
+      selectedNodeId === 'sub_silicon_photonics_optical_interconnect' ||
+      selectedNodeId === 'sub_interconnect_speed_of_light' ||
+      selectedNodeId === 'sub_landauer_limit'
+    ) {
+      return 'roofline_memory_wall';
+    }
+    return 'cosmic_scale';
+  }, [selectedNodeId]);
 
   // Causal neighborhood: active node + prerequisites + consequences
   const activeNeighborIds = useMemo(() => {
@@ -315,6 +377,22 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
             >
               <Scale className="w-3.5 h-3.5 text-cyan-300" />
               <span className="font-semibold">Cosmic Ladder (10⁰ → 10⁻⁹ m)</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setLayoutMode('simulators');
+                soundFX.playSuccess();
+              }}
+              title="Silicon Physics Laboratory Workbench"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                layoutMode === 'simulators'
+                  ? 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white font-bold shadow-xs ring-1 ring-emerald-400'
+                  : 'text-emerald-400 hover:text-white'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5 text-emerald-300" />
+              <span className="font-semibold">Physics Lab</span>
             </button>
           </div>
         </div>
@@ -783,145 +861,192 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
               </p>
             </div>
 
-            {/* NAIVE MISCONCEPTION VS FIRST-PRINCIPLES TRUTH */}
-            <div className="grid grid-cols-1 gap-3">
-              {/* Naive Misconception */}
-              <div className="bg-amber-500/5 dark:bg-amber-500/10 rounded-xl border border-amber-500/30 p-4 space-y-1.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wide font-mono">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                  <span>The Naive Misconception</span>
-                </div>
-                <p className="text-xs text-ink-700 dark:text-ink-300 leading-relaxed">
-                  {activeNode.naiveMisconception}
-                </p>
-              </div>
-
-              {/* First-Principles Reality */}
-              <div className="bg-cyan-500/5 dark:bg-cyan-500/10 rounded-xl border border-cyan-500/30 p-4 space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-800 dark:text-cyan-400 uppercase tracking-wide font-mono">
-                  <Atom className="w-3.5 h-3.5 shrink-0" />
-                  <span>The Deep Physical Reality (Scratch Truth)</span>
-                </div>
-                <p className="text-xs sm:text-sm text-ink-800 dark:text-ink-200 leading-relaxed font-sans">
-                  {activeNode.firstPrinciplesReality}
-                </p>
-              </div>
+            {/* Inspector Tab Switcher: Dossier vs Physical Simulator */}
+            <div className="flex items-center gap-1 bg-ink-100 dark:bg-ink-800 p-1 rounded-xl border border-ink-200 dark:border-white/10 text-xs shrink-0">
+              <button
+                onClick={() => {
+                  setInspectorTab('dossier');
+                  soundFX.playTap();
+                }}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium text-center transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                  inspectorTab === 'dossier'
+                    ? 'bg-white dark:bg-ink-900 text-ink-900 dark:text-white font-bold shadow-xs'
+                    : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Epistemic Dossier</span>
+              </button>
+              <button
+                onClick={() => {
+                  setInspectorTab('simulator');
+                  soundFX.playTap();
+                }}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium text-center transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                  inspectorTab === 'simulator'
+                    ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                    : 'text-emerald-600 dark:text-emerald-400 hover:text-emerald-700'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-300" />
+                <span>Live Physics Sandbox</span>
+              </button>
             </div>
 
-            {/* GOVERNING EQUATION CARD */}
-            <div className="bg-white dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 p-4 shadow-sm space-y-2">
-              <div className="flex items-center justify-between text-xs font-bold text-ink-700 dark:text-ink-300 font-mono">
-                <div className="flex items-center gap-1.5">
-                  <Sigma className="w-3.5 h-3.5 text-brand-500" />
-                  <span>Governing Physical Law</span>
+            {inspectorTab === 'simulator' ? (
+              <div className="space-y-4">
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                  <strong>Hardware Sandbox:</strong> Testing physical dynamics for <em>"{activeNode.question}"</em>. Interact with real-time transistor channels, thermal leakage, or energy bandgaps.
                 </div>
-                <span className="text-[10px] text-ink-400 uppercase font-mono">Exact Formulation</span>
+                <SubstratePhysicsSimCanvas
+                  initialStation={defaultStationForNode}
+                  cosmicScaleIndex={selectedCosmicIndex}
+                  onScaleChange={setSelectedCosmicIndex}
+                />
               </div>
-
-              <div className="bg-ink-50 dark:bg-ink-950 p-3 rounded-xl border border-ink-200/80 dark:border-white/5 overflow-x-auto text-center">
-                <MathView math={activeNode.governingEquation} display={true} />
-              </div>
-
-              <p className="text-[11px] text-ink-500 dark:text-ink-400 leading-relaxed italic">
-                {activeNode.equationExplanation}
-              </p>
-            </div>
-
-            {/* SILICON REALITY CHECK */}
-            <div className="bg-emerald-500/5 dark:bg-emerald-500/10 rounded-xl border border-emerald-500/30 p-4 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wide font-mono">
-                <Cpu className="w-3.5 h-3.5 shrink-0" />
-                <span>Silicon & Hardware Reality</span>
-              </div>
-              <p className="text-xs text-ink-700 dark:text-ink-300 leading-relaxed">
-                {activeNode.siliconReality}
-              </p>
-            </div>
-
-            {/* STEP-BY-STEP DEDUCTIVE DERIVATION */}
-            <div className="bg-white dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 p-4 shadow-sm space-y-3">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-ink-900 dark:text-white uppercase tracking-wide font-mono">
-                <CornerDownRight className="w-3.5 h-3.5 text-brand-500" />
-                <span>Axiomatic Deductive Derivation</span>
-              </div>
-
-              <div className="space-y-3 relative pl-3 border-l-2 border-brand-500/30 ml-2">
-                {activeNode.deductiveDerivation.map((step) => (
-                  <div key={step.stepNumber} className="space-y-1 relative">
-                    <div className="absolute -left-[19px] top-1 w-3 h-3 rounded-full bg-brand-500 border-2 border-white dark:border-ink-900" />
-                    <h4 className="text-xs font-bold text-ink-900 dark:text-white">
-                      {step.title}
-                    </h4>
-                    <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
-                      {step.derivation}
+            ) : (
+              <>
+                {/* NAIVE MISCONCEPTION VS FIRST-PRINCIPLES TRUTH */}
+                <div className="grid grid-cols-1 gap-3">
+                  {/* Naive Misconception */}
+                  <div className="bg-amber-500/5 dark:bg-amber-500/10 rounded-xl border border-amber-500/30 p-4 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wide font-mono">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      <span>The Naive Misconception</span>
+                    </div>
+                    <p className="text-xs text-ink-700 dark:text-ink-300 leading-relaxed">
+                      {activeNode.naiveMisconception}
                     </p>
-                    {step.formula && (
-                      <div className="bg-ink-50 dark:bg-ink-950 p-2 rounded-lg border border-ink-200/60 dark:border-white/5 my-1 text-center">
-                        <MathView math={step.formula} display={false} />
-                      </div>
-                    )}
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* THOUGHT EXPERIMENT CARD */}
-            <div className="bg-purple-500/5 dark:bg-purple-500/10 rounded-xl border border-purple-500/30 p-4 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-purple-800 dark:text-purple-400 uppercase tracking-wide font-mono">
-                <Lightbulb className="w-3.5 h-3.5 shrink-0 text-amber-500" />
-                <span>Gedankenexperiment (Thought Experiment)</span>
-              </div>
-              <p className="text-xs text-ink-700 dark:text-ink-300 leading-relaxed italic">
-                "{activeNode.thoughtExperiment}"
-              </p>
-            </div>
-
-            {/* CAUSAL NAVIGATION BUTTONS */}
-            <div className="bg-ink-50 dark:bg-ink-950/60 p-3 rounded-xl border border-ink-200 dark:border-white/5 space-y-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-ink-400 block">
-                Causal Links in the Epistemic Graph
-              </span>
-
-              {/* Prerequisites */}
-              {activeNode.prerequisiteIds.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[11px] font-medium text-ink-500">Prerequisites:</span>
-                  {activeNode.prerequisiteIds.map((pId) => {
-                    const prereq = SUBSTRATE_REALITY_NODES.find((n) => n.id === pId);
-                    if (!prereq) return null;
-                    return (
-                      <button
-                        key={pId}
-                        onClick={() => handleSelectNode(pId)}
-                        className="px-2 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 text-xs border border-cyan-500/30 cursor-pointer transition-colors"
-                      >
-                        ← {prereq.order}. {prereq.question.slice(0, 22)}...
-                      </button>
-                    );
-                  })}
+                  {/* First-Principles Reality */}
+                  <div className="bg-cyan-500/5 dark:bg-cyan-500/10 rounded-xl border border-cyan-500/30 p-4 space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-800 dark:text-cyan-400 uppercase tracking-wide font-mono">
+                      <Atom className="w-3.5 h-3.5 shrink-0" />
+                      <span>The Deep Physical Reality (Scratch Truth)</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-ink-800 dark:text-ink-200 leading-relaxed font-sans">
+                      {activeNode.firstPrinciplesReality}
+                    </p>
+                  </div>
                 </div>
-              )}
 
-              {/* Consequences */}
-              {activeNode.connectedIds.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[11px] font-medium text-ink-500">Consequences:</span>
-                  {activeNode.connectedIds.map((cId) => {
-                    const conseq = SUBSTRATE_REALITY_NODES.find((n) => n.id === cId);
-                    if (!conseq) return null;
-                    return (
-                      <button
-                        key={cId}
-                        onClick={() => handleSelectNode(cId)}
-                        className="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs border border-emerald-500/30 cursor-pointer transition-colors"
-                      >
-                        → {conseq.order}. {conseq.question.slice(0, 22)}...
-                      </button>
-                    );
-                  })}
+                {/* GOVERNING EQUATION CARD */}
+                <div className="bg-white dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 p-4 shadow-sm space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-ink-700 dark:text-ink-300 font-mono">
+                    <div className="flex items-center gap-1.5">
+                      <Sigma className="w-3.5 h-3.5 text-brand-500" />
+                      <span>Governing Physical Law</span>
+                    </div>
+                    <span className="text-[10px] text-ink-400 uppercase font-mono">Exact Formulation</span>
+                  </div>
+
+                  <div className="bg-ink-50 dark:bg-ink-950 p-3 rounded-xl border border-ink-200/80 dark:border-white/5 overflow-x-auto text-center">
+                    <MathView math={activeNode.governingEquation} display={true} />
+                  </div>
+
+                  <p className="text-[11px] text-ink-500 dark:text-ink-400 leading-relaxed italic">
+                    {activeNode.equationExplanation}
+                  </p>
                 </div>
-              )}
-            </div>
+
+                {/* SILICON REALITY CHECK */}
+                <div className="bg-emerald-500/5 dark:bg-emerald-500/10 rounded-xl border border-emerald-500/30 p-4 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wide font-mono">
+                    <Cpu className="w-3.5 h-3.5 shrink-0" />
+                    <span>Silicon & Hardware Reality</span>
+                  </div>
+                  <p className="text-xs text-ink-700 dark:text-ink-300 leading-relaxed">
+                    {activeNode.siliconReality}
+                  </p>
+                </div>
+
+                {/* STEP-BY-STEP DEDUCTIVE DERIVATION */}
+                <div className="bg-white dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 p-4 shadow-sm space-y-3">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-ink-900 dark:text-white uppercase tracking-wide font-mono">
+                    <CornerDownRight className="w-3.5 h-3.5 text-brand-500" />
+                    <span>Axiomatic Deductive Derivation</span>
+                  </div>
+
+                  <div className="space-y-3 relative pl-3 border-l-2 border-brand-500/30 ml-2">
+                    {activeNode.deductiveDerivation.map((step) => (
+                      <div key={step.stepNumber} className="space-y-1 relative">
+                        <div className="absolute -left-[19px] top-1 w-3 h-3 rounded-full bg-brand-500 border-2 border-white dark:border-ink-900" />
+                        <h4 className="text-xs font-bold text-ink-900 dark:text-white">
+                          {step.title}
+                        </h4>
+                        <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+                          {step.derivation}
+                        </p>
+                        {step.formula && (
+                          <div className="bg-ink-50 dark:bg-ink-950 p-2 rounded-lg border border-ink-200/60 dark:border-white/5 my-1 text-center">
+                            <MathView math={step.formula} display={false} />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* THOUGHT EXPERIMENT CARD */}
+                <div className="bg-purple-500/5 dark:bg-purple-500/10 rounded-xl border border-purple-500/30 p-4 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-purple-800 dark:text-purple-400 uppercase tracking-wide font-mono">
+                    <Lightbulb className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                    <span>Gedankenexperiment (Thought Experiment)</span>
+                  </div>
+                  <p className="text-xs text-ink-700 dark:text-ink-300 leading-relaxed italic">
+                    "{activeNode.thoughtExperiment}"
+                  </p>
+                </div>
+
+                {/* CAUSAL NAVIGATION BUTTONS */}
+                <div className="bg-ink-50 dark:bg-ink-950/60 p-3 rounded-xl border border-ink-200 dark:border-white/5 space-y-2">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-ink-400 block">
+                    Causal Links in the Epistemic Graph
+                  </span>
+
+                  {/* Prerequisites */}
+                  {activeNode.prerequisiteIds.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[11px] font-medium text-ink-500">Prerequisites:</span>
+                      {activeNode.prerequisiteIds.map((pId) => {
+                        const prereq = SUBSTRATE_REALITY_NODES.find((n) => n.id === pId);
+                        if (!prereq) return null;
+                        return (
+                          <button
+                            key={pId}
+                            onClick={() => handleSelectNode(pId)}
+                            className="px-2 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 text-xs border border-cyan-500/30 cursor-pointer transition-colors"
+                          >
+                            ← {prereq.order}. {prereq.question.slice(0, 22)}...
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Consequences */}
+                  {activeNode.connectedIds.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[11px] font-medium text-ink-500">Consequences:</span>
+                      {activeNode.connectedIds.map((cId) => {
+                        const conseq = SUBSTRATE_REALITY_NODES.find((n) => n.id === cId);
+                        if (!conseq) return null;
+                        return (
+                          <button
+                            key={cId}
+                            onClick={() => handleSelectNode(cId)}
+                            className="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs border border-emerald-500/30 cursor-pointer transition-colors"
+                          >
+                            → {conseq.order}. {conseq.question.slice(0, 22)}...
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -1057,6 +1182,13 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
             </div>
           </div>
 
+          {/* Real-time Procedural Physical Canvas for Current Scale */}
+          <SubstratePhysicsSimCanvas
+            initialStation="cosmic_scale"
+            cosmicScaleIndex={selectedCosmicIndex}
+            onScaleChange={setSelectedCosmicIndex}
+          />
+
           {/* ACTIVE SCALE TIER CARD */}
           <div className="bg-white dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 p-6 shadow-md space-y-6">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-ink-200 dark:border-white/10">
@@ -1150,6 +1282,100 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
                   Zoom In (10x Deeper) →
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* VIEW MODE 5: SILICON PHYSICS LABORATORY WORKBENCH         */}
+      {/* ========================================================= */}
+      {layoutMode === 'simulators' && (
+        <div className="space-y-6">
+          <div className="p-5 bg-gradient-to-r from-emerald-950/60 via-ink-950 to-cyan-950/60 rounded-2xl border border-emerald-500/30 text-white space-y-2 shadow-lg">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                ACTIVE HARDWARE WORKBENCH
+              </span>
+              <span className="text-xs text-ink-400 font-mono">
+                Real-Time Physical Simulation Engines
+              </span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white">
+              The Silicon Physics Laboratory
+            </h2>
+            <p className="text-xs sm:text-sm text-ink-300 max-w-3xl leading-relaxed">
+              Direct physical experimentation with the laws of computation: toggle CMOS conduction channels to watch adders calculate binary sums, simulate DRAM capacitor thermal leakage and refresh timings, perturb cross-coupled inverters across Lyapunov saddle points, and compare electronic bandgaps across metals, silicon, and clay.
+            </p>
+          </div>
+
+          {/* Master Physical Canvas */}
+          <SubstratePhysicsSimCanvas
+            initialStation="full_adder"
+            cosmicScaleIndex={selectedCosmicIndex}
+            onScaleChange={setSelectedCosmicIndex}
+          />
+
+          {/* 4 Deep Physical Station Reference Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 font-mono">
+                <Zap className="w-4 h-4 text-emerald-500" />
+                <span>1. CMOS Full Adder Conduction</span>
+              </div>
+              <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+                Arithmetic is not an abstract concept; it is physical potential barrier routing. When gate voltages open PMOS pull-up or NMOS pull-down channels, electrons flow along the path of least electrostatic action, physically forcing output wires to voltages corresponding to Boolean Sum and Carry.
+              </p>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-400 font-mono">
+                <Activity className="w-4 h-4 text-amber-500" />
+                <span>2. DRAM 1T-1C Thermal Leakage</span>
+              </div>
+              <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+                A DRAM bit is 100,000 electrons in a 30 fF deep-trench capacitor. Subthreshold thermal junction hopping and quantum tunneling constantly drain charge. Raise the die temperature slider to watch the leakage rate accelerate exponentially under Arrhenius' law.
+              </p>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-purple-700 dark:text-purple-400 font-mono">
+                <Layers className="w-4 h-4 text-purple-500" />
+                <span>3. Bistable Double-Well SRAM Latch</span>
+              </div>
+              <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+                Two back-to-back inverters create positive regenerative feedback. Perturb the voltage to the unstable saddle point (0.375V); within picoseconds, any infinitesimal fluctuation is amplified, violently snapping the node back into Lyapunov-stable 0V or 0.75V attractors.
+              </p>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-cyan-700 dark:text-cyan-400 font-mono">
+                <Atom className="w-4 h-4 text-cyan-500" />
+                <span>4. Why Metal and Why Not Clay?</span>
+              </div>
+              <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+                Copper has zero bandgap (Eg = 0): electrons form a permanent delocalized Fermi sea. Silicon (Eg = 1.12 eV) is modifiable by atomic dopants. Clay has an immense Eg &gt; 8 eV bandgap: thermal energy is 300× too weak to free a single electron, meaning mobile carrier density is strictly zero.
+              </p>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-violet-700 dark:text-violet-400 font-mono">
+                <Zap className="w-4 h-4 text-violet-500" />
+                <span>5. CMOS Inverter Dynamics & Crowbar Current</span>
+              </div>
+              <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+                Why CMOS took over computing: when Vin is 0V or 1V, one transistor is completely cut off, so static leakage current is zero picoamperes! Power is ONLY dissipated during the nanosecond transition when both PMOS and NMOS conduct simultaneously, releasing a sharp crowbar current pulse.
+              </p>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-400 font-mono">
+                <Gauge className="w-4 h-4 text-amber-500" />
+                <span>6. GPU Roofline Model & FlashAttention</span>
+              </div>
+              <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+                Why GPUs starve on naive attention: with an arithmetic intensity of only 2 FLOPs/byte, Tensor Cores achieve less than 1% utilization due to the HBM memory wall. Fusing attention inside 256 KB on-chip SRAM via FlashAttention catapults intensity past the ridge point into 100% compute saturation.
+              </p>
             </div>
           </div>
         </div>

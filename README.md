@@ -60,34 +60,60 @@ Most machine learning resources teach neural architectures as disconnected black
 
 ## 1. Substrate & Reality Graph (Pure Scratch Epistemology)
 
-A dedicated first-principles reductionist page (<kbd>9</kbd>) dissecting the physical substrate of computation with zero hand-waving:
+A dedicated first-principles reductionist page (<kbd>9</kbd>) dissecting the physical substrate of computation with zero hand-waving across **40 master inquiries**:
 
 ```
-[Electrons & Fermi Sea] ──► [Why Metal & Why Not Clay?] ──► [Voltage as Field Work]
-           │                                                              │
-           ▼                                                              ▼
-[Closed Loop Continuity] ──► [Capacitive Storage & DRAM 1T-1C] ──► [Moving Charges Doing Math]
-           │                                                              │
-           ▼                                                              ▼
-[Cross-Coupled Bistable SRAM] ──► [Why Need a Microcontroller?] ──► [Why One Monolithic Chip?]
-           │                                                              │
-           ▼                                                              ▼
-[Why Chips Must Be Nanometers] ──► [What Python Really Is (ceval.c)] ──► [The Epistemology of Computation]
+[Quantum Tunneling & Fermi Sea] ──► [Why Metal & Why Not Clay?] ──► [Voltage as Field Work]
+               │                                                              │
+               ▼                                                              ▼
+[Beach Sand to Czochralski Ingot] ──► [Passivating Native Oxide (SiO₂)] ──► [P-N Junction & MOSFETs]
+               │                                                              │
+               ▼                                                              ▼
+[CMOS Inverter Crowbar Current] ──► [Closed Loop Continuity] ──► [Capacitive Storage & DRAM 1T-1C]
+               │                                                              │
+               ▼                                                              ▼
+[Cross-Coupled Bistable SRAM] ──► [How Moving Charges Do Math] ──► [ALU & Microarchitectural Pipelining]
+               │                                                              │
+               ▼                                                              ▼
+[Virtual Memory & TLB Indirection] ──► [Why One Monolithic Chip?] ──► [GPU SIMT Floorplans vs CPUs]
+               │                                                              │
+               ▼                                                              ▼
+[Quantization Energy Collapse O(b²)] ──► [FlashAttention SRAM Tiling] ──► [Silicon Photonics (100+ GHz)]
 ```
 
-### The Existential Questions Solved from Bedrock:
+### The 40 Bedrock Inquiries Solved from First Principles:
 - **What is a metal? What is metallic bonding?** A rigid lattice of positive cations immersed in a delocalized quantum Fermi gas ($E_g = 0$) where Fermi velocity reaches $1.57 \times 10^6\text{ m/s}$.
 - **Why metal and why not clay?** Clay (hydrated aluminosilicate) possesses an immense bandgap $E_g > 8\text{ eV}$. Thermal energy ($0.026\text{ eV}$) cannot excite valence electrons across this gap ($n_i \approx 10^{-35}\text{ cm}^{-3} \equiv 0$). Clay has zero free carriers and cannot create voltage-controlled switching barriers.
+- **Why Silicon and not Germanium or Diamond?** Native passivation chemistry. Thermal oxidation of silicon yields Silicon Dioxide ($SiO_2$), an atomic-grade isotropic insulator with interface defect density $D_{it} < 10^{10}\text{ cm}^{-2}\text{eV}^{-1}$. Germanium oxide ($GeO_2$) dissolves in water and sublimates; Diamond cannot be thermally passivated or selectively etched.
+- **How does beach sand become a single-crystal ingot?** Carbothermic reduction ($SiO_2 + 2C \to Si + 2CO$) produces 98% metallurgical silicon; fractional distillation of trichlorosilane liquid ($SiHCl_3$) reaches 99.9999999% ("nine-nines") purity; Czochralski seed pulling at 1,420°C freezes atoms epitaxially along the [100] lattice without grain boundaries.
 - **What is voltage and voltage change?** The line integral of an electric field ($\Delta V = -\int \mathbf{E}\cdot d\mathbf{l}$). A voltage change is physical thermodynamic work done moving charge across an electrostatic gradient.
 - **Why must a circuit be a closed loop?** Charge conservation ($\nabla \cdot \mathbf{J} = -\partial\rho/\partial t$). In an open wire, charge accumulation at the tip creates an opposing Coulomb field in femtoseconds that exactly cancels the battery field, dropping current to zero.
 - **How are charges stored in RAM?** In DRAM (1T-1C), a binary 1 is $\sim 100,000$ electrons in a $30\text{ fF}$ deep-trench capacitor. Subthreshold and quantum tunneling leak this charge within $64\text{ ms}$, requiring sense amplifiers to refresh every row thousands of times per second.
 - **How do moving charges do arithmetic?** Topological conduction pathways: 28 complementary CMOS transistors in a 1-bit Full Adder route electrons along the path of least electrostatic action, physically asserting $S = A \oplus B \oplus C_{in}$ and $C_{out} = (A \cdot B) + (C_{in} \cdot (A \oplus B))$.
 - **What is a register?** Two cross-coupled CMOS inverters creating a bistable double-well potential where positive feedback locks voltages into stable attractors ($V_{DD}$ or $0\text{ V}$) without capacitors.
 - **What is an ALU?** A parallel combinational matrix of adders, barrel shifters, and logic gates evaluating simultaneously; opcode bit vectors selectively enable multiplexer transmission gates to route the chosen output.
-- **Why need a microcontroller instead of soldering logic gates?** The Turing-von Neumann principle: separating physical silicon hardware from temporal sequences of state instructions stored in memory. Changing behavior requires altering memory charges rather than melting solder.
-- **Why one monolithic chip and why make it smaller?** External PCB traces have $\sim 20\text{ pF}$ capacitance and inductive ringing ($L \frac{di}{dt}$); driving them consumes $20,000\times$ more energy ($E = \frac{1}{2} C V^2$) and caps speeds to MHz. Monolithic integration drops capacitance to femtofarads ($10^{-15}\text{ F}$) and wire delays to picoseconds.
-- **What is Python really?** An abstraction pyramid: human UTF-8 text $\to$ AST $\to$ 2-byte bytecode opcodes $\to$ evaluated by a giant C `while(1) { switch(opcode) }` loop in `ceval.c`, where every integer is a 28-byte heap-allocated `PyLongObject` struct.
-- **What is computation itself?** Physical relaxation of a non-equilibrium thermodynamic system whose sculpted semiconductor potential energy barriers are isomorphic to formal logic.
+- **What is an instruction pipeline and why does speculative execution leak secrets?** Overlapping fetch, decode, execute, memory, and writeback stages brings $CPI \to 1$. Conditional branches force branch predictors to guess future paths; discarded speculative instructions still alter physical L1 cache lines ($T_{\text{hit}} \approx 1\text{ ns}$ vs $T_{\text{miss}} \approx 60\text{ ns}$), exposing the Spectre side-channel.
+- **What is Virtual Memory and TLB?** Hardware indirection: 64-bit addresses are segmented into VPNs and page offsets. Hardware MMUs walk 4-level radix page tables; the Translation Lookaside Buffer (TLB) caches translations with <0.5 ns latency, maintaining the illusion of private 128 TB address spaces.
+- **How do GPUs differ from CPUs at the silicon floorplan level?** CPUs dedicate 80% of die area to massive L3 caches, out-of-order execution queues, and speculative branch logic to minimize single-thread latency. GPUs dedicate 85% of die area to SIMT ALUs and Tensor Cores, hiding 200-cycle HBM memory stalls with zero-cost 32-thread hardware warp swapping.
+- **What is Quantization physically doing to charges?** Digital multiplier hardware complexity scales quadratically with wordlength ($O(b^2)$). Shrinking from FP32 to FP8 slashes capacitive toggle charge $\sum \alpha C V_{DD}^2$ by $20\times$, collapsing energy from $4.0\text{ pJ}$ to $0.2\text{ pJ}$ per multiplication.
+- **What is the Attention Matrix physically in Silicon (FlashAttention)?** $N \times N$ attention maps for $N=128k$ consume $32\text{ GB}$ of RAM. FlashAttention computes online softmax running statistics entirely within the GPU SM's $256\text{ KB}$ ultra-fast on-chip SRAM ($19\text{ TB/s}$ bandwidth), never materializing intermediate attention matrices in slow off-chip HBM.
+- **Why do copper wires fail at 100+ GHz?** High-frequency magnetic induction confines alternating currents to a microscopic perimeter layer (Skin Depth $\delta = \sqrt{\rho/\pi f \mu} < 0.2\,\mu\text{m}$ at 100 GHz), causing AC resistance and dielectric loss to skyrocket. Co-Packaged Optics and Silicon Photonics replace lossy copper traces with optical dielectric waveguides carrying charge-free photons with zero capacitive coupling.
+
+### The Silicon Physics Laboratory Workbench (6 Interactive Stations):
+1. **CMOS Full Adder Conduction**: Live toggles for inputs $A, B, C_{in}$; visualizes conduction channels and live Boolean sum/carry outputs.
+2. **DRAM 1T-1C Thermal Leakage & Refresh Scope**: Real-time oscilloscope tracking capacitor voltage decay across temperature ($200\text{ K} \to 400\text{ K}$), with automated refresh cycles and manual pulse injection.
+3. **Bistable Double-Well SRAM Latch**: Interactive Lyapunov potential well; perturb the voltage bead to the unstable saddle point ($0.375\text{ V}$) and watch regenerative feedback snap it into stable attractors.
+4. **Metal vs Silicon vs Clay Bandgap Explorer**: Compares free carrier densities $n_i(T)$ across Copper ($E_g = 0$), Silicon ($E_g = 1.12\text{ eV}$), and Clay ($E_g = 8\text{ eV}$).
+5. **CMOS Inverter Dynamics & Crowbar Current**: Live $V_{in}$ slider ($0\text{ V} \to 1.0\text{ V}$) showing pull-up PMOS and pull-down NMOS states, output voltage transfer curves, and the microampere shoot-through crowbar current spike at $0.5\text{ V}$.
+6. **GPU Roofline Model & Memory Wall**: Interactive operational intensity slider ($0.1 \to 1000\text{ FLOPs/byte}$); benchmarks Naive Attention vs FlashAttention vs Dense GEMM against Hopper H100 Tensor Core ceilings and HBM3e bandwidth slopes.
+
+### Procedural Web Audio Physical Sonification Engine:
+Integrated zero-dependency procedural synthesizers driven directly by hardware physics:
+- **Quantum Tunneling Resonance**: Dispersive frequency sweep sonifying wavepacket barrier penetration.
+- **Clock Jitter & Pulse**: Crisp microsecond ticks modulating with clock state transitions.
+- **DRAM Thermal Leakage & Refresh**: Descending exponential voltage hum with bright capacitive restoration chirps.
+- **High-Dimensional Collapse Chord**: Multi-tonal sideband noise narrowing into a pure 432 Hz sine wave as dimension scales $d = 2 \to 4096$, sonifying the vanishing cosine variance $\text{Var} = 1/d$.
+- **Grokking Phase Snap**: Microtonal dissonance resolving into a polyphonic major harmonic triad upon parameter phase transition.
 
 ---
 
