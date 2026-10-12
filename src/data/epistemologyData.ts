@@ -416,6 +416,168 @@ export const PAPER_DECONSTRUCTIONS: PaperInventionDeconstruction[] = [
     whyPreviousAttemptsFailed:
       'Researchers focused on single-step autoencoders (VAEs) which caused blurry averages, or GAN discriminators which caused game-theoretic collapse.',
   },
+  {
+    id: 'paper_flashattention',
+    paperTitle: 'FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness',
+    authorsAndYear: 'Tri Dao, Daniel Y. Fu, Stefano Ermon, Atri Rudra, Christopher Ré (2022)',
+    architecturalBreakthrough: 'FlashAttention (IO-Aware Exact Attention via SRAM Tiling & Online Softmax)',
+    theApparentParadox:
+      'The Hardware Wall Paradox: Everyone assumed standard attention was computationally bounded by its O(N^2) FLOP complexity. Dozens of papers attempted approximate attention (sparse patterns, low-rank kernels) to reduce FLOPs, but they degraded perplexity and often ran slower on physical GPUs. How can an algorithm compute 100% exact, unapproximated attention 2x to 4x faster while scaling linearly in GPU memory footprint O(N) rather than quadratic O(N^2)?',
+    theRawIntuitionBeforeMath:
+      'GPUs do not spend their time computing; they spend their time waiting for memory to crawl across slow silicon wires. What if we never write the massive N x N attention matrix to GPU High-Bandwidth Memory (HBM) at all? Tile queries, keys, and values into tiny on-chip SRAM chunks, compute softmax incrementally on the fly, and fuse the entire loop into a single hardware kernel!',
+    theCrossDisciplinaryMetaphor:
+      'Operating System Memory Hierarchy & Cache-Oblivious Algorithms: In classical algorithm engineering (Aggarwal-Vitter IO model), CPU registers and L1/L2 caches are orders of magnitude faster than DRAM. You never spill intermediate buffers to disk when you can stream-process tiles in fast local memory.',
+    theDifferentiableRelaxation:
+      'Online Softmax Tiling (Milakov & Gimelshein): Standard softmax requires knowing the global maximum row element m = max(x_i) before computing sum(exp(x_i - m)). Dao used online softmax to dynamically rescale running partition sums and outputs when streaming new blocks into SRAM: m_new = max(m_old, m_block), rescaling prior accumulators by exp(m_old - m_new).',
+    theHardwareSymbiosis:
+      'Modern GPUs have fast on-chip SRAM (192 KB per SM with ~19 TB/s bandwidth) vs slow off-chip HBM (40-80 GB with ~1.5-3.3 TB/s). By tiling Q, K, V blocks into SRAM, IO complexity plummets from O(N d + N^2) to O(N^2 d^2 / M) where M is SRAM size. In the backward pass, FlashAttention does not store the N x N attention matrix; it simply recomputes QK^T blocks on-the-fly in SRAM, which is 3x faster than reading from HBM!',
+    unwrittenMentalPath: [
+      '1. Hardware Profiling: Profiling Transformers on A100 GPUs showed Tensor Cores were 80% idle, starved of data because memory bandwidth was saturated.',
+      '2. The Shattered Premise: Standard DL theory measured FLOPs. But modern deep learning is memory-bound (IO-bound), not compute-bound.',
+      '3. The Root Culprit: PyTorch materializes S = Q*K^T (N x N) and P = softmax(S) (N x N) into HBM DRAM, generating hundreds of gigabytes of useless memory traffic.',
+      '4. The Algorithmic Riddle: Softmax couples all columns together via the normalizer denominator. How can we tile attention along sequence length without seeing future tokens?',
+      '5. The Solution: Apply the Online Softmax trick inside a fused CUDA/Triton kernel. Maintain running max and normalizer, updating running output O directly in SRAM.',
+      '6. The Backward Recomputation Miracle: Discard intermediate attention activations entirely. Recomputing them from Q, K, V in SRAM during backward pass eliminates memory storage while speeding up runtime.',
+    ],
+    formalEquation: '\\mathbf{O}_i^{(j)} = \\frac{\\ell_i^{(j-1)} e^{m_i^{(j-1)} - m_i^{(j)}} \\mathbf{O}_i^{(j-1)} + e^{\\tilde{\\mathbf{S}}_{ij} - m_i^{(j)}} \\mathbf{V}_j}{\\ell_i^{(j)}}, \\quad m_i^{(j)} = \\max(m_i^{(j-1)}, \\max(\\tilde{\\mathbf{S}}_{ij}))',
+    whyPreviousAttemptsFailed:
+      'Previous researchers treated the GPU as an abstract mathematical black box executing FLOPs. They designed approximate linear/sparse attention architectures (Linformer, Performer, Reformer) that degraded language modeling accuracy and suffered from irregular, uncoalesced memory access patterns that ran slower on real hardware.',
+  },
+  {
+    id: 'paper_deepseek_mla',
+    paperTitle: 'DeepSeek-V2 / DeepSeek-V3: Multi-Head Latent Attention',
+    authorsAndYear: 'DeepSeek-AI (Guang Liu et al., 2024)',
+    architecturalBreakthrough: 'DeepSeek Multi-Head Latent Attention (Low-Rank Joint KV Compression with RoPE Decoupling & Matrix Absorption)',
+    theApparentParadox:
+      'The Inference KV-Cache Wall: Scaling LLM context length to 128k+ tokens causes Key-Value caches to consume up to 90% of GPU memory, capping generation throughput to single-digit batch sizes. Grouped-Query Attention (GQA) and Multi-Query Attention (MQA) compress KV heads, but severely damage retrieval expressive power and multi-hop reasoning. How can an architecture compress KV cache footprint by 85-93% while matching or outperforming full Multi-Head Attention (MHA)?',
+    theRawIntuitionBeforeMath:
+      'In Multi-Head Attention, individual heads contain enormous cross-head redundancy. Instead of caching separate, high-dimensional Key and Value vectors for every head, project Keys and Values into a single, compact shared latent vector c_t^{KV} per token! At generation time, exploit linear algebra matrix associativity to absorb decompression weights directly into Query projection matrices, so uncompressed Key matrices never exist in GPU memory at all!',
+    theCrossDisciplinaryMetaphor:
+      'Signal Processing Lossy Compression + Linear Algebra Matrix Associativity: Analogous to transform coding in image/audio codecs (JPEG/MP3) where multi-channel redundancies are projected onto low-rank basis coefficients, combined with compiler operator fusion: (q^T * W_{UK}) * c^{KV} = q^T * (W_{UK} * c^{KV}).',
+    theDifferentiableRelaxation:
+      'Low-Rank Joint Projection with Decoupled RoPE: Position encodings (RoPE) apply non-linear, position-dependent 2D rotations that destroy matrix absorption. MLA shatters this barrier by decoupling Rotary Position Embeddings into an auxiliary tiny vector k_t^R (e.g. 64 dims), while leaving the core content key and value projections purely low-rank and linear.',
+    theHardwareSymbiosis:
+      'During inference generation, the per-token KV cache shrinks from 16,384 scalars (in 128-head MHA) down to just 576 scalars (512 latent dims + 64 RoPE dims)—a 93% memory reduction! Because W_{UK} is folded offline into W_Q, generation requires zero Key decompression in HBM, transforming inference from memory-bandwidth-choked lookups into dense compute-bound GEMMs.',
+    unwrittenMentalPath: [
+      '1. Crisis: Deploying a 236B/671B MoE model at 64k-128k context requires hundreds of gigabytes per active user session just for KV cache.',
+      '2. Failure of GQA: Grouping 128 heads into 8 heads degrades "Needle In A Haystack" associative recall and fine-grained knowledge retrieval.',
+      '3. Low-Rank Hypothesis: Why compress head count when you can compress head dimensionality? Project Keys and Values jointly into latent c_t^{KV} in R^{d_c}.',
+      '4. The RoPE Mathematical Blocker: Rotary embeddings multiply vectors by position-dependent block diagonal matrices R_t. This prevents factoring W_{UK} into W_Q across time steps!',
+      '5. The Decoupled RoPE Invention: Keep content keys k^C un-rotated (absorbable) and concatenate a separate tiny rotary key k^R that carries pure geometry.',
+      '6. Matrix Absorption at Inference: Fold W_{UK} into W_Q (Q-absorption) and W_{UV} into W_O (Out-absorption). GPU memory reads are slashed by over 5x with zero loss in MHA modeling capacity.',
+    ],
+    formalEquation: '\\mathbf{q}_{t,i} = [\\mathbf{W}_{UQ,i} \\mathbf{c}_t^Q; \\; \\mathcal{R}_t \\mathbf{q}_{t,i}^R], \\quad \\mathbf{k}_t = [\\mathbf{c}_t^{KV}; \\; \\mathcal{R}_t \\mathbf{k}_t^R], \\quad \\mathbf{q}_{t,i}^T \\mathbf{k}_j = (\\mathbf{q}_{t,i}^{C} \\mathbf{W}_{UK,i}) \\mathbf{c}_j^{KV} + (\\mathcal{R}_t \\mathbf{q}_{t,i}^R)^T (\\mathcal{R}_j \\mathbf{k}_j^R)',
+    whyPreviousAttemptsFailed:
+      'Prior compression methods assumed Keys and Values must exist in their multi-head functional forms during attention calculation. They either collapsed heads (MQA/GQA) or attempted naive SVD without realizing that rotary positional encodings prevented inference-time weight absorption.',
+  },
+  {
+    id: 'paper_lora',
+    paperTitle: 'LoRA: Low-Rank Adaptation of Large Language Models',
+    authorsAndYear: 'Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, Weizhu Chen (2021)',
+    architecturalBreakthrough: 'LoRA (Low-Rank Parameter Adaptation via Intrinsic Dimensionality Hypothesis)',
+    theApparentParadox:
+      'The Multi-Task Deployment Dilemma: Fine-tuning a 175B foundation model for specific tasks required updating and storing 175B parameters (hundreds of gigabytes) per downstream checkpoint. Prior parameter-efficient methods (Houlsby adapters) inserted sequential bottleneck layers between transformer blocks, which broke GPU operator parallelism and added 20-30% latency overhead during serving. How can we adapt giant models with 10,000x fewer parameters while introducing zero inference latency and zero extra layers?',
+    theRawIntuitionBeforeMath:
+      'When an overparameterized neural network is adapted to a new downstream task, the weight change matrix Delta W does not explore the full d x k dimensional space. Its intrinsic rank is minuscule (often r <= 8)! Freeze the pre-trained weights W_0 completely and factor the parameter update into two thin matrices B and A. At deployment, linearly merge B*A directly into W_0!',
+    theCrossDisciplinaryMetaphor:
+      'Random Matrix Theory & SVD Projection: Complex physical systems on high-dimensional manifolds exhibit low-dimensional collective modes. Perturbing a pre-trained equilibrium state along its dominant singular vectors captures virtually all functional variation with exponential parameter efficiency.',
+    theDifferentiableRelaxation:
+      'Low-Rank Matrix Factorization with Asymmetric Zero-Initialization: Parameterize Delta W = (alpha / r) * B * A, where B in R^{d x r} is initialized to all zeros and A in R^{r x k} is initialized with Gaussian noise. This ensures Delta W = 0 at step zero, guaranteeing that fine-tuning starts exactly at the pre-trained model function without gradient shock.',
+    theHardwareSymbiosis:
+      'During training, optimizer states (Adam momentum and variance, which consume 8 bytes per parameter in FP16/BF16) are only stored for B and A, cutting training VRAM by up to 3x and allowing 70B models to fine-tune on consumer GPUs. At deployment, computing W = W_0 + (alpha/r)*B*A merges the weights permanently: the serving engine runs the identical vanilla Transformer architecture with zero extra FLOPs or kernel launch overhead.',
+    unwrittenMentalPath: [
+      '1. Deployment Crisis: Fine-tuning GPT-3 (175B) for 1,000 corporate customers would require storing 350 TB of model weights, making multi-tenant SaaS unviable.',
+      '2. Flaw of Adapters: Serial adapter layers add sequential CUDA kernel launches. Even tiny 2-layer adapters reduce inference serving throughput by 20%.',
+      '3. Intrinsic Rank Insight: Li et al. (2018) and Aghajanyan et al. (2020) demonstrated that pre-trained language models have very low intrinsic dimension.',
+      '4. The Decomposition Leap: Instead of adding layers, decompose the weight update itself: Delta W = B * A with r << d.',
+      '5. The Zero-Init Stabilization: If both B and A are random Gaussian, step 0 has random noise Delta W, destroying pre-trained capabilities. Initializing B = 0 guarantees Delta W = 0 at initialization.',
+      '6. The Linear Folding Triumph: Because matrix multiplication is distributive (W_0 x + BA x = (W_0 + BA)x), adapted weights can be merged offline into static weights for zero-cost deployment.',
+    ],
+    formalEquation: '\\mathbf{h} = \\mathbf{W}_0 \\mathbf{x} + \\Delta \\mathbf{W} \\mathbf{x} = \\mathbf{W}_0 \\mathbf{x} + \\frac{\\alpha}{r} \\mathbf{B} \\mathbf{A} \\mathbf{x}, \\quad \\mathbf{B} \\in \\mathbb{R}^{d \\times r}, \\; \\mathbf{A} \\in \\mathbb{R}^{r \\times k}, \\; r \\ll \\min(d, k)',
+    whyPreviousAttemptsFailed:
+      'Prior approaches focused on structural surgery—inserting new sub-modules (adapters, prefix tokens) into the computational graph—rather than reparameterizing the parameter update trajectory itself. Prefix tuning consumed valuable prompt context, while adapters introduced serial GPU kernel launch latency.',
+  },
+  {
+    id: 'paper_swin',
+    paperTitle: 'Swin Transformer: Hierarchical Vision Transformer using Shifted Windows',
+    authorsAndYear: 'Ze Liu, Yutong Lin, Yue Cao, Han Hu, Yixuan Wei, Zheng Zhang, Stephen Lin, Baining Guo (2021)',
+    architecturalBreakthrough: 'Swin Transformer (Shifted Windows for Hierarchical Vision)',
+    theApparentParadox:
+      'The Vision Resolution Dilemma: Standard Vision Transformers (ViT) partition images into fixed patches and calculate global all-to-all self-attention. For dense vision tasks (high-resolution object detection, 4K semantic segmentation), sequence length scales to tens of thousands of tokens, causing quadratic complexity O(H^2 W^2) to explode GPU memory. Local window attention achieves linear complexity O(H W), but strictly isolates windows, preventing global context propagation. How can an attention model maintain strict linear complexity while enabling seamless cross-window receptive field growth?',
+    theRawIntuitionBeforeMath:
+      'Alternate the partition grid between layers! In layer l, partition the image into regular non-overlapping M x M windows. In layer l+1, shift the window grid by half a window size (M/2, M/2). The new window boundaries now cross right through the centers of previous windows, bridging global context without calculating a single cross-window attention score!',
+    theCrossDisciplinaryMetaphor:
+      'Cellular Automata & Multiscale Wavelets: Similar to Margolus neighborhood cellular automata or staggered grid finite-difference meshes, where alternating spatial partition blocks allow local updates to propagate information globally across the lattice with linear computational work.',
+    theDifferentiableRelaxation:
+      'Cyclic Shift with Masked Attention: Shifting a grid near image borders produces smaller, irregular sub-windows. Rather than padding (which increases window count from 4 to 9), Swin cyclically shifts border slices to the opposite side to assemble complete M x M windows, then uses attention masking to zero out attention between non-adjacent spatial regions.',
+    theHardwareSymbiosis:
+      'Standard local attention on irregular sub-windows breaks GPU tensor core parallelization due to uneven batch shapes. Swin’s cyclic shift guarantees the number and size of windows remains strictly uniform across every layer, mapping cleanly to high-throughput batch GEMMs on GPU Tensor Cores while scaling linearly O(HW) with image resolution.',
+    unwrittenMentalPath: [
+      '1. Scalability Barrier: ViT was revolutionary for 224x224 classification, but completely choked on COCO object detection (800x1200 images = 60,000 patches).',
+      '2. Failure of Sparse Attention: Complex sparse graphs or axial attention required irregular memory lookups and custom CUDA kernels that underutilized Tensor Cores.',
+      '3. Local Window Compromise: Dividing tokens into 7x7 windows makes compute linear O(HW), but stacking isolated window layers creates blind spots where windows never communicate.',
+      '4. The Geometric Leap: What if layer l groups tokens [0:M] and layer l+1 groups [M/2:3M/2]? Cross-window communication occurs for free simply by shifting the grouping boundary!',
+      '5. The Border Patch Crisis: Shifting creates ragged slices at the image boundaries, threatening to explode window count and break batch tensor shapes.',
+      '6. The Cyclic Shift Triumph: Roll border slices into vacant slots on the opposite side, apply a binary attention mask to prevent false cross-boundary attention, and reverse-roll after attention.',
+    ],
+    formalEquation: '\\hat{\\mathbf{z}}^l = \\text{W-MSA}(\\text{LN}(\\mathbf{z}^{l-1})) + \\mathbf{z}^{l-1}, \\quad \\hat{\\mathbf{z}}^{l+1} = \\text{SW-MSA}(\\text{LN}(\\mathbf{z}^l)) + \\mathbf{z}^l, \\quad \\Omega(\\text{Swin}) = 4hwC^2 + 2M^2hwC',
+    whyPreviousAttemptsFailed:
+      'Previous hierarchical visual backbones either relied on dilated convolutions or complex sparse attention patterns that suffered from poor cache locality and non-coalesced memory access on modern GPUs, losing the speed advantage over dense CNNs.',
+  },
+  {
+    id: 'paper_flow_matching',
+    paperTitle: 'Flow Matching for Generative Modeling',
+    authorsAndYear: 'Yaron Lipman, Ricky T. Q. Chen, Heli Ben-Hamu, Maximilian Nickel, Matt Le (2022)',
+    architecturalBreakthrough: 'Flow Matching (Continuous Normalizing Flows via Straight Paths)',
+    theApparentParadox:
+      'The Generative Sampling-vs-Training Tradeoff: Diffusion models (DDPM, SDEs) train stably using simple regression losses, but require 50-1,000 curved Langevin denoising steps to generate images. Continuous Normalizing Flows (CNFs) offer deterministic, fast ODE sampling, but training CNFs traditionally required backpropagating through numerical ODE solvers (the Adjoint method) and computing expensive divergence traces, making them untrainable on large datasets. How can continuous-time vector fields be trained with simple regression loss without solving any ODE during training?',
+    theRawIntuitionBeforeMath:
+      'Why force generative trajectories to follow curved Brownian diffusion paths or solve expensive ODEs during training? The shortest distance between two points is a straight line! If we pair noise x_0 with data x_1, the optimal path is a linear interpolation x_t = (1-t)x_0 + t x_1 with constant velocity v = x_1 - x_0. Train a neural network to regress this constant velocity field with elementary Mean Squared Error!',
+    theCrossDisciplinaryMetaphor:
+      'Optimal Transport & Fluid Mechanics: Particles of an incompressible fluid moving along straight geodesic streamlines from a Gaussian source distribution to a data target distribution, minimizing kinetic energy dissipation (Wasserstein-2 optimal transport).',
+    theDifferentiableRelaxation:
+      'Conditional Flow Matching (CFM) Theorem: Regressing the intractable marginal vector field u_t(x) = int u_t(x|x_1) q(x_1|x) dx_1 is intractable. Lipman proved that regressing the per-sample conditional vector field u_t(x|x_1) = (x_1 - (1 - sigma_min)x)/(1 - (1 - sigma_min)t) shares the exact same expected gradient with respect to network parameters as the intractable marginal objective!',
+    theHardwareSymbiosis:
+      'Training requires zero numerical integration, zero divergence trace estimates, and zero SDE stepping: it evaluates a single forward pass of vector field v_theta(x_t, t) against target x_1 - x_0 under MSE loss on standard GPU Tensor Cores. At inference, because probability trajectories are straight geodesics, standard Euler or Heun solvers produce photorealistic synthesis in just 4 to 10 steps.',
+    unwrittenMentalPath: [
+      '1. Frustration with Diffusion: SDE diffusion models introduce artificial Brownian noise at every reverse step, causing trajectory curvature and requiring slow multi-step solvers.',
+      '2. CNF Dilemma: Neural ODEs and CNFs are mathematically elegant and invertible, but training them requires calculating instantaneous change-of-variables via Hutchinson trace estimators inside an ODE solver loop.',
+      '3. The Straight Line Insight: What is the simplest possible path between noise x_0 ~ N(0, I) and image x_1? A straight line: x_t = (1-t)x_0 + t x_1.',
+      '4. Constant Velocity Field: The time derivative of x_t is simply dx_t/dt = x_1 - x_0. The target velocity is constant and independent of t!',
+      '5. The Mathematical Bridge: While the global vector field is intractable, Conditional Flow Matching proves that training against conditional straight lines yields the exact marginal velocity field in expectation.',
+      '6. Modern Impact: Replaced curved diffusion across modern foundation models (Stable Diffusion 3, Flux, Voicebox), cutting synthesis steps from 50+ to 4.',
+    ],
+    formalEquation: '\\mathcal{L}_{\\text{CFM}}(\\theta) = \\mathbb{E}_{t \\sim \\mathcal{U}[0, 1], \\, \\mathbf{x}_0 \\sim p_0, \\, \\mathbf{x}_1 \\sim q}\\left[ \\| \\mathbf{v}_\\theta((1 - t)\\mathbf{x}_0 + t\\mathbf{x}_1, t) - (\\mathbf{x}_1 - \\mathbf{x}_0) \\|^2 \\right]',
+    whyPreviousAttemptsFailed:
+      'Researchers assumed that continuous normalizing flows required optimizing exact data likelihood log p(x) via the continuous change-of-variables theorem, which forced expensive numerical integration into every training step. Flow Matching bypassed likelihood calculation entirely by directly supervising velocity fields.',
+  },
+  {
+    id: 'paper_vae_reparam',
+    paperTitle: 'Auto-Encoding Variational Bayes',
+    authorsAndYear: 'Diederik P. Kingma & Max Welling (2013)',
+    architecturalBreakthrough: 'Variational Autoencoders & The Reparameterization Trick (AEVB)',
+    theApparentParadox:
+      'The Stochastic Gradient Barrier: In deep directed latent variable models p(x, z), the true posterior p(z|x) is intractable. Variational inference introduces an inference encoder q_phi(z|x), but calculating gradients of the Evidence Lower Bound (ELBO) with respect to encoder parameters requires differentiating through a stochastic sampling operation z ~ q_phi(z|x). Standard score-function estimators (REINFORCE) suffer from catastrophic variance that grows exponentially with dimension, rendering deep latent networks untrainable.',
+    theRawIntuitionBeforeMath:
+      'Do not let the neural network generate the randomness internally! A Gaussian random variable is nothing more than a deterministic linear transformation of standard unit noise: z = mu(x) + sigma(x) * epsilon. Push the randomness outside the network graph into an independent auxiliary noise source epsilon ~ N(0, I). Now the path from encoder outputs mu and sigma to the loss is completely deterministic and differentiable!',
+    theCrossDisciplinaryMetaphor:
+      'Coordinate Transformation & Auxiliary Random Variables in Classical Statistical Physics: Rather than simulating stochastic brownian motion inside the internal dynamical equations, express the system state as a deterministic coordinate transformation of an external white-noise thermal bath.',
+    theDifferentiableRelaxation:
+      'The Reparameterization Trick: Express stochastic variable z ~ q_phi(z|x) as deterministic function g_phi(epsilon, x) = mu_phi(x) + sigma_phi(x) odot epsilon where epsilon ~ N(0, I). This transforms the gradient of an expectation into the expectation of a gradient: nabla_phi E_{q_phi}[f(z)] = E_{p(epsilon)}[nabla_phi f(g_phi(epsilon, x))], which has orders of magnitude lower variance.',
+    theHardwareSymbiosis:
+      'By reducing stochastic latent sampling to simple elementwise arithmetic operations (z = mu + exp(0.5 * log_var) * epsilon), the entire encoder, bottleneck, and decoder form a single end-to-end differentiable computational graph executed as dense GEMMs on GPUs with standard backpropagation.',
+    unwrittenMentalPath: [
+      '1. The Deep Generative Dream: We want continuous, disentangled latent representations of complex sensory data, but marginalizing over high-dimensional z in p(x) = int p(x|z)p(z)dz is intractable.',
+      '2. Variational Formulation: Construct the Evidence Lower Bound (ELBO) using an amortized inference network q_phi(z|x).',
+      '3. The Stochastic Wall: When computing d/d_phi E_{q_phi}[log p_theta(x|z)], sampling z inside the computational graph creates a non-differentiable step.',
+      '4. The Failure of REINFORCE: The score-function estimator d/d_phi E[f(z)] = E[f(z) d/d_phi log q_phi(z)] suffers from overwhelming variance; training fails even for tiny toy datasets.',
+      '5. The Reparameterization Epiphany: Sample epsilon ~ N(0, I) externally, and let the network compute z = mu(x) + sigma(x) * epsilon. The derivative wrt mu is 1; the derivative wrt sigma is epsilon!',
+      '6. End-to-End Amortization: Variational autoencoders became the mathematical seed for generative AI, latent diffusion backbones (SD VAE), and modern representation learning.',
+    ],
+    formalEquation: '\\mathcal{L}_{\\text{ELBO}}(\\theta, \\phi; \\mathbf{x}) = \\mathbb{E}_{\\boldsymbol{\\epsilon} \\sim \\mathcal{N}(0, \\mathbf{I})}\\left[ \\log p_\\theta(\\mathbf{x} | \\boldsymbol{\\mu}_\\phi(\\mathbf{x}) + \\boldsymbol{\\sigma}_\\phi(\\mathbf{x}) \\odot \\boldsymbol{\\epsilon}) \\right] - D_{\\text{KL}}(q_\\phi(\\mathbf{z}|\\mathbf{x}) \\| p(\\mathbf{z}))',
+    whyPreviousAttemptsFailed:
+      'Previous machine learning researchers relied on wake-sleep algorithms (Helmholtz machines) or Markov Chain Monte Carlo (MCMC) sampling in the inner loop, both of which were hopelessly slow and could not leverage GPU backpropagation.',
+  },
 ];
 
 export const INVENTION_GYM_EXERCISES: InventionGymExercise[] = [
@@ -494,5 +656,149 @@ export const INVENTION_GYM_EXERCISES: InventionGymExercise[] = [
     theBreakthroughArchitectureName: 'Process Reward Verifier & Test-Time Search Scaling',
     hardwareRealityCheck:
       'Test-time search is embarrassingly parallel on inference clusters. Generating 64 reasoning rollouts concurrently achieves linear speedup on vLLM/TensorRT-LLM.',
+  },
+  {
+    id: 'gym_video_memory_wall',
+    targetDomain: 'Video Generation & Spatiotemporal Long Context',
+    title: 'The Long-Context Memory Wall in Video Transformers',
+    currentBottleneckDescription:
+      'High-resolution video diffusion and autoregressive generation models (e.g. Sora, Movie Gen, HunyuanVideo) process hundreds of frames, expanding spatiotemporal token sequences to 500,000–2,000,000+ visual patches. Materializing dense 3D spatiotemporal KV-caches consumes hundreds of gigabytes of GPU HBM per single video sequence. Standard FlashAttention avoids materializing attention matrices but still requires holding raw Keys and Values in memory; meanwhile, video contains extreme spatiotemporal redundancy across consecutive frames, yet naive downsampling blurs high-frequency motion boundaries.',
+    theFalseAssumption:
+      'The false assumption that every spatiotemporal patch in a 1M-token video sequence requires an independent, uncompressed high-dimensional Key-Value vector stored permanently in GPU memory.',
+    candidateMetaphors: [
+      {
+        id: 'meta_video_codec_motion',
+        metaphorName: 'Video Codec Residual Motion Vectors (MPEG/H.264 I-Frame vs P-Frame)',
+        sourceDiscipline: 'Digital Video Compression & Motion Estimation',
+        intuition:
+          'Select periodic keyframe patches as full anchor tokens, and represent intermediate temporal patches as 2D motion displacement vectors.',
+        whyItFitsOrFails:
+          'Effective for raw RGB pixels, but fails in deep latent spaces where semantic transformations, occlusions, and lighting changes cannot be represented as rigid 2D geometric translation vectors.',
+        isOptimalLeap: false,
+      },
+      {
+        id: 'meta_spatiotemporal_mla',
+        metaphorName: 'Low-Rank Latent Cache Projection with Decoupled 3D-RoPE & Fused SRAM Tiling',
+        sourceDiscipline: 'DeepSeek MLA + FlashAttention IO-Aware Systems',
+        intuition:
+          'Jointly compress spatiotemporal Keys and Values into a shared compact latent c_{t,s}^{KV}, decouple 3D spatiotemporal rotary coordinates (t, x, y) into a tiny geometric vector, and tile attention chunks directly into on-chip SRAM with online softmax.',
+        whyItFitsOrFails:
+          'This is the optimal architectural leap! Slashes video KV cache memory by over 85% via matrix absorption while eliminating intermediate HBM traffic via 3D Flash tiling, enabling 1M+ spatiotemporal token generation on a single GPU node.',
+        isOptimalLeap: true,
+      },
+      {
+        id: 'meta_pure_linear_video_ssm',
+        metaphorName: 'Continuous 3D State-Space Filtering / Orthogonal Raster Scans',
+        sourceDiscipline: 'Multidimensional Linear Control Theory (3D-SSM)',
+        intuition:
+          'Flatten video into raster scan trajectories and process via continuous linear state-space models with constant O(1) inference memory.',
+        whyItFitsOrFails:
+          'Offers constant memory, but pure linear state transitions suffer from catastrophic associative decay when tracking occluded objects across temporal horizons.',
+        isOptimalLeap: false,
+      },
+    ],
+    differentiableRelaxationPrompt:
+      'How do you project spatiotemporal tokens into an ultra-low-rank latent vector c_{t,s}^{KV} while preserving 3D spatiotemporal rotary coordinates (t, x, y) without breaking inference matrix absorption?',
+    suggestedMathematicalInvariant:
+      '\\mathbf{c}_{t,s}^{KV} = \\mathbf{W}_{DKV} \\mathbf{h}_{t,s}, \\quad \\mathbf{k}_{t,s} = [\\mathbf{W}_{UK} \\mathbf{c}_{t,s}^{KV}; \\; \\mathcal{R}_{3D}(t, x, y) \\mathbf{k}_{t,s}^R], \\quad \\mathbf{S}_{ij} = (\\mathbf{q}_i^C \\mathbf{W}_{UK}) \\mathbf{c}_j^{KV} + (\\mathbf{q}_i^R)^T (\\mathcal{R}_{3D}(t_j, x_j, y_j) \\mathbf{k}_j^R)',
+    theBreakthroughArchitectureName: 'Spatiotemporal Multi-Head Latent Flash Attention (ST-MLA)',
+    hardwareRealityCheck:
+      'On Hopper/Blackwell GPUs, low-rank latent KV vectors are streamed directly into 228 KB on-chip SRAM; matrix absorption computes Q * W_{UK} offline, so uncompressed multi-head keys never touch slow HBM memory, unlocking 120-second 4K video rollouts within 80GB VRAM.',
+  },
+  {
+    id: 'gym_autoregressive_planning_trap',
+    targetDomain: 'Complex Reasoning, Theorem Proving & Autonomous Planning',
+    title: 'The Autoregressive Planning Trap: Why 1D Search Stalls in Complex Reasoning',
+    currentBottleneckDescription:
+      'Standard language models formulate reasoning as greedy next-token prediction along a 1D sequence. For non-monotonic planning, competitive programming, and multi-step mathematical proofs, a single sub-optimal token decision early in the chain irreversibly drives the model into an irrecoverable hallucination attractor basin. Autoregressive sampling cannot backtrack, cannot simulate counterfactual proof branches, and cannot allocate dynamic test-time compute to verify step-level soundness.',
+    theFalseAssumption:
+      'The false assumption that logical deduction and strategic reasoning can be modeled as a memoryless Markovian next-token emission process along a 1D string without explicit tree search, value estimation, and backtracking.',
+    candidateMetaphors: [
+      {
+        id: 'meta_beam_search_static',
+        metaphorName: 'Heuristic Beam Search with Cumulative Token Likelihood',
+        sourceDiscipline: 'Classical Statistical NLP & Speech Recognition',
+        intuition:
+          'Maintain top-k candidate token branches at each step ranked by cumulative language model log-probabilities.',
+        whyItFitsOrFails:
+          'High token likelihood correlates with fluent grammar and frequent clichés rather than mathematical truth; beam search collapses into repetitive loops without detecting logical contradictions.',
+        isOptimalLeap: false,
+      },
+      {
+        id: 'meta_mcts_latent_world_model',
+        metaphorName: 'Monte Carlo Tree Search with Process-Supervised Value Functions (AlphaZero for Thought)',
+        sourceDiscipline: 'Game Theory & Optimal Control (AlphaZero / MuZero)',
+        intuition:
+          'Formulate reasoning as a tree search over discrete thought transitions; train a Process Reward Model (PRM) to score intermediate step validity and guide UCT exploration with explicit backtracking and lookahead verification.',
+        whyItFitsOrFails:
+          'The foundational architecture behind frontier reasoning models (OpenAI o1/o3)! Decouples step generation from strategic evaluation, allowing inference compute to scale arbitrarily by exploring and pruning proof trees.',
+        isOptimalLeap: true,
+      },
+      {
+        id: 'meta_continuous_recurrent_thinking',
+        metaphorName: 'Continuous Latent Recurrent Loop / Adaptive Computation Time',
+        sourceDiscipline: 'Recurrent Dynamical Systems',
+        intuition:
+          'Iterate the hidden representation in a recurrent continuous latent loop before emitting output tokens.',
+        whyItFitsOrFails:
+          'Continuous recurrence is an opaque black box that suffers from gradient explosion over deep horizons and cannot interface with symbolic formal verifiers (Lean, Python REPL).',
+        isOptimalLeap: false,
+      },
+    ],
+    differentiableRelaxationPrompt:
+      'How do you train an intermediate step value verifier V_psi(s) to score partial reasoning steps when only final outcome ground truth (correct/incorrect) is available?',
+    suggestedMathematicalInvariant:
+      '\\mathcal{U}(s, a) = Q(s, a) + c_{\\text{puct}} P(s, a) \\frac{\\sqrt{\\sum_b N(s, b)}}{1 + N(s, a)}, \\quad \\mathcal{L}_{\\text{PRM}} = -\\sum_{k=1}^K y_k^* \\log \\sigma(V_\\psi(s_k)) + (1 - y_k^*) \\log(1 - \\sigma(V_\\psi(s_k)))',
+    theBreakthroughArchitectureName: 'Latent Thought MCTS with Process-Supervised Value Verification',
+    hardwareRealityCheck:
+      'Tree search converts inference from memory-bandwidth-bound single-token decoding into parallel batched tree rollouts. Speculative tree exploration achieves 90%+ GPU Tensor Core utilization by grouping multi-branch evaluations into large matrix multiplications.',
+  },
+  {
+    id: 'gym_continuous_depth_latency',
+    targetDomain: 'Edge AI, Real-Time Physics Emulation & Continuous-Depth Architectures',
+    title: 'Continuous-Depth Neural Architectures Under Extreme Latency Budgets',
+    currentBottleneckDescription:
+      'Neural Ordinary Differential Equations (Neural ODEs) model continuous-depth representations where depth corresponds to integration time t in [0, T], perfectly suited for irregular sensor data and physical systems. However, standard adaptive Runge-Kutta numerical solvers (Dormand-Prince / RK45) require 6 or more vector field evaluations per time step to monitor local error. Under extreme edge latency constraints (microsecond drone avionics, embedded robotics), standard solvers either explode in latency due to stiffness or experience catastrophic numerical drift and instability when forced into crude fixed-step Euler approximations.',
+    theFalseAssumption:
+      'The false assumption that continuous-depth neural networks must use general-purpose dissipative ODE solvers that ignore the geometric conservation invariants (energy, volume, phase space) of the underlying dynamical system.',
+    candidateMetaphors: [
+      {
+        id: 'meta_quantized_euler',
+        metaphorName: 'Quantized Fixed-Step Euler Discretization with INT8 Truncation',
+        sourceDiscipline: 'Digital Signal Processing & Embedded Systems',
+        intuition:
+          'Fix step size to a tiny constant delta t and quantize vector field weights to INT8 to maximize clock frequency.',
+        whyItFitsOrFails:
+          'Euler integration introduces truncation error that accumulates linearly or exponentially; on oscillatory or stiff physical systems, it violates energy conservation and explodes latent states into infinity.',
+        isOptimalLeap: false,
+      },
+      {
+        id: 'meta_symplectic_hamiltonian',
+        metaphorName: 'Symplectic & Geometric Integrators with Hamiltonian Phase-Space Splitting',
+        sourceDiscipline: 'Classical Hamiltonian Mechanics & Celestial Orbit Simulation',
+        intuition:
+          'Split neural state into position q and momentum p coordinates; use symplectic integrators (Verlet / Leapfrog) that strictly conserve phase-space volume and Hamiltonian energy, guaranteeing long-term bounded error even with large, aggressive step sizes.',
+        whyItFitsOrFails:
+          'This is the optimal leap! Symplectic flow guarantees exact volume preservation (det(J) = 1) and prevents energy drift. Allows 5x to 10x larger step sizes under extreme latency budgets while maintaining rock-solid numerical stability.',
+        isOptimalLeap: true,
+      },
+      {
+        id: 'meta_layer_pruning_early_exit',
+        metaphorName: 'Discrete Architecture Layer Pruning & Early Exit Classifiers',
+        sourceDiscipline: 'Static Neural Network Compression',
+        intuition:
+          'Revert to discrete ResNet blocks and add early-exit classifier heads to terminate compute when confidence is high.',
+        whyItFitsOrFails:
+          'Discrete early exits cannot model irregular continuous-time sensor signals, lose physics-informed inductive biases, and offer no formal stability guarantees.',
+        isOptimalLeap: false,
+      },
+    ],
+    differentiableRelaxationPrompt:
+      'How do you parameterize a neural vector field as a separable Hamiltonian H(q, p) = T(p) + V_theta(q) such that integration steps reduce to symplectic, volume-preserving updates?',
+    suggestedMathematicalInvariant:
+      '\\begin{cases} \\mathbf{p}_{t + \\frac{\\Delta t}{2}} = \\mathbf{p}_t - \\frac{\\Delta t}{2} \\nabla_{\\mathbf{q}} V_\\theta(\\mathbf{q}_t) \\\\ \\mathbf{q}_{t + \\Delta t} = \\mathbf{q}_t + \\Delta t \\, \\mathbf{M}^{-1} \\mathbf{p}_{t + \\frac{\\Delta t}{2}} \\\\ \\mathbf{p}_{t + \\Delta t} = \\mathbf{p}_{t + \\frac{\\Delta t}{2}} - \\frac{\\Delta t}{2} \\nabla_{\\mathbf{q}} V_\\theta(\\mathbf{q}_{t + \\Delta t}) \\end{cases}, \\quad \\det\\left( \\frac{\\partial (\\mathbf{q}_{t+\\Delta t}, \\mathbf{p}_{t+\\Delta t})}{\\partial (\\mathbf{q}_t, \\mathbf{p}_t)} \\right) = 1',
+    theBreakthroughArchitectureName: 'Symplectic Hamiltonian Neural Flow (Symplectic-ODE)',
+    hardwareRealityCheck:
+      'Symplectic leapfrog updates consist entirely of fused elementwise multiply-add (FMA) vector operations without matrix inversions. Reversible phase-space trajectories eliminate activation caching during training backpropagation, cutting training memory footprint to O(1).',
   },
 ];
