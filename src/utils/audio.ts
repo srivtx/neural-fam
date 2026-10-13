@@ -365,6 +365,85 @@ class SoundFX {
       // ignore
     }
   }
+
+  // Dimension Collapse Chord: As dimension scales 2 -> 4096, detuned cluster filters into pure 432 Hz sine tone
+  public playDimensionCollapseChord(dimension: number) {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const baseFreq = 432.0; // Pure Pythagorean A
+      // Spread decreases proportionally to 1 / sqrt(dimension)
+      const spreadHz = Math.max(0.5, 90.0 / Math.sqrt(Math.max(1, dimension)));
+      const numPartials = dimension > 50 ? 2 : 4;
+
+      for (let i = 0; i < numPartials; i++) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        const detuneOffset = (i - (numPartials - 1) / 2) * spreadHz;
+        osc.type = dimension >= 100 ? 'sine' : 'triangle';
+        osc.frequency.setValueAtTime(baseFreq + detuneOffset, now);
+
+        const vol = 0.05 / numPartials;
+        gain.gain.setValueAtTime(vol, now);
+        gain.gain.exponentialRampToValueAtTime(0.0005, now + 0.35);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.38);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Superposition Resonance: Sonifies cross-feature interference vs clean sparse recovery
+  public playSuperpositionResonance(sparsity: number, isCleanRecovery: boolean = true) {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      if (isCleanRecovery) {
+        // High sparsity: pristine shimmering overtone
+        const freqs = [528.0, 660.0, 792.0]; // Solfeggio / Harmonic triad
+        freqs.forEach((freq, idx) => {
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.03);
+          gain.gain.setValueAtTime(0.03, now + idx * 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.03 + 0.28);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.03);
+          osc.stop(now + idx * 0.03 + 0.3);
+        });
+      } else {
+        // Low sparsity / dense interference: dissonant buzzy cluster
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180 + (1 - sparsity) * 80, now);
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      }
+    } catch {
+      // ignore
+    }
+  }
 }
 
 export const soundFX = new SoundFX();

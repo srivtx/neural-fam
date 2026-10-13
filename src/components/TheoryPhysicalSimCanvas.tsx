@@ -46,7 +46,8 @@ export type SimMode =
   | 'geometry'
   | 'neural_ode'
   | 'saddle_escape'
-  | 'grokking';
+  | 'grokking'
+  | 'superposition';
 
 export const DIMENSION_OPTIONS = [2, 3, 10, 50, 100, 4096] as const;
 export type Dimension = (typeof DIMENSION_OPTIONS)[number];
@@ -227,31 +228,31 @@ export const FIRST_PRINCIPLES_SIM_DOSSIERS: Record<SimMode, FirstPrinciplesSimDo
   },
 
   saddle_escape: {
-    modeName: 'Loss Landscape & Saddle Point Escape',
-    tagline: 'Hessian Negative Curvature Eigenvectors and Kinetic Energy Barrier Crossing',
+    modeName: '3D Loss Landscape & Skip-Connection Homotopy',
+    tagline: 'Li et al. Filter-Normalized Convexification & Dauphin High-Dimensional Saddle Escape',
     invariant: {
-      title: 'Hessian Spectral Signature',
-      equation: '\\lambda_{\\min}(\\nabla^2 L(x^*)) < 0, \\quad \\nabla L(x^*) = 0',
+      title: 'Homotopy Convexification Invariant',
+      equation: 'f(\\alpha, x) = (1 - \\alpha) L_{\\text{chaotic}}(x) + \\alpha L_{\\text{convex}}(x), \\quad y = x + F(x)',
       explanation:
-        'In high dimensions, critical points are almost never local minima; they possess strict saddle geometry with both positive (confining) and negative (escape) curvature directions.',
+        'Identity skip connections act as an architectural homotopy that smooths non-convex fractal barriers into an open convex funnel where gradient flows unimpeded.',
     },
     force: {
-      title: 'Heavy-Ball Momentum & Langevin Kick',
-      equation: '\\mathbf{v}_{t+1} = \\beta \\mathbf{v}_t - \\eta \\nabla L(\\mathbf{x}_t) + \\sigma \\sqrt{\\eta} \\boldsymbol{\\xi}_t',
+      title: 'Hessian Negative Curvature & Heavy-Ball Momentum',
+      equation: '\\mathbf{v}_{t+1} = \\beta \\mathbf{v}_t - \\eta \\nabla f(\\mathbf{x}_t) + \\sigma \\sqrt{\\eta} \\boldsymbol{\\xi}_t, \\quad \\lambda_{\\min} < 0',
       explanation:
-        'While vanilla SGD halts where grad L is zero, momentum accumulates kinetic energy and Langevin noise perturbs the particle onto the negative curvature eigenvector.',
+        'While vanilla SGD halts at flat saddles, momentum accumulates kinetic energy and thermal Langevin kicks fling the state down the negative curvature escape chute.',
     },
     normalizer: {
-      title: 'Spectral Step-Size Bound',
-      equation: '\\eta < \\frac{2(1 + \\beta)}{\\lambda_{\\max}}, \\quad \\kappa = \\frac{\\lambda_{\\max}}{|\\lambda_{\\min}|}',
+      title: 'Dauphin High-Dimensional Saddle Ratio',
+      equation: '\\frac{N_{\\text{minima}}}{N_{\\text{saddle}}} \\sim \\mathcal{O}(2^{-d}), \\quad \\kappa = \\frac{\\lambda_{\\max}}{|\\lambda_{\\min}|}',
       explanation:
-        'Prevents runaway oscillations across steep positive curvature canyon walls while allowing acceleration along the shallow negative curvature chute.',
+        'As dimension d scales to 100+, the probability that all d Hessian eigenvalues are positive drops exponentially as 2^-d. True local minima vanish; critical points are almost universally saddles.',
     },
     conservationLaw: {
-      title: 'Phase Space Energy Dissipation',
-      equation: '\\frac{d}{dt}\\left(\\frac{1}{2}\\|v\\|^2 + L(x)\\right) = -\\gamma \\|v\\|^2 + \\text{noise}',
+      title: 'Phase Space Kinetic Energy Dissipation',
+      equation: '\\frac{d}{dt}\\left(\\frac{1}{2}\\|v\\|^2 + f(x)\\right) = -\\gamma \\|v\\|^2 + \\text{noise}',
       explanation:
-        'Heavy-ball optimization is isomorphic to a damped physical particle with mass. Stored kinetic energy overcomes flat saddle plateaus that trap massless gradient descent.',
+        'Heavy-ball optimization is isomorphic to a physical particle with mass rolling down a potential well. Stored momentum enables tunneling past narrow chaotic ravines.',
     },
   },
 
@@ -281,6 +282,35 @@ export const FIRST_PRINCIPLES_SIM_DOSSIERS: Record<SimMode, FirstPrinciplesSimDo
       equation: 'F = \\langle L \\rangle - T \\cdot S(W) \\implies \\text{Phase Transition at } t_{\\text{crit}}',
       explanation:
         'Grokking is a first-order phase transition in parameter space, moving from a high-entropy disordered memorization state to an ordered, low-entropy crystalline Fourier circuit.',
+    },
+  },
+
+  superposition: {
+    modeName: 'The Superposition Paradox (High-Dimensional Sparse Coding)',
+    tagline: 'Anthropic Toy Models of Superposition, Welch Bound, and Overcomplete Polytopes',
+    invariant: {
+      title: 'Welch Mutual Coherence Lower Bound',
+      equation: '\\mu(W) = \\max_{i \\neq j} |\\mathbf{w}_i^T \\mathbf{w}_j| \\ge \\sqrt{\\frac{M - d}{d(M - 1)}}',
+      explanation:
+        'Any dictionary of M unit features embedded into a d-dimensional bottleneck must exhibit mutual cross-interference lower-bounded by the Welch bound. Features pack into antipodal pairs or regular simplex polytopes on the hypersphere.',
+    },
+    force: {
+      title: 'Non-Linear ReLU Sparse Reconstruction',
+      equation: '\\hat{x}_i = \\text{ReLU}\\left(x_i + \\sum_{j \\neq i} (\\mathbf{w}_i^T \\mathbf{w}_j) x_j - b_i\\right)',
+      explanation:
+        'Because individual concepts in LLMs activate sparsely (p << 1), the cross-interference term stays below threshold b with high probability. Non-linear ReLU completely filters out interference, yielding lossless retrieval.',
+    },
+    normalizer: {
+      title: 'Sparsity Collision Horizon',
+      equation: '\\mathbb{P}(\\text{interference collision}) \\sim \\mathcal{O}\\left(\\frac{p^2 M^2}{d}\\right), \\quad S = 1 - p',
+      explanation:
+        'As sparsity S approaches 1.0 (p -> 0), the chance of two correlated features co-activating simultaneously shrinks to zero, allowing thousands of concepts to coexist safely in a few hundred dimensions.',
+    },
+    conservationLaw: {
+      title: 'Overcomplete Polytope Channel Capacity',
+      equation: 'M_{\\text{features}} \\gg d_{\\text{bottleneck}}, \\quad \\mathcal{L}_{\\text{MSE}} = \\frac{1}{M}\\|x - \\hat{x}\\|^2 \\to 0',
+      explanation:
+        'Superposition breaks the linear capacity limit M <= d. By exploiting the sparsity of human knowledge, deep neural networks achieve exponentially higher concept density per unit parameter.',
     },
   },
 };
@@ -758,6 +788,112 @@ function getOdePointPosition(p: OdePoint, t: number): { x: number; y: number } {
 }
 
 // =============================================================================
+// SUPERPOSITION SIMULATION LOGIC
+// =============================================================================
+
+export function generateSuperpositionWeights(M: number, d: number): number[][] {
+  const W: number[][] = [];
+  if (d === 2) {
+    if (M === 2) {
+      W.push([1, 0]);
+      W.push([0, 1]);
+    } else if (M === 3) {
+      // 120-degree Mercedes-Benz star
+      for (let i = 0; i < 3; i++) {
+        const theta = (i * 2 * Math.PI) / 3;
+        W.push([Math.cos(theta), Math.sin(theta)]);
+      }
+    } else if (M % 2 === 0) {
+      // Antipodal pairs
+      const pairs = M / 2;
+      for (let i = 0; i < pairs; i++) {
+        const theta = (i * Math.PI) / pairs;
+        W.push([Math.cos(theta), Math.sin(theta)]);
+        W.push([-Math.cos(theta), -Math.sin(theta)]);
+      }
+    } else {
+      for (let i = 0; i < M; i++) {
+        const theta = (i * 2 * Math.PI) / M;
+        W.push([Math.cos(theta), Math.sin(theta)]);
+      }
+    }
+  } else {
+    // d >= 3: Deterministic pseudo-random hypersphere embedding + Thomson repulsion relaxation
+    for (let i = 0; i < M; i++) {
+      const vec: number[] = [];
+      let normSq = 0;
+      for (let k = 0; k < d; k++) {
+        const val = Math.sin((i + 1) * 12.9898 + (k + 1) * 78.233);
+        vec.push(val);
+        normSq += val * val;
+      }
+      const norm = Math.sqrt(normSq) || 1;
+      W.push(vec.map((v) => v / norm));
+    }
+
+    // Thomson repulsion relaxation to distribute vectors uniformly over S^{d-1}
+    for (let iter = 0; iter < 18; iter++) {
+      for (let i = 0; i < M; i++) {
+        const grad: number[] = new Array(d).fill(0);
+        for (let j = 0; j < M; j++) {
+          if (i === j) continue;
+          let dot = 0;
+          for (let k = 0; k < d; k++) dot += W[i][k] * W[j][k];
+          for (let k = 0; k < d; k++) {
+            grad[k] += 2 * dot * W[j][k];
+          }
+        }
+        let normSq = 0;
+        for (let k = 0; k < d; k++) {
+          W[i][k] -= 0.04 * grad[k];
+          normSq += W[i][k] * W[i][k];
+        }
+        const norm = Math.sqrt(normSq) || 1;
+        for (let k = 0; k < d; k++) W[i][k] /= norm;
+      }
+    }
+  }
+  return W;
+}
+
+export function computeGramMatrix(W: number[][]): number[][] {
+  const M = W.length;
+  const G: number[][] = [];
+  for (let i = 0; i < M; i++) {
+    G[i] = [];
+    for (let j = 0; j < M; j++) {
+      let dot = 0;
+      for (let k = 0; k < W[i].length; k++) {
+        dot += W[i][k] * W[j][k];
+      }
+      G[i][j] = dot;
+    }
+  }
+  return G;
+}
+
+export function computeWelchBound(M: number, d: number): number {
+  if (M <= d) return 0;
+  return Math.sqrt((M - d) / (d * (M - 1)));
+}
+
+export function sampleSparseInput(M: number, sparsity: number): number[] {
+  const x = new Array(M).fill(0);
+  let activeCount = 0;
+  for (let i = 0; i < M; i++) {
+    if (Math.random() < sparsity) {
+      x[i] = 0.55 + Math.random() * 0.65;
+      activeCount++;
+    }
+  }
+  if (activeCount === 0) {
+    const pick = Math.floor(Math.random() * M);
+    x[pick] = 0.85;
+  }
+  return x;
+}
+
+// =============================================================================
 // MAIN COMPONENT
 // =============================================================================
 
@@ -811,10 +947,12 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
   const odePointsRef = useRef<OdePoint[]>(createOdePoints());
   const odeStreamlinesRef = useRef<OdeStreamline[]>([]);
 
-  // Saddle Escape Controls
+  // Loss Landscape & Saddle Escape Controls (Li et al. & Dauphin et al.)
+  const [residualAlpha, setResidualAlpha] = useState<number>(0.35);
+  const [landscapeDim, setLandscapeDim] = useState<number>(12);
   const [saddleMomentum, setSaddleMomentum] = useState<number>(0.9);
-  const [saddleLr, setSaddleLr] = useState<number>(0.12);
-  const [saddleNoise, setSaddleNoise] = useState<number>(0.08);
+  const [saddleLr, setSaddleLr] = useState<number>(0.08);
+  const [saddleNoise, setSaddleNoise] = useState<number>(0.06);
   const [saddleCurvature, setSaddleCurvature] = useState<number>(1.0);
   const saddleVanillaPosRef = useRef<{ x: number; y: number }>({ x: 0.04, y: 0.015 });
   const saddleVanillaTrailRef = useRef<{ x: number; y: number }[]>([]);
@@ -823,6 +961,23 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
   const saddleMomentumTrailRef = useRef<{ x: number; y: number }[]>([]);
   const saddleStepRef = useRef<number>(0);
   const saddleAngleRef = useRef<number>(-0.75);
+  const saddlePitchRef = useRef<number>(0.55);
+  const saddleYawRef = useRef<number>(-0.65);
+
+  // Superposition Paradox Controls (Anthropic Toy Models & Welch Bound)
+  const [superpositionM, setSuperpositionM] = useState<number>(12);
+  const [superpositionD, setSuperpositionD] = useState<number>(2);
+  const [superpositionSparsity, setSuperpositionSparsity] = useState<number>(0.12);
+  const [superpositionThreshold, setSuperpositionThreshold] = useState<number>(0.16);
+  const superpositionYawRef = useRef<number>(0.0);
+  const superpositionPitchRef = useRef<number>(0.35);
+  const superpositionInputsRef = useRef<number[]>(sampleSparseInput(12, 0.12));
+  const superpositionWeightsRef = useRef<number[][]>(generateSuperpositionWeights(12, 2));
+  const superpositionTimerRef = useRef<number>(0);
+
+  // Unified Mouse & Touch Dragging State
+  const isDraggingCanvasRef = useRef<boolean>(false);
+  const dragStartCanvasRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Grokking Controls
   const [grokkingStep, setGrokkingStep] = useState<number>(0);
@@ -911,9 +1066,9 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
       }
       odeStreamlinesRef.current = ribbons;
     } else if (currentMode === 'saddle_escape') {
-      saddleVanillaPosRef.current = { x: 0.04, y: 0.015 };
+      saddleVanillaPosRef.current = { x: 0.85, y: 0.95 };
       saddleVanillaTrailRef.current = [];
-      saddleMomentumPosRef.current = { x: 0.04, y: 0.015 };
+      saddleMomentumPosRef.current = { x: 0.85, y: 0.95 };
       saddleMomentumVelRef.current = { x: 0, y: 0 };
       saddleMomentumTrailRef.current = [];
       saddleStepRef.current = 0;
@@ -921,6 +1076,10 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
       grokkingStepRef.current = 0;
       setGrokkingStep(0);
       grokkingCelebratedRef.current = false;
+    } else if (currentMode === 'superposition') {
+      superpositionWeightsRef.current = generateSuperpositionWeights(superpositionM, superpositionD);
+      superpositionInputsRef.current = sampleSparseInput(superpositionM, superpositionSparsity);
+      superpositionTimerRef.current = 0;
     }
 
     particlesRef.current = list;
@@ -2005,117 +2164,191 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
       }
 
       // =======================================================================
-      // 6. SADDLE POINT ESCAPE (CURVATURE & MOMENTUM)
+      // 6. 3D LOSS LANDSCAPE & SKIP-CONNECTIONS (LI ET AL. HOMOTOPY & DAUPHIN SADDLE ESCAPE)
       // =======================================================================
       else if (mode === 'saddle_escape') {
-        const cx = w * 0.5;
-        const cy = h * 0.52;
-        const scale = Math.min(w, h) * 0.21;
-        const pitch = 0.58;
-        const angle = saddleAngleRef.current;
-        const cosA = Math.cos(angle);
-        const sinA = Math.sin(angle);
+        const cx = w * 0.44;
+        const cy = h * 0.54;
+        const scale = Math.min(w, h) * 0.22;
+        const pitch = saddlePitchRef.current;
+        const yaw = saddleYawRef.current;
+        const cosY = Math.cos(yaw);
+        const sinY = Math.sin(yaw);
+        const cosP = Math.cos(pitch);
+        const sinP = Math.sin(pitch);
 
         const project3D = (x: number, y: number, z: number) => {
-          const rx = x * cosA - y * sinA;
-          const ry = x * sinA + y * cosA;
-          const sx = cx + scale * rx;
-          const sy = cy + scale * (ry * Math.sin(pitch) - z * Math.cos(pitch));
-          return { sx, sy };
+          const rx = x * cosY - y * sinY;
+          const ry = x * sinY + y * cosY;
+          const rz = z;
+
+          const py = ry * cosP - rz * sinP;
+          const pz = ry * sinP + rz * cosP;
+
+          const fov = 4.0;
+          const dist = 5.2 - pz * 0.4;
+          const factor = (scale * fov) / Math.max(0.2, dist);
+
+          const sx = cx + rx * factor;
+          const sy = cy + py * factor;
+          return { sx, sy, depth: pz };
         };
 
         const computeLoss = (x: number, y: number) => {
-          return 0.5 * 1.6 * x * x - 0.5 * saddleCurvature * y * y + 0.08 * saddleCurvature * Math.pow(y, 4);
+          // Convex basin (ResNet with identity highways)
+          const lConvex =
+            0.5 * (0.85 * x * x + 1.15 * y * y) +
+            0.4 * Math.log(1 + 0.5 * (x * x + y * y)) +
+            0.12 * Math.exp(-0.6 * (x * x + y * y)) * (Math.cos(3.2 * x) * Math.cos(3.2 * y) - 1);
+
+          // Chaotic rugged surface with cliffs, ravines and local traps (VGG-style without skips)
+          const lChaotic =
+            0.18 * ((1 - x) * (1 - x) + 8 * Math.pow(y - x * x, 2)) +
+            0.75 *
+              (Math.sin(2.0 * x) * Math.cos(2.0 * y) +
+                0.5 * Math.sin(4.8 * x) * Math.cos(4.8 * y) +
+                0.33 * Math.sin(9.3 * x) * Math.cos(9.3 * y)) +
+            0.35 * (Math.pow(x, 3) / 3 - x * y * y) * Math.exp(-0.25 * (x * x + y * y));
+
+          // Dauphin et al. high-dimensional negative curvature escape channel modulation
+          const dimFactor = 1 - Math.pow(2, -(landscapeDim - 2) / 8);
+          const saddleMod = -0.28 * dimFactor * (y * y - 0.22 * Math.pow(y, 4));
+
+          return (1 - residualAlpha) * lChaotic + residualAlpha * lConvex + saddleMod;
         };
 
         // Header Title
         ctx.font = 'bold 12px JetBrains Mono, monospace';
         ctx.textAlign = 'left';
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillText('3D LOSS LANDSCAPE & SADDLE ESCAPE: L(x, y) = 1/2 λ₁ x² - 1/2 λ₂ y²', 24, 28);
+        ctx.fillStyle = '#c084fc';
+        ctx.fillText(
+          '3D LOSS LANDSCAPE & SKIP-CONNECTIONS: f(α, x) = (1-α) L_chaotic + α L_convex',
+          24,
+          26
+        );
 
         ctx.font = '10px JetBrains Mono, monospace';
         ctx.fillStyle = '#94a3b8';
         ctx.fillText(
-          `Curvature Ratio κ = ${(1.6 / Math.max(0.01, saddleCurvature)).toFixed(2)} · Negative Curvature λ₂ < 0 (Unstable Manifold)`,
+          `Highway α = ${residualAlpha.toFixed(2)} [${
+            residualAlpha < 0.3
+              ? 'VGG-19 Fractal Chaos'
+              : residualAlpha > 0.7
+              ? 'ResNet-152 Convex Funnel'
+              : 'Intermediate Highway'
+          }] · Optimization Dimension d = ${landscapeDim} · Dauphin Saddle Escape Ratio ~ 2^-d = ${(Math.pow(2, -landscapeDim / 6)).toFixed(4)}`,
           24,
-          44
+          42
         );
 
-        // 3D Wireframe Saddle Surface Grid
-        const stepsX = 15;
-        const stepsY = 15;
-        ctx.lineWidth = 1;
+        // 3D Quad Mesh with depth sorting & Lambertian lighting
+        const steps = 24;
+        const range = 2.1;
+        const quads: {
+          p0: { sx: number; sy: number };
+          p1: { sx: number; sy: number };
+          p2: { sx: number; sy: number };
+          p3: { sx: number; sy: number };
+          depth: number;
+          zMean: number;
+          normDot: number;
+        }[] = [];
 
-        // Lines along X
-        for (let j = 0; j <= stepsY; j++) {
-          const y = -2.0 + (j / stepsY) * 4.0;
-          ctx.beginPath();
-          for (let i = 0; i <= stepsX; i++) {
-            const x = -1.5 + (i / stepsX) * 3.0;
-            const z = computeLoss(x, y);
-            const pt = project3D(x, y, z);
-            if (i === 0) ctx.moveTo(pt.sx, pt.sy);
-            else ctx.lineTo(pt.sx, pt.sy);
+        for (let j = 0; j < steps; j++) {
+          const y0 = -range + (j / steps) * (2 * range);
+          const y1 = -range + ((j + 1) / steps) * (2 * range);
+          for (let i = 0; i < steps; i++) {
+            const x0 = -range + (i / steps) * (2 * range);
+            const x1 = -range + ((i + 1) / steps) * (2 * range);
+
+            const z00 = computeLoss(x0, y0);
+            const z10 = computeLoss(x1, y0);
+            const z11 = computeLoss(x1, y1);
+            const z01 = computeLoss(x0, y1);
+
+            const p0 = project3D(x0, y0, z00);
+            const p1 = project3D(x1, y0, z10);
+            const p2 = project3D(x1, y1, z11);
+            const p3 = project3D(x0, y1, z01);
+
+            const depth = (p0.depth + p1.depth + p2.depth + p3.depth) / 4;
+            const zMean = (z00 + z10 + z11 + z01) / 4;
+
+            // Approximate surface normal
+            const ux = x1 - x0, uy = 0, uz = z10 - z00;
+            const vx = 0, vy = y1 - y0, vz = z01 - z00;
+            const nx = uy * vz - uz * vy;
+            const ny = uz * vx - ux * vz;
+            const nz = ux * vy - uy * vx;
+            const nLen = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+            // Directional light [0.4, 0.8, 0.45]
+            const normDot = Math.max(0.2, (nx * 0.4 + ny * 0.8 + nz * 0.45) / nLen);
+
+            quads.push({ p0, p1, p2, p3, depth, zMean, normDot });
           }
-          const zMean = computeLoss(0, y);
-          ctx.strokeStyle =
-            zMean < -0.4
-              ? 'rgba(14, 165, 233, 0.35)'
-              : zMean > 0.4
-              ? 'rgba(168, 85, 247, 0.28)'
-              : 'rgba(71, 85, 105, 0.32)';
+        }
+
+        // Sort quads back to front
+        quads.sort((a, b) => a.depth - b.depth);
+
+        // Render quads
+        ctx.lineWidth = 0.5;
+        for (let q = 0; q < quads.length; q++) {
+          const quad = quads[q];
+          const brightness = quad.normDot;
+          let r = 20, g = 30, b = 60;
+          if (residualAlpha > 0.6) {
+            // Convex funnel: sapphire to cyan-emerald
+            if (quad.zMean < 0.4) {
+              r = 14; g = 116; b = 144;
+            } else if (quad.zMean < 1.0) {
+              r = 16; g = 185; b = 129;
+            } else {
+              r = 56; g = 189; b = 248;
+            }
+          } else {
+            // Chaotic fractured surface: purple, magenta and fiery amber
+            if (quad.zMean < 0.4) {
+              r = 76; g = 29; b = 149;
+            } else if (quad.zMean < 1.1) {
+              r = 190; g = 24; b = 93;
+            } else {
+              r = 245; g = 158; b = 11;
+            }
+          }
+
+          const fillR = Math.min(255, Math.floor(r * brightness));
+          const fillG = Math.min(255, Math.floor(g * brightness));
+          const fillB = Math.min(255, Math.floor(b * brightness));
+
+          ctx.beginPath();
+          ctx.moveTo(quad.p0.sx, quad.p0.sy);
+          ctx.lineTo(quad.p1.sx, quad.p1.sy);
+          ctx.lineTo(quad.p2.sx, quad.p2.sy);
+          ctx.lineTo(quad.p3.sx, quad.p3.sy);
+          ctx.closePath();
+
+          ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, 0.78)`;
+          ctx.fill();
+          ctx.strokeStyle = `rgba(255, 255, 255, 0.08)`;
           ctx.stroke();
         }
 
-        // Lines along Y
-        for (let i = 0; i <= stepsX; i++) {
-          const x = -1.5 + (i / stepsX) * 3.0;
-          ctx.beginPath();
-          for (let j = 0; j <= stepsY; j++) {
-            const y = -2.0 + (j / stepsY) * 4.0;
-            const z = computeLoss(x, y);
-            const pt = project3D(x, y, z);
-            if (j === 0) ctx.moveTo(pt.sx, pt.sy);
-            else ctx.lineTo(pt.sx, pt.sy);
-          }
-          ctx.strokeStyle = 'rgba(71, 85, 105, 0.22)';
-          ctx.stroke();
-        }
+        // Numerical Gradient helper (central differences)
+        const getGradient = (x: number, y: number) => {
+          const eps = 0.005;
+          const gx = (computeLoss(x + eps, y) - computeLoss(x - eps, y)) / (2 * eps);
+          const gy = (computeLoss(x, y + eps) - computeLoss(x, y - eps)) / (2 * eps);
+          return { gx, gy };
+        };
 
-        // Eigenvector Arrows at Origin
-        const e1Pt = project3D(1.2, 0, computeLoss(1.2, 0));
-        const origPt = project3D(0, 0, 0);
-        ctx.strokeStyle = '#f43f5e';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(origPt.sx, origPt.sy);
-        ctx.lineTo(e1Pt.sx, e1Pt.sy);
-        ctx.stroke();
-
-        ctx.font = '9px JetBrains Mono, monospace';
-        ctx.fillStyle = '#f43f5e';
-        ctx.fillText('+λ₁ Wall', e1Pt.sx + 4, e1Pt.sy);
-
-        const e2Pt = project3D(0, 1.4, computeLoss(0, 1.4));
-        ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(origPt.sx, origPt.sy);
-        ctx.lineTo(e2Pt.sx, e2Pt.sy);
-        ctx.stroke();
-
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillText('-λ₂ Escape Chute', e2Pt.sx + 4, e2Pt.sy);
-
-        // Simulation Update for Both Particles
+        // Simulation Updates for Both Particles
         if (isRunning) {
           saddleStepRef.current += 1;
 
           // 1. Vanilla SGD Update
           const vPos = saddleVanillaPosRef.current;
-          const vGx = 1.6 * vPos.x;
-          const vGy = -saddleCurvature * vPos.y + 0.32 * saddleCurvature * Math.pow(vPos.y, 3);
+          const { gx: vGx, gy: vGy } = getGradient(vPos.x, vPos.y);
           vPos.x -= saddleLr * vGx;
           vPos.y -= saddleLr * vGy;
           saddleVanillaTrailRef.current.push({ x: vPos.x, y: vPos.y });
@@ -2124,8 +2357,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
           // 2. Heavy-Ball Momentum + Langevin Update
           const mPos = saddleMomentumPosRef.current;
           const mVel = saddleMomentumVelRef.current;
-          const mGx = 1.6 * mPos.x;
-          const mGy = -saddleCurvature * mPos.y + 0.32 * saddleCurvature * Math.pow(mPos.y, 3);
+          const { gx: mGx, gy: mGy } = getGradient(mPos.x, mPos.y);
           const noiseX = (Math.random() - 0.5) * 2;
           const noiseY = (Math.random() - 0.5) * 2;
 
@@ -2137,95 +2369,109 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
           saddleMomentumTrailRef.current.push({ x: mPos.x, y: mPos.y });
           if (saddleMomentumTrailRef.current.length > 70) saddleMomentumTrailRef.current.shift();
 
-          // Clamp / reset if escaped far into valley
-          if (Math.abs(mPos.y) > 2.3 || Math.abs(mPos.x) > 2.0) {
-            mPos.x = 0.04;
-            mPos.y = 0.015;
+          // Boundary clamp / respawn
+          if (Math.abs(mPos.x) > range || Math.abs(mPos.y) > range) {
+            mPos.x = 0.85;
+            mPos.y = 0.95;
             mVel.x = 0;
             mVel.y = 0;
             saddleMomentumTrailRef.current = [];
           }
+          if (Math.abs(vPos.x) > range || Math.abs(vPos.y) > range) {
+            vPos.x = 0.85;
+            vPos.y = 0.95;
+            saddleVanillaTrailRef.current = [];
+          }
         }
 
-        // Draw Vanilla SGD Trail & Sphere
+        // Draw Vanilla SGD Trail & Glowing Particle
         const vTrail = saddleVanillaTrailRef.current;
         if (vTrail.length > 1) {
           ctx.beginPath();
-          const firstP = project3D(vTrail[0].x, vTrail[0].y, computeLoss(vTrail[0].x, vTrail[0].y));
-          ctx.moveTo(firstP.sx, firstP.sy);
-          for (let i = 1; i < vTrail.length; i++) {
-            const pt = project3D(vTrail[i].x, vTrail[i].y, computeLoss(vTrail[i].x, vTrail[i].y));
+          const pStart = project3D(vTrail[0].x, vTrail[0].y, computeLoss(vTrail[0].x, vTrail[0].y));
+          ctx.moveTo(pStart.sx, pStart.sy);
+          for (let k = 1; k < vTrail.length; k++) {
+            const pt = project3D(vTrail[k].x, vTrail[k].y, computeLoss(vTrail[k].x, vTrail[k].y));
             ctx.lineTo(pt.sx, pt.sy);
           }
-          ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
-          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.6)';
+          ctx.lineWidth = 1.8;
           ctx.stroke();
         }
 
         const curV = saddleVanillaPosRef.current;
         const curVPt = project3D(curV.x, curV.y, computeLoss(curV.x, curV.y));
         ctx.beginPath();
-        ctx.arc(curVPt.sx, curVPt.sy, 4.5, 0, Math.PI * 2);
+        ctx.arc(curVPt.sx, curVPt.sy, 5, 0, Math.PI * 2);
         ctx.fillStyle = '#fbbf24';
         ctx.shadowColor = '#d97706';
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 10;
         ctx.fill();
         ctx.shadowBlur = 0;
 
         ctx.font = 'bold 9px JetBrains Mono, monospace';
         ctx.fillStyle = '#fbbf24';
-        ctx.fillText('Vanilla SGD (Stuck)', curVPt.sx + 8, curVPt.sy - 6);
+        ctx.fillText('Vanilla SGD', curVPt.sx + 8, curVPt.sy - 4);
 
-        // Draw Momentum Trail & Sphere
+        // Draw Momentum Trail & Glowing Particle
         const mTrail = saddleMomentumTrailRef.current;
         if (mTrail.length > 1) {
           ctx.beginPath();
-          const firstP = project3D(mTrail[0].x, mTrail[0].y, computeLoss(mTrail[0].x, mTrail[0].y));
-          ctx.moveTo(firstP.sx, firstP.sy);
-          for (let i = 1; i < mTrail.length; i++) {
-            const pt = project3D(mTrail[i].x, mTrail[i].y, computeLoss(mTrail[i].x, mTrail[i].y));
+          const pStart = project3D(mTrail[0].x, mTrail[0].y, computeLoss(mTrail[0].x, mTrail[0].y));
+          ctx.moveTo(pStart.sx, pStart.sy);
+          for (let k = 1; k < mTrail.length; k++) {
+            const pt = project3D(mTrail[k].x, mTrail[k].y, computeLoss(mTrail[k].x, mTrail[k].y));
             ctx.lineTo(pt.sx, pt.sy);
           }
-          ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
-          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+          ctx.lineWidth = 2.6;
           ctx.stroke();
         }
 
         const curM = saddleMomentumPosRef.current;
         const curMPt = project3D(curM.x, curM.y, computeLoss(curM.x, curM.y));
         ctx.beginPath();
-        ctx.arc(curMPt.sx, curMPt.sy, 5.5, 0, Math.PI * 2);
+        ctx.arc(curMPt.sx, curMPt.sy, 6, 0, Math.PI * 2);
         ctx.fillStyle = '#38bdf8';
         ctx.shadowColor = '#0284c7';
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 14;
         ctx.fill();
         ctx.shadowBlur = 0;
 
         ctx.font = 'bold 9px JetBrains Mono, monospace';
         ctx.fillStyle = '#38bdf8';
-        ctx.fillText('Momentum SGD (Escaping)', curMPt.sx + 8, curMPt.sy - 6);
+        ctx.fillText('Momentum SGD', curMPt.sx + 9, curMPt.sy - 4);
 
-        // Comparison Stats HUD
-        const shudW = 220;
-        const shudH = 62;
-        const shx = w - shudW - 20;
-        const shy = 20;
-        ctx.fillStyle = 'rgba(10, 8, 20, 0.85)';
+        // HUD Statistics Panel (Right Side)
+        const shudW = 228;
+        const shudH = 92;
+        const shx = w - shudW - 16;
+        const shy = 16;
+        ctx.fillStyle = 'rgba(10, 8, 20, 0.88)';
         ctx.fillRect(shx, shy, shudW, shudH);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
         ctx.strokeRect(shx, shy, shudW, shudH);
 
-        const vGradNorm = Math.hypot(1.6 * curV.x, -saddleCurvature * curV.y);
+        const { gx: vgx, gy: vgy } = getGradient(curV.x, curV.y);
+        const vGradNorm = Math.hypot(vgx, vgy);
         const mVelNorm = Math.hypot(saddleMomentumVelRef.current.x, saddleMomentumVelRef.current.y);
+        const mKinetic = 0.5 * mVelNorm * mVelNorm;
 
         ctx.font = '9px JetBrains Mono, monospace';
         ctx.textAlign = 'left';
         ctx.fillStyle = '#fbbf24';
-        ctx.fillText(`Vanilla SGD: ||∇L|| = ${vGradNorm.toFixed(3)} (Stalled)`, shx + 8, shy + 16);
+        ctx.fillText(`Vanilla SGD: ||∇f|| = ${vGradNorm.toFixed(3)} ${vGradNorm < 0.05 ? '(TRAPPED)' : ''}`, shx + 8, shy + 16);
         ctx.fillStyle = '#38bdf8';
-        ctx.fillText(`Momentum: ||v|| = ${mVelNorm.toFixed(3)} (Kinetic)`, shx + 8, shy + 32);
-        ctx.fillStyle = '#34d399';
-        ctx.fillText(`Step: ${saddleStepRef.current} · Escaped Down -λ₂`, shx + 8, shy + 48);
+        ctx.fillText(`Momentum SGD: ||v|| = ${mVelNorm.toFixed(3)} (Tunnels)`, shx + 8, shy + 32);
+        ctx.fillText(`Kinetic Energy E_k = ${mKinetic.toFixed(4)}`, shx + 8, shy + 48);
+        ctx.fillStyle = residualAlpha > 0.6 ? '#34d399' : '#f43f5e';
+        ctx.fillText(
+          residualAlpha > 0.6 ? 'Landscape: Convex Funnel (Global Flow)' : 'Landscape: Chaotic Fractures (Saddles & Cliffs)',
+          shx + 8,
+          shy + 64
+        );
+        ctx.fillStyle = '#a78bfa';
+        ctx.fillText('Drag canvas to orbit 3D camera', shx + 8, shy + 80);
       }
 
       // =======================================================================
@@ -2478,6 +2724,323 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
         ctx.fillText(`||W||_2: ${currentWeightNorm.toFixed(2)}`, ghx + 8, ghy + 48);
       }
 
+      // =======================================================================
+      // 8. THE SUPERPOSITION PARADOX SIMULATOR (ANTHROPIC TOY MODELS & WELCH BOUND)
+      // =======================================================================
+      else if (mode === 'superposition') {
+        const M = superpositionM;
+        const d = superpositionD;
+        const p = superpositionSparsity;
+        const threshold = superpositionThreshold;
+
+        // Periodic input resampling if running
+        if (isRunning) {
+          superpositionTimerRef.current += 1;
+          if (superpositionTimerRef.current % 140 === 0) {
+            superpositionInputsRef.current = sampleSparseInput(M, p);
+          }
+        }
+
+        const W = superpositionWeightsRef.current;
+        const x = superpositionInputsRef.current;
+        const G = computeGramMatrix(W);
+        const welch = computeWelchBound(M, d);
+
+        // Run forward pass
+        // 1. Bottleneck compression: h = sum_j x_j * w_j in R^d
+        const hiddenH: number[] = new Array(d).fill(0);
+        for (let j = 0; j < M; j++) {
+          if (x[j] !== 0) {
+            for (let k = 0; k < d; k++) {
+              hiddenH[k] += x[j] * W[j][k];
+            }
+          }
+        }
+
+        // 2. Decoder projection & ReLU threshold: xHat_i = ReLU(w_i^T h - b)
+        const xHat: number[] = new Array(M).fill(0);
+        let totalSqErr = 0;
+        for (let i = 0; i < M; i++) {
+          let proj = 0;
+          for (let k = 0; k < d; k++) {
+            proj += W[i][k] * hiddenH[k];
+          }
+          xHat[i] = Math.max(0, proj - threshold);
+          const err = x[i] - xHat[i];
+          totalSqErr += err * err;
+        }
+        const mse = totalSqErr / Math.max(1, M);
+
+        // Header Title
+        ctx.font = 'bold 12px JetBrains Mono, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillText(
+          'THE SUPERPOSITION PARADOX: OVERCOMPLETE DICTIONARIES & NON-LINEAR RELU RECOVERY',
+          24,
+          26
+        );
+
+        ctx.font = '10px JetBrains Mono, monospace';
+        ctx.fillStyle = '#94a3b8';
+        const activeCount = x.filter((v) => v > 0).length;
+        ctx.fillText(
+          `Features M = ${M} · Bottleneck Dim d = ${d} · Capacity Ratio M/d = ${(M / d).toFixed(2)}x · Sparsity S = ${(1 - p).toFixed(2)} (${activeCount} Active) · Welch Lower Bound μ_W = ${welch.toFixed(3)}`,
+          24,
+          42
+        );
+
+        // ---------------------------------------------------------------------
+        // ZONE 1: HYPERSPHERE GEOMETRY S^{d-1} (LEFT 32%)
+        // ---------------------------------------------------------------------
+        const z1Cx = w * 0.17;
+        const z1Cy = h * 0.54;
+        const z1R = Math.min(w * 0.13, h * 0.35);
+
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 11px JetBrains Mono, monospace';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText(`HYPERSPHERE S^{d-1} (d=${d})`, z1Cx, z1Cy - z1R - 16);
+        ctx.font = '9px JetBrains Mono, monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(d === 2 ? 'Mercedes / Antipodal Polytope' : 'Thomson Equipotential Equilibrium', z1Cx, z1Cy - z1R - 4);
+
+        // Draw Sphere / Circle Outline
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(z1Cx, z1Cy, z1R, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Coordinate Crosshairs
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(z1Cx - z1R, z1Cy);
+        ctx.lineTo(z1Cx + z1R, z1Cy);
+        ctx.moveTo(z1Cx, z1Cy - z1R);
+        ctx.lineTo(z1Cx, z1Cy + z1R);
+        ctx.stroke();
+
+        if (d >= 3) {
+          const pitch = superpositionPitchRef.current;
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+          ctx.beginPath();
+          ctx.ellipse(z1Cx, z1Cy, z1R, z1R * Math.abs(Math.sin(pitch)), 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Draw Feature Vectors W_i
+        for (let i = 0; i < M; i++) {
+          const isActive = x[i] > 0;
+          let px = 0, py = 0;
+
+          if (d === 2) {
+            px = z1Cx + W[i][0] * z1R;
+            py = z1Cy - W[i][1] * z1R;
+          } else {
+            const yaw = superpositionYawRef.current;
+            const pitch = superpositionPitchRef.current;
+            const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
+            const cosP = Math.cos(pitch), sinP = Math.sin(pitch);
+            const wx = W[i][0], wy = W[i][1], wz = W[i][2] || 0;
+            const rx = wx * cosY - wy * sinY;
+            const ry = wx * sinY + wy * cosY;
+            const rz = wz;
+            const sy = ry * cosP - rz * sinP;
+            px = z1Cx + rx * z1R;
+            py = z1Cy - sy * z1R;
+          }
+
+          ctx.beginPath();
+          ctx.moveTo(z1Cx, z1Cy);
+          ctx.lineTo(px, py);
+
+          if (isActive) {
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2.4;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(px, py, 4.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#f59e0b';
+            ctx.shadowColor = '#d97706';
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            ctx.font = 'bold 9px JetBrains Mono, monospace';
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillText(`f${i+1}`, px + (px > z1Cx ? 7 : -7), py - 3);
+          } else {
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.5)';
+            ctx.fill();
+          }
+        }
+
+        // Compressed Latent Vector h in center
+        let hx = 0, hy = 0;
+        if (d === 2) {
+          hx = z1Cx + hiddenH[0] * z1R * 0.7;
+          hy = z1Cy - hiddenH[1] * z1R * 0.7;
+        } else {
+          hx = z1Cx + hiddenH[0] * z1R * 0.7;
+          hy = z1Cy - hiddenH[1] * z1R * 0.7;
+        }
+        ctx.strokeStyle = '#ec4899';
+        ctx.lineWidth = 2.8;
+        ctx.beginPath();
+        ctx.moveTo(z1Cx, z1Cy);
+        ctx.lineTo(hx, hy);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(hx, hy, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#ec4899';
+        ctx.shadowColor = '#be185d';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.font = 'bold 9px JetBrains Mono, monospace';
+        ctx.fillStyle = '#ec4899';
+        ctx.fillText('h (Latent)', hx + 8, hy + 2);
+
+        // ---------------------------------------------------------------------
+        // ZONE 2: GRAM MATRIX HEATMAP G = W^T W (CENTER 34%)
+        // ---------------------------------------------------------------------
+        const z2Cx = w * 0.50;
+        const z2Cy = h * 0.54;
+        const matSize = Math.min(w * 0.28, h * 0.62);
+        const cell = matSize / M;
+        const matLeft = z2Cx - matSize / 2;
+        const matTop = z2Cy - matSize / 2 + 10;
+
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 11px JetBrains Mono, monospace';
+        ctx.fillStyle = '#34d399';
+        ctx.fillText('GRAM MATRIX G = WᵀW', z2Cx, matTop - 20);
+
+        let maxCoherence = 0;
+        for (let r = 0; r < M; r++) {
+          for (let c = 0; c < M; c++) {
+            if (r !== c) {
+              maxCoherence = Math.max(maxCoherence, Math.abs(G[r][c]));
+            }
+          }
+        }
+
+        ctx.font = '9px JetBrains Mono, monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`Max Coherence μ = ${maxCoherence.toFixed(3)} · Welch Bound μ_W = ${welch.toFixed(3)}`, z2Cx, matTop - 7);
+
+        // Draw Matrix Cells
+        for (let r = 0; r < M; r++) {
+          for (let c = 0; c < M; c++) {
+            const val = G[r][c];
+            const mcx = matLeft + c * cell;
+            const mcy = matTop + r * cell;
+
+            if (r === c) {
+              ctx.fillStyle = '#ffffff';
+            } else if (val < 0) {
+              const intensity = Math.min(1, Math.abs(val));
+              ctx.fillStyle = `rgba(14, 165, 233, ${0.15 + intensity * 0.8})`;
+            } else {
+              const intensity = Math.min(1, val);
+              ctx.fillStyle = `rgba(239, 68, 68, ${0.15 + intensity * 0.85})`;
+            }
+
+            ctx.fillRect(mcx, mcy, cell - 1, cell - 1);
+          }
+        }
+
+        // Matrix border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(matLeft, matTop, matSize, matSize);
+
+        // Legend below Gram Matrix
+        const legY = matTop + matSize + 16;
+        ctx.font = '9px JetBrains Mono, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText('● -1.0 (Antipodal)', z2Cx - 85, legY);
+        ctx.fillStyle = '#64748b';
+        ctx.fillText('● 0.0 (Orthogonal)', z2Cx, legY);
+        ctx.fillStyle = '#ef4444';
+        ctx.fillText('● +1.0 (Interference)', z2Cx + 85, legY);
+
+        // ---------------------------------------------------------------------
+        // ZONE 3: NON-LINEAR RELU RECONSTRUCTION BARS & HUD (RIGHT 34%)
+        // ---------------------------------------------------------------------
+        const z3Left = w * 0.68;
+        const z3Width = w * 0.29;
+        const z3Top = h * 0.22;
+        const rowH = Math.min(18, (h * 0.54) / M);
+
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 11px JetBrains Mono, monospace';
+        ctx.fillStyle = '#a78bfa';
+        ctx.fillText('RECONSTRUCTION: x̂ = ReLU(Wᵀh - b)', z3Left, z3Top - 22);
+
+        // Status Badge
+        const isClean = mse < 0.03;
+        ctx.fillStyle = isClean ? '#34d399' : mse < 0.12 ? '#fbbf24' : '#f43f5e';
+        ctx.font = 'bold 9px JetBrains Mono, monospace';
+        ctx.fillText(
+          isClean
+            ? '✓ ZERO INTERFERENCE (ReLU Filtered Cross-Talk)'
+            : mse < 0.12
+            ? '~ BOUNDED SUPERPOSITION NOISE'
+            : '⚠ CAPACITY COLLAPSE (Polytope Overwhelmed)',
+          z3Left,
+          z3Top - 7
+        );
+
+        // Feature Bars
+        const barMaxW = z3Width * 0.42;
+        for (let i = 0; i < M; i++) {
+          const ry = z3Top + i * rowH;
+
+          // Label
+          ctx.font = '9px JetBrains Mono, monospace';
+          ctx.fillStyle = x[i] > 0 ? '#fbbf24' : '#64748b';
+          ctx.fillText(`f${i+1}`, z3Left, ry + rowH * 0.7);
+
+          // Bar 1: Input x[i]
+          const bx = z3Left + 24;
+          const trueW = (x[i] / 1.5) * barMaxW;
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
+          ctx.fillRect(bx, ry + 2, trueW, rowH * 0.38);
+
+          // Bar 2: Reconstructed xHat[i]
+          const hatW = (xHat[i] / 1.5) * barMaxW;
+          const err = Math.abs(xHat[i] - x[i]);
+          ctx.fillStyle = err < 0.08 ? 'rgba(52, 211, 153, 0.85)' : 'rgba(239, 68, 68, 0.85)';
+          ctx.fillRect(bx, ry + rowH * 0.45, hatW, rowH * 0.42);
+
+          // Numeric values
+          if (x[i] > 0 || xHat[i] > 0.05) {
+            ctx.fillStyle = err < 0.08 ? '#34d399' : '#f87171';
+            ctx.fillText(`${xHat[i].toFixed(2)}`, bx + barMaxW + 8, ry + rowH * 0.7);
+          }
+        }
+
+        // Bottom Stats HUD
+        const bhudTop = z3Top + M * rowH + 12;
+        ctx.font = '9px JetBrains Mono, monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`Reconstruction Loss MSE: ${mse.toFixed(4)}`, z3Left, bhudTop);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText(`Cyan: Input x_i  |  Emerald: Reconstructed x̂_i`, z3Left, bhudTop + 14);
+      }
+
       animFrameRef.current = requestAnimationFrame(render);
     };
 
@@ -2507,6 +3070,12 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
     saddleLr,
     saddleNoise,
     saddleCurvature,
+    residualAlpha,
+    landscapeDim,
+    superpositionM,
+    superpositionD,
+    superpositionSparsity,
+    superpositionThreshold,
     grokkingWeightDecay,
     grokkingDataRedundancy,
   ]);
@@ -2545,7 +3114,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
 
   const handleDimensionChange = (newDim: Dimension) => {
     setDimension(newDim);
-    soundFX.playTap();
+    soundFX.playDimensionCollapseChord(newDim);
   };
 
   const handleResampleGeometry = () => {
@@ -2567,14 +3136,35 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
 
   const handlePerturbSaddle = () => {
     saddleMomentumPosRef.current = {
-      x: 0.04 + (Math.random() - 0.5) * 0.03,
-      y: 0.015 + (Math.random() - 0.5) * 0.02,
+      x: 0.85 + (Math.random() - 0.5) * 0.4,
+      y: 0.95 + (Math.random() - 0.5) * 0.4,
     };
     saddleMomentumVelRef.current = {
-      x: (Math.random() - 0.5) * 0.02,
-      y: (Math.random() - 0.5) * 0.02,
+      x: (Math.random() - 0.5) * 0.05,
+      y: (Math.random() - 0.5) * 0.05,
     };
     saddleMomentumTrailRef.current = [];
+    saddleVanillaPosRef.current = {
+      x: 0.85 + (Math.random() - 0.5) * 0.4,
+      y: 0.95 + (Math.random() - 0.5) * 0.4,
+    };
+    saddleVanillaTrailRef.current = [];
+    soundFX.playTap();
+  };
+
+  const handleSampleSuperposition = () => {
+    const newInputs = sampleSparseInput(superpositionM, superpositionSparsity);
+    superpositionInputsRef.current = newInputs;
+    const activeCount = newInputs.filter((v) => v > 0).length;
+    const isClean = activeCount <= Math.max(1, Math.floor(superpositionD * 0.8));
+    soundFX.playSuperpositionResonance(superpositionSparsity, isClean);
+  };
+
+  const handleReoptimizeWeights = (newM?: number, newD?: number) => {
+    const targetM = newM ?? superpositionM;
+    const targetD = newD ?? superpositionD;
+    superpositionWeightsRef.current = generateSuperpositionWeights(targetM, targetD);
+    superpositionInputsRef.current = sampleSparseInput(targetM, superpositionSparsity);
     soundFX.playTap();
   };
 
@@ -2677,7 +3267,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
             }`}
           >
             <Mountain className="w-3.5 h-3.5" />
-            6. Saddle Escape
+            6. Loss Landscape & Skips
           </button>
 
           <button
@@ -2691,6 +3281,18 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
             <Radio className="w-3.5 h-3.5" />
             7. Grokking
           </button>
+
+          <button
+            onClick={() => handleModeChange('superposition')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              mode === 'superposition'
+                ? 'bg-amber-600 text-white font-bold shadow-md shadow-amber-600/30 ring-1 ring-amber-400/50'
+                : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            8. Superposition Paradox
+          </button>
         </div>
       </div>
 
@@ -2698,28 +3300,60 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
       <div className="relative rounded-2xl overflow-hidden border border-ink-200 dark:border-white/10 bg-ink-950 shadow-inner">
         <canvas
           ref={canvasRef}
-          className="w-full h-80 sm:h-96 block cursor-crosshair"
+          className="w-full h-80 sm:h-96 block cursor-crosshair touch-none select-none"
           title="Interactive Physical Simulation Canvas - Drag to rotate 3D view"
           onMouseDown={(e) => {
-            if (mode === 'geometry') {
-              isDraggingGeomRef.current = true;
-              dragStartGeomRef.current = { x: e.clientX, y: e.clientY };
-            }
+            isDraggingCanvasRef.current = true;
+            dragStartCanvasRef.current = { x: e.clientX, y: e.clientY };
           }}
           onMouseMove={(e) => {
-            if (mode === 'geometry' && isDraggingGeomRef.current) {
-              const dx = e.clientX - dragStartGeomRef.current.x;
-              const dy = e.clientY - dragStartGeomRef.current.y;
-              dragStartGeomRef.current = { x: e.clientX, y: e.clientY };
-              geomYawRef.current += dx * 0.01;
-              geomPitchRef.current = Math.max(-1.4, Math.min(1.4, geomPitchRef.current + dy * 0.01));
+            if (isDraggingCanvasRef.current) {
+              const dx = e.clientX - dragStartCanvasRef.current.x;
+              const dy = e.clientY - dragStartCanvasRef.current.y;
+              dragStartCanvasRef.current = { x: e.clientX, y: e.clientY };
+              if (mode === 'geometry') {
+                geomYawRef.current += dx * 0.01;
+                geomPitchRef.current = Math.max(-1.4, Math.min(1.4, geomPitchRef.current + dy * 0.01));
+              } else if (mode === 'saddle_escape') {
+                saddleYawRef.current += dx * 0.01;
+                saddlePitchRef.current = Math.max(-1.3, Math.min(1.3, saddlePitchRef.current + dy * 0.01));
+              } else if (mode === 'superposition') {
+                superpositionYawRef.current += dx * 0.01;
+                superpositionPitchRef.current = Math.max(-1.4, Math.min(1.4, superpositionPitchRef.current + dy * 0.01));
+              }
             }
           }}
           onMouseUp={() => {
-            isDraggingGeomRef.current = false;
+            isDraggingCanvasRef.current = false;
           }}
           onMouseLeave={() => {
-            isDraggingGeomRef.current = false;
+            isDraggingCanvasRef.current = false;
+          }}
+          onTouchStart={(e) => {
+            if (e.touches.length > 0) {
+              isDraggingCanvasRef.current = true;
+              dragStartCanvasRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+          }}
+          onTouchMove={(e) => {
+            if (isDraggingCanvasRef.current && e.touches.length > 0) {
+              const dx = e.touches[0].clientX - dragStartCanvasRef.current.x;
+              const dy = e.touches[0].clientY - dragStartCanvasRef.current.y;
+              dragStartCanvasRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+              if (mode === 'geometry') {
+                geomYawRef.current += dx * 0.01;
+                geomPitchRef.current = Math.max(-1.4, Math.min(1.4, geomPitchRef.current + dy * 0.01));
+              } else if (mode === 'saddle_escape') {
+                saddleYawRef.current += dx * 0.01;
+                saddlePitchRef.current = Math.max(-1.3, Math.min(1.3, saddlePitchRef.current + dy * 0.01));
+              } else if (mode === 'superposition') {
+                superpositionYawRef.current += dx * 0.01;
+                superpositionPitchRef.current = Math.max(-1.4, Math.min(1.4, superpositionPitchRef.current + dy * 0.01));
+              }
+            }
+          }}
+          onTouchEnd={() => {
+            isDraggingCanvasRef.current = false;
           }}
         />
 
@@ -2787,7 +3421,7 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
                 title="Inject Thermal Langevin Perturbation"
               >
                 <Zap className="w-3.5 h-3.5" />
-                Perturb Saddle
+                Perturb Particles
               </button>
             )}
 
@@ -2800,6 +3434,27 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
                 <Sparkles className="w-3.5 h-3.5" />
                 Jump to Cliff
               </button>
+            )}
+
+            {mode === 'superposition' && (
+              <>
+                <button
+                  onClick={handleSampleSuperposition}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs bg-amber-600 hover:bg-amber-500 text-white cursor-pointer transition-all shadow-xs"
+                  title="Sample New Random Sparse Input Activations"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Sample Inputs
+                </button>
+                <button
+                  onClick={() => handleReoptimizeWeights()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs bg-brand-600 hover:bg-brand-500 text-white cursor-pointer transition-all shadow-xs"
+                  title="Re-optimize Polytope Packing Equilibrium"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Re-pack
+                </button>
+              </>
             )}
           </div>
 
@@ -2907,15 +3562,38 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
             {mode === 'saddle_escape' && (
               <div className="flex items-center gap-2 flex-wrap">
                 <span>
-                  Curvature: <strong className="text-cyan-400">λ₂ = -{saddleCurvature.toFixed(2)}</strong>
+                  Highway: <strong className="text-purple-400">α = {residualAlpha.toFixed(2)}</strong>
                 </span>
                 <span>·</span>
                 <span>
-                  Momentum: <strong className="text-purple-400">β = {saddleMomentum.toFixed(2)}</strong>
+                  Dim: <strong className="text-cyan-400">d = {landscapeDim}</strong>
                 </span>
                 <span>·</span>
                 <span>
-                  Noise: <strong className="text-amber-400">σ = {saddleNoise.toFixed(2)}</strong>
+                  Momentum: <strong className="text-emerald-400">β = {saddleMomentum.toFixed(2)}</strong>
+                </span>
+                <span>·</span>
+                <span>
+                  Saddle 2^-d: <strong className="text-amber-400">{(Math.pow(2, -landscapeDim / 6)).toFixed(4)}</strong>
+                </span>
+              </div>
+            )}
+            {mode === 'superposition' && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span>
+                  M = <strong className="text-amber-400">{superpositionM}</strong>
+                </span>
+                <span>·</span>
+                <span>
+                  d = <strong className="text-cyan-400">{superpositionD}</strong>
+                </span>
+                <span>·</span>
+                <span>
+                  Sparsity: <strong className="text-emerald-400">{(1 - superpositionSparsity).toFixed(2)}</strong>
+                </span>
+                <span>·</span>
+                <span>
+                  Threshold: <strong className="text-purple-400">b = {superpositionThreshold.toFixed(2)}</strong>
                 </span>
               </div>
             )}
@@ -3343,69 +4021,151 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
         )}
 
         {mode === 'saddle_escape' && (
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
-            <div className="space-y-1.5">
-              <div className="flex justify-between font-medium">
-                <span className="text-ink-600 dark:text-ink-300">Heavy-Ball Momentum (β):</span>
-                <span className="font-mono text-cyan-400">{saddleMomentum.toFixed(2)}</span>
+          <div className="space-y-3 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {/* Slider 1: Residual Highway Alpha */}
+              <div className="space-y-1.5 p-2.5 rounded-xl bg-ink-100/70 dark:bg-ink-900/60 border border-ink-200/50 dark:border-white/5">
+                <div className="flex justify-between font-medium">
+                  <span className="text-ink-600 dark:text-ink-300">Residual Highway (α):</span>
+                  <span className="font-mono text-purple-400">{residualAlpha.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.0"
+                  max="1.0"
+                  step="0.05"
+                  value={residualAlpha}
+                  onChange={(e) => setResidualAlpha(parseFloat(e.target.value))}
+                  className="w-full accent-purple-500 cursor-pointer"
+                />
+                <div className="flex justify-between text-[9px] text-ink-400 font-mono">
+                  <span>0.0 (VGG Chaos)</span>
+                  <span>1.0 (ResNet Funnel)</span>
+                </div>
               </div>
-              <input
-                type="range"
-                min="0.0"
-                max="0.98"
-                step="0.02"
-                value={saddleMomentum}
-                onChange={(e) => setSaddleMomentum(parseFloat(e.target.value))}
-                className="w-full accent-cyan-500 cursor-pointer"
-              />
+
+              {/* Slider 2: Dimension d (Dauphin Saddle Ratio) */}
+              <div className="space-y-1.5 p-2.5 rounded-xl bg-ink-100/70 dark:bg-ink-900/60 border border-ink-200/50 dark:border-white/5">
+                <div className="flex justify-between font-medium">
+                  <span className="text-ink-600 dark:text-ink-300">Dimension (d):</span>
+                  <span className="font-mono text-cyan-400">d = {landscapeDim}</span>
+                </div>
+                <input
+                  type="range"
+                  min="2"
+                  max="100"
+                  step="2"
+                  value={landscapeDim}
+                  onChange={(e) => {
+                    const d = parseInt(e.target.value, 10);
+                    setLandscapeDim(d);
+                    soundFX.playDimensionCollapseChord(d);
+                  }}
+                  className="w-full accent-cyan-500 cursor-pointer"
+                />
+                <div className="flex justify-between text-[9px] text-ink-400 font-mono">
+                  <span>2 (Saddles Rare)</span>
+                  <span>100 (2^-d Escape)</span>
+                </div>
+              </div>
+
+              {/* Slider 3: Heavy-Ball Momentum */}
+              <div className="space-y-1.5 p-2.5 rounded-xl bg-ink-100/70 dark:bg-ink-900/60 border border-ink-200/50 dark:border-white/5">
+                <div className="flex justify-between font-medium">
+                  <span className="text-ink-600 dark:text-ink-300">Momentum (β):</span>
+                  <span className="font-mono text-emerald-400">{saddleMomentum.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.0"
+                  max="0.98"
+                  step="0.02"
+                  value={saddleMomentum}
+                  onChange={(e) => setSaddleMomentum(parseFloat(e.target.value))}
+                  className="w-full accent-emerald-500 cursor-pointer"
+                />
+                <div className="flex justify-between text-[9px] text-ink-400 font-mono">
+                  <span>0.0 (Massless)</span>
+                  <span>0.98 (Heavy Ball)</span>
+                </div>
+              </div>
+
+              {/* Slider 4: Learning Rate */}
+              <div className="space-y-1.5 p-2.5 rounded-xl bg-ink-100/70 dark:bg-ink-900/60 border border-ink-200/50 dark:border-white/5">
+                <div className="flex justify-between font-medium">
+                  <span className="text-ink-600 dark:text-ink-300">Learning Rate (η):</span>
+                  <span className="font-mono text-amber-400">{saddleLr.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.01"
+                  max="0.25"
+                  step="0.01"
+                  value={saddleLr}
+                  onChange={(e) => setSaddleLr(parseFloat(e.target.value))}
+                  className="w-full accent-amber-500 cursor-pointer"
+                />
+                <div className="flex justify-between text-[9px] text-ink-400 font-mono">
+                  <span>0.01 (Slow)</span>
+                  <span>0.25 (Aggressive)</span>
+                </div>
+              </div>
+
+              {/* Slider 5: Langevin Thermal Noise */}
+              <div className="space-y-1.5 p-2.5 rounded-xl bg-ink-100/70 dark:bg-ink-900/60 border border-ink-200/50 dark:border-white/5">
+                <div className="flex justify-between font-medium">
+                  <span className="text-ink-600 dark:text-ink-300">Langevin Noise (σ):</span>
+                  <span className="font-mono text-pink-400">{saddleNoise.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.0"
+                  max="0.25"
+                  step="0.01"
+                  value={saddleNoise}
+                  onChange={(e) => setSaddleNoise(parseFloat(e.target.value))}
+                  className="w-full accent-pink-500 cursor-pointer"
+                />
+                <div className="flex justify-between text-[9px] text-ink-400 font-mono">
+                  <span>0.0 (Deterministic)</span>
+                  <span>0.25 (Thermal Kick)</span>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <div className="flex justify-between font-medium">
-                <span className="text-ink-600 dark:text-ink-300">Learning Rate (η):</span>
-                <span className="font-mono text-cyan-400">{saddleLr.toFixed(2)}</span>
-              </div>
-              <input
-                type="range"
-                min="0.02"
-                max="0.3"
-                step="0.01"
-                value={saddleLr}
-                onChange={(e) => setSaddleLr(parseFloat(e.target.value))}
-                className="w-full accent-cyan-500 cursor-pointer"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex justify-between font-medium">
-                <span className="text-ink-600 dark:text-ink-300">Langevin Noise (σ):</span>
-                <span className="font-mono text-amber-400">{saddleNoise.toFixed(2)}</span>
-              </div>
-              <input
-                type="range"
-                min="0.0"
-                max="0.3"
-                step="0.02"
-                value={saddleNoise}
-                onChange={(e) => setSaddleNoise(parseFloat(e.target.value))}
-                className="w-full accent-amber-500 cursor-pointer"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex justify-between font-medium">
-                <span className="text-ink-600 dark:text-ink-300">Negative Curvature (|λ₂|):</span>
-                <span className="font-mono text-purple-400">{saddleCurvature.toFixed(2)}</span>
-              </div>
-              <input
-                type="range"
-                min="0.3"
-                max="2.0"
-                step="0.1"
-                value={saddleCurvature}
-                onChange={(e) => setSaddleCurvature(parseFloat(e.target.value))}
-                className="w-full accent-purple-500 cursor-pointer"
-              />
+            {/* Quick Architectural Presets */}
+            <div className="flex items-center gap-2 pt-1 flex-wrap">
+              <span className="text-[11px] font-mono text-ink-400">Architectural Presets:</span>
+              <button
+                onClick={() => {
+                  setResidualAlpha(0.0);
+                  setLandscapeDim(2);
+                  soundFX.playTap();
+                }}
+                className="px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold bg-ink-200 dark:bg-ink-800 text-ink-700 dark:text-ink-300 hover:text-white cursor-pointer"
+              >
+                VGG Plain Net (α=0, d=2: Fractured Chaos)
+              </button>
+              <button
+                onClick={() => {
+                  setResidualAlpha(0.5);
+                  setLandscapeDim(10);
+                  soundFX.playTap();
+                }}
+                className="px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold bg-ink-200 dark:bg-ink-800 text-ink-700 dark:text-ink-300 hover:text-white cursor-pointer"
+              >
+                Half-Skip Transition (α=0.5, d=10)
+              </button>
+              <button
+                onClick={() => {
+                  setResidualAlpha(1.0);
+                  setLandscapeDim(50);
+                  soundFX.playTap();
+                }}
+                className="px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold bg-brand-600/30 text-brand-300 border border-brand-500/40 hover:bg-brand-600 hover:text-white cursor-pointer"
+              >
+                ResNet Identity Highway (α=1.0, d=50: Convex Funnel)
+              </button>
             </div>
           </div>
         )}
@@ -3469,6 +4229,161 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
                 }}
                 className="w-full accent-amber-500 cursor-pointer"
               />
+            </div>
+          </div>
+        )}
+
+        {mode === 'superposition' && (
+          <div className="space-y-3 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Slider 1: Feature Count M */}
+              <div className="space-y-1.5 p-2.5 rounded-xl bg-ink-100/70 dark:bg-ink-900/60 border border-ink-200/50 dark:border-white/5">
+                <div className="flex justify-between font-medium">
+                  <span className="text-ink-600 dark:text-ink-300">Feature Count (M):</span>
+                  <span className="font-mono text-amber-400">M = {superpositionM}</span>
+                </div>
+                <input
+                  type="range"
+                  min="3"
+                  max="24"
+                  step="1"
+                  value={superpositionM}
+                  onChange={(e) => {
+                    const m = parseInt(e.target.value, 10);
+                    setSuperpositionM(m);
+                    handleReoptimizeWeights(m, superpositionD);
+                  }}
+                  className="w-full accent-amber-500 cursor-pointer"
+                />
+                <div className="flex justify-between text-[9px] text-ink-400 font-mono">
+                  <span>3 Features</span>
+                  <span>24 Features</span>
+                </div>
+              </div>
+
+              {/* Slider 2: Bottleneck Dimension d */}
+              <div className="space-y-1.5 p-2.5 rounded-xl bg-ink-100/70 dark:bg-ink-900/60 border border-ink-200/50 dark:border-white/5">
+                <div className="flex justify-between font-medium">
+                  <span className="text-ink-600 dark:text-ink-300">Bottleneck Dim (d):</span>
+                  <span className="font-mono text-cyan-400">d = {superpositionD}</span>
+                </div>
+                <input
+                  type="range"
+                  min="2"
+                  max="8"
+                  step="1"
+                  value={superpositionD}
+                  onChange={(e) => {
+                    const d = parseInt(e.target.value, 10);
+                    setSuperpositionD(d);
+                    handleReoptimizeWeights(superpositionM, d);
+                  }}
+                  className="w-full accent-cyan-500 cursor-pointer"
+                />
+                <div className="flex justify-between text-[9px] text-ink-400 font-mono">
+                  <span>2D (Circle)</span>
+                  <span>8D (Hyper-volume)</span>
+                </div>
+              </div>
+
+              {/* Slider 3: Sparsity p */}
+              <div className="space-y-1.5 p-2.5 rounded-xl bg-ink-100/70 dark:bg-ink-900/60 border border-ink-200/50 dark:border-white/5">
+                <div className="flex justify-between font-medium">
+                  <span className="text-ink-600 dark:text-ink-300">Activation Prob (p):</span>
+                  <span className="font-mono text-emerald-400">p = {superpositionSparsity.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.02"
+                  max="0.60"
+                  step="0.02"
+                  value={superpositionSparsity}
+                  onChange={(e) => {
+                    const s = parseFloat(e.target.value);
+                    setSuperpositionSparsity(s);
+                    const newInputs = sampleSparseInput(superpositionM, s);
+                    superpositionInputsRef.current = newInputs;
+                    const active = newInputs.filter((v) => v > 0).length;
+                    const isClean = active <= Math.max(1, Math.floor(superpositionD * 0.8));
+                    soundFX.playSuperpositionResonance(s, isClean);
+                  }}
+                  className="w-full accent-emerald-500 cursor-pointer"
+                />
+                <div className="flex justify-between text-[9px] text-ink-400 font-mono">
+                  <span>0.02 (98% Sparse)</span>
+                  <span>0.60 (Dense Storm)</span>
+                </div>
+              </div>
+
+              {/* Slider 4: ReLU Threshold b */}
+              <div className="space-y-1.5 p-2.5 rounded-xl bg-ink-100/70 dark:bg-ink-900/60 border border-ink-200/50 dark:border-white/5">
+                <div className="flex justify-between font-medium">
+                  <span className="text-ink-600 dark:text-ink-300">ReLU Threshold (b):</span>
+                  <span className="font-mono text-purple-400">b = {superpositionThreshold.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.00"
+                  max="0.35"
+                  step="0.01"
+                  value={superpositionThreshold}
+                  onChange={(e) => setSuperpositionThreshold(parseFloat(e.target.value))}
+                  className="w-full accent-purple-500 cursor-pointer"
+                />
+                <div className="flex justify-between text-[9px] text-ink-400 font-mono">
+                  <span>0.00 (Pass Through)</span>
+                  <span>0.35 (Heavy Filter)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Geometric Presets */}
+            <div className="flex items-center gap-2 pt-1 flex-wrap">
+              <span className="text-[11px] font-mono text-ink-400">Polytope Presets:</span>
+              <button
+                onClick={() => {
+                  setSuperpositionM(3);
+                  setSuperpositionD(2);
+                  setSuperpositionSparsity(0.33);
+                  handleReoptimizeWeights(3, 2);
+                }}
+                className="px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold bg-ink-200 dark:bg-ink-800 text-ink-700 dark:text-ink-300 hover:text-white cursor-pointer"
+              >
+                2D Mercedes Star (M=3, d=2, 120°)
+              </button>
+              <button
+                onClick={() => {
+                  setSuperpositionM(4);
+                  setSuperpositionD(2);
+                  setSuperpositionSparsity(0.25);
+                  handleReoptimizeWeights(4, 2);
+                }}
+                className="px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold bg-ink-200 dark:bg-ink-800 text-ink-700 dark:text-ink-300 hover:text-white cursor-pointer"
+              >
+                2D Antipodal Pairs (M=4, d=2, w_j = -w_i)
+              </button>
+              <button
+                onClick={() => {
+                  setSuperpositionM(16);
+                  setSuperpositionD(4);
+                  setSuperpositionSparsity(0.08);
+                  handleReoptimizeWeights(16, 4);
+                }}
+                className="px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold bg-brand-600/30 text-brand-300 border border-brand-500/40 hover:bg-brand-600 hover:text-white cursor-pointer"
+              >
+                High-Dim Overcomplete (M=16, d=4, 92% Sparse)
+              </button>
+              <button
+                onClick={() => {
+                  setSuperpositionM(16);
+                  setSuperpositionD(2);
+                  setSuperpositionSparsity(0.50);
+                  handleReoptimizeWeights(16, 2);
+                }}
+                className="px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold bg-rose-600/20 text-rose-300 border border-rose-500/30 hover:bg-rose-600 hover:text-white cursor-pointer"
+              >
+                Interference Collapse (M=16, d=2, 50% Active)
+              </button>
             </div>
           </div>
         )}
