@@ -42,6 +42,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Split,
+  Layout,
   Monitor,
   Maximize2,
   Minimize2,
@@ -85,7 +86,7 @@ export const RoboticsHardwareLabView: React.FC = () => {
     thermalDrift: false,
   });
   const [isCopied, setIsCopied] = useState<boolean>(false);
-  const [workbenchLayout, setWorkbenchLayout] = useState<'split' | 'stacked'>('split');
+  const [workbenchLayout, setWorkbenchLayout] = useState<'wide_canvas' | 'split' | 'stacked'>('wide_canvas');
   const [isStudioMaximized, setIsStudioMaximized] = useState<boolean>(false);
 
   // Listen for Escape key to close maximized studio view cleanly
@@ -862,9 +863,9 @@ export const RoboticsHardwareLabView: React.FC = () => {
       {!isStudioMaximized ? (
         <div className="space-y-6">
         {/* Active Experiment Command Deck */}
-        <div className="bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
+        <div className="bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
           {/* Top Metadata Row: Category & Badges on Left, Prev/Next Stepper on Right */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-200/60 dark:border-white/10 pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-200/60 dark:border-white/10 pb-3.5">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-brand-500/15 text-brand-600 dark:text-brand-400 border border-brand-500/25 uppercase tracking-wider flex items-center gap-1.5">
                 {renderIcon(activeExp.iconName, 'w-3.5 h-3.5')}
@@ -926,20 +927,20 @@ export const RoboticsHardwareLabView: React.FC = () => {
           </div>
 
           {/* Main Title & Physical Premise */}
-          <div className="space-y-1.5">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-ink-900 dark:text-white tracking-tight flex items-center gap-3">
-              <span className="p-2.5 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 shrink-0">
-                {renderIcon(activeExp.iconName, 'w-6 h-6')}
+          <div className="space-y-1">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-ink-900 dark:text-white tracking-tight flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 shrink-0">
+                {renderIcon(activeExp.iconName, 'w-5 h-5')}
               </span>
               <span>{activeExp.title}</span>
             </h2>
-            <p className="text-xs sm:text-sm md:text-base text-ink-600 dark:text-ink-300 leading-relaxed max-w-4xl pt-0.5">
+            <p className="text-xs sm:text-sm text-ink-600 dark:text-ink-300 leading-relaxed max-w-4xl pt-0.5">
               {activeExp.subtitle}
             </p>
           </div>
 
           {/* Silicon & Physical Specs Chip Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-ink-200/40 dark:border-white/5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 border-t border-ink-200/40 dark:border-white/5">
             <div className="p-2.5 rounded-xl bg-ink-50 dark:bg-ink-950/70 border border-ink-200/60 dark:border-white/5 space-y-0.5">
               <span className="text-[10px] font-mono text-ink-500 dark:text-ink-400 uppercase tracking-wider block">Target MCU</span>
               <span className="text-xs font-bold text-ink-900 dark:text-white font-mono">ATmega328P (16 MHz)</span>
@@ -964,8 +965,8 @@ export const RoboticsHardwareLabView: React.FC = () => {
         </div>
 
         {/* Primary Studio Workbench Mode Command Deck (5 Distinct Studio Modes) */}
-        <div className="p-2.5 sm:p-3 rounded-3xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 shadow-sm space-y-2.5">
-          <div className="px-2 pt-1 pb-0.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="p-3 sm:p-3.5 rounded-3xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 shadow-sm space-y-2">
+          <div className="px-1.5 pt-0.5 pb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="space-y-0.5">
               <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-ink-500 dark:text-ink-400 flex items-center gap-1.5">
                 <Gauge className="w-3.5 h-3.5 text-brand-500" />
@@ -1107,8 +1108,23 @@ export const RoboticsHardwareLabView: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                {/* Layout Toggle Buttons: Split vs Stacked */}
+                {/* Layout Toggle Buttons: Wide Canvas (70/30) vs Balanced (60/40) vs Stacked */}
                 <div className="flex items-center p-1 bg-ink-100 dark:bg-ink-950 rounded-xl border border-ink-200 dark:border-white/10 text-xs font-mono">
+                  <button
+                    onClick={() => {
+                      setWorkbenchLayout('wide_canvas');
+                      soundFX.playTap();
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                      workbenchLayout === 'wide_canvas'
+                        ? 'bg-brand-500 text-white shadow-xs'
+                        : 'text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+                    }`}
+                    title="Canvas Wide (70/30): 70% Breadboard on left + 30% Wire Sequencer Dock on right"
+                  >
+                    <Layout className="w-3.5 h-3.5" />
+                    <span>Canvas Wide (70/30)</span>
+                  </button>
                   <button
                     onClick={() => {
                       setWorkbenchLayout('split');
@@ -1119,10 +1135,10 @@ export const RoboticsHardwareLabView: React.FC = () => {
                         ? 'bg-brand-500 text-white shadow-xs'
                         : 'text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
                     }`}
-                    title="Split View (Side-by-Side): 60% Breadboard on left + 40% Wire Sequencer on right with zero vertical scrolling"
+                    title="Balanced (60/40): 60% Breadboard on left + 40% Wire Sequencer on right"
                   >
                     <Split className="w-3.5 h-3.5" />
-                    <span>Split View (Side-by-Side)</span>
+                    <span>Balanced (60/40)</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1137,7 +1153,7 @@ export const RoboticsHardwareLabView: React.FC = () => {
                     title="Stacked View: Full width breadboard canvas + Full width project builder below"
                   >
                     <Layers className="w-3.5 h-3.5" />
-                    <span>Stacked View</span>
+                    <span>Stacked</span>
                   </button>
                 </div>
 
@@ -1169,11 +1185,76 @@ export const RoboticsHardwareLabView: React.FC = () => {
               </div>
             </div>
 
-            {/* Build Area: Split Side-by-Side or Stacked */}
-            {workbenchLayout === 'split' ? (
+            {/* Build Area: Canvas Wide (70/30), Balanced (60/40), or Stacked */}
+            {workbenchLayout === 'wide_canvas' ? (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                {/* 70% Breadboard on Left (lg:col-span-8 xl:col-span-8) */}
+                <div className="lg:col-span-8 xl:col-span-8 h-[600px] lg:h-[700px] xl:h-[760px] flex flex-col min-h-0 space-y-3">
+                  <WokwiVirtualBreadboard
+                    experimentId={activeExp.id}
+                    activeWiringStep={currentWiringStep}
+                    onStepChange={(step) => setCurrentWiringStep(step)}
+                    interactive={true}
+                    showControls={true}
+                    embeddedMode={true}
+                    isMaximized={false}
+                    fitHeight={true}
+                    className="w-full h-full shadow-2xl"
+                  />
+                </div>
+
+                {/* 30% Wire Sequencer Dock on Right (lg:col-span-4 xl:col-span-4) */}
+                <div className="lg:col-span-4 xl:col-span-4 h-[600px] lg:h-[700px] xl:h-[760px] flex flex-col min-h-0">
+                  <WokwiProjectBuilder
+                    experimentId={activeExp.id}
+                    currentWiringStep={currentWiringStep}
+                    onWiringStepChange={(step) => setCurrentWiringStep(step)}
+                    onExperimentChange={(id) => {
+                      setSelectedExpId(id);
+                      setCurrentWiringStep(1);
+                    }}
+                    layout="split"
+                    isMaximized={false}
+                    className="h-full flex flex-col min-h-0"
+                  />
+                </div>
+              </div>
+            ) : workbenchLayout === 'split' ? (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
                 {/* 60% Breadboard on Left (lg:col-span-7) */}
-                <div className="lg:col-span-7 space-y-3">
+                <div className="lg:col-span-7 h-[600px] lg:h-[700px] xl:h-[760px] flex flex-col min-h-0 space-y-3">
+                  <WokwiVirtualBreadboard
+                    experimentId={activeExp.id}
+                    activeWiringStep={currentWiringStep}
+                    onStepChange={(step) => setCurrentWiringStep(step)}
+                    interactive={true}
+                    showControls={true}
+                    embeddedMode={true}
+                    isMaximized={false}
+                    fitHeight={false}
+                    className="w-full shadow-2xl"
+                  />
+                </div>
+
+                {/* 40% Wire Sequencer on Right (lg:col-span-5) */}
+                <div className="lg:col-span-5 h-[600px] lg:h-[700px] xl:h-[760px] flex flex-col min-h-0">
+                  <WokwiProjectBuilder
+                    experimentId={activeExp.id}
+                    currentWiringStep={currentWiringStep}
+                    onWiringStepChange={(step) => setCurrentWiringStep(step)}
+                    onExperimentChange={(id) => {
+                      setSelectedExpId(id);
+                      setCurrentWiringStep(1);
+                    }}
+                    layout="split"
+                    isMaximized={false}
+                    className="h-full flex flex-col min-h-0"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="w-full">
                   <WokwiVirtualBreadboard
                     experimentId={activeExp.id}
                     activeWiringStep={currentWiringStep}
@@ -1185,35 +1266,6 @@ export const RoboticsHardwareLabView: React.FC = () => {
                     className="w-full shadow-2xl"
                   />
                 </div>
-
-                {/* 40% Wire Sequencer on Right (lg:col-span-5) */}
-                <div className="lg:col-span-5">
-                  <WokwiProjectBuilder
-                    experimentId={activeExp.id}
-                    currentWiringStep={currentWiringStep}
-                    onWiringStepChange={(step) => setCurrentWiringStep(step)}
-                    onExperimentChange={(id) => {
-                      setSelectedExpId(id);
-                      setCurrentWiringStep(1);
-                    }}
-                    layout="split"
-                    isMaximized={false}
-                    className="h-full"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <WokwiVirtualBreadboard
-                  experimentId={activeExp.id}
-                  activeWiringStep={currentWiringStep}
-                  onStepChange={(step) => setCurrentWiringStep(step)}
-                  interactive={true}
-                  showControls={true}
-                  isMaximized={false}
-                  fitHeight={false}
-                  className="w-full shadow-2xl"
-                />
                 <WokwiProjectBuilder
                   experimentId={activeExp.id}
                   currentWiringStep={currentWiringStep}
@@ -1294,8 +1346,8 @@ export const RoboticsHardwareLabView: React.FC = () => {
       {/* IMMERSIVE FULL-SCREEN MAXIMIZED STUDIO MODAL */}
       {/* ================================================================= */}
       {isStudioMaximized && (
-        <div className="fixed inset-0 z-50 bg-[#090d16] flex flex-col p-3 sm:p-5 backdrop-blur-2xl overflow-hidden text-ink-100 animate-fade-in">
-          {/* Top Bar: Experiment Dropdown, 5 Mode Pills, Mode 1 Layout Toggle + Step Badge, Close / Minimize */}
+        <div className="fixed inset-0 z-50 bg-[#070b12] flex flex-col p-3 sm:p-5 backdrop-blur-3xl overflow-hidden text-ink-100 animate-fade-in">
+          {/* Top Bar: Experiment Dropdown, 5 Mode Pills, Mode 1 Layout Switcher + Step Badge, Close / Minimize */}
           <div className="flex flex-wrap items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-white/10 shrink-0">
             {/* Left: Experiment Icon, Dropdown Selector (1 to 8), Prev/Next Stepper */}
             <div className="flex items-center gap-2.5 min-w-0">
@@ -1371,11 +1423,27 @@ export const RoboticsHardwareLabView: React.FC = () => {
               })}
             </div>
 
-            {/* Right: Mode 1 Controls (Split/Stacked + Step Badge) & Close/Minimize Button */}
+            {/* Right: Mode 1 Layout Switcher (Wide Canvas / Balanced / Stacked) + Step Badge & Close/Minimize Button */}
             <div className="flex items-center gap-2 shrink-0">
               {studioMode === 'breadboard_build' && (
                 <>
                   <div className="flex items-center p-0.5 bg-ink-950/80 rounded-xl border border-white/10 text-xs font-mono">
+                    <button
+                      onClick={() => {
+                        setWorkbenchLayout('wide_canvas');
+                        soundFX.playTap();
+                      }}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                        workbenchLayout === 'wide_canvas'
+                          ? 'bg-brand-500 text-white shadow-xs'
+                          : 'text-ink-400 hover:text-white'
+                      }`}
+                      title="Wide Canvas (70/30): 70% Breadboard on left + 30% Wire Sequencer on right"
+                    >
+                      <Layout className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Wide Canvas</span>
+                      <span className="sm:hidden">Wide</span>
+                    </button>
                     <button
                       onClick={() => {
                         setWorkbenchLayout('split');
@@ -1386,10 +1454,11 @@ export const RoboticsHardwareLabView: React.FC = () => {
                           ? 'bg-brand-500 text-white shadow-xs'
                           : 'text-ink-400 hover:text-white'
                       }`}
-                      title="Split View (Side-by-Side)"
+                      title="Balanced Split (60/40)"
                     >
                       <Split className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Split</span>
+                      <span className="hidden sm:inline">Balanced Split</span>
+                      <span className="sm:hidden">Split</span>
                     </button>
                     <button
                       onClick={() => {
@@ -1407,7 +1476,7 @@ export const RoboticsHardwareLabView: React.FC = () => {
                       <span className="hidden sm:inline">Stacked</span>
                     </button>
                   </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-1 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap hidden lg:inline-flex">
+                  <span className="text-[10px] font-mono font-bold px-2 py-1 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap hidden xl:inline-flex">
                     Step #{currentWiringStep} Active
                   </span>
                 </>
@@ -1434,19 +1503,53 @@ export const RoboticsHardwareLabView: React.FC = () => {
           <div className="flex-1 min-h-0 w-full overflow-hidden pt-3 sm:pt-4">
             {/* Mode 1: Virtual Breadboard & Project Builder */}
             {studioMode === 'breadboard_build' && (
-              workbenchLayout === 'split' ? (
+              workbenchLayout === 'wide_canvas' ? (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-full min-h-0">
-                  {/* 60% Breadboard Canvas on Left (lg:col-span-7) */}
-                  <div className="lg:col-span-7 h-full min-h-0 flex flex-col overflow-y-auto custom-scrollbar pr-1">
+                  {/* 70% Breadboard Canvas on Left (lg:col-span-8 xl:col-span-8) */}
+                  <div className="lg:col-span-8 xl:col-span-8 h-full min-h-0 flex flex-col overflow-hidden">
                     <WokwiVirtualBreadboard
                       experimentId={activeExp.id}
                       activeWiringStep={currentWiringStep}
                       onStepChange={(step) => setCurrentWiringStep(step)}
                       interactive={true}
                       showControls={true}
+                      embeddedMode={true}
                       isMaximized={true}
                       fitHeight={true}
-                      className="w-full shadow-2xl shrink-0"
+                      className="w-full h-full shadow-2xl shrink-0"
+                    />
+                  </div>
+
+                  {/* 30% Wire Sequencer on Right (lg:col-span-4 xl:col-span-4) */}
+                  <div className="lg:col-span-4 xl:col-span-4 h-full min-h-0 flex flex-col overflow-hidden">
+                    <WokwiProjectBuilder
+                      experimentId={activeExp.id}
+                      currentWiringStep={currentWiringStep}
+                      onWiringStepChange={(step) => setCurrentWiringStep(step)}
+                      onExperimentChange={(id) => {
+                        setSelectedExpId(id);
+                        setCurrentWiringStep(1);
+                      }}
+                      layout="split"
+                      isMaximized={true}
+                      className="h-full flex flex-col min-h-0"
+                    />
+                  </div>
+                </div>
+              ) : workbenchLayout === 'split' ? (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-full min-h-0">
+                  {/* 60% Breadboard Canvas on Left (lg:col-span-7) */}
+                  <div className="lg:col-span-7 h-full min-h-0 flex flex-col overflow-hidden">
+                    <WokwiVirtualBreadboard
+                      experimentId={activeExp.id}
+                      activeWiringStep={currentWiringStep}
+                      onStepChange={(step) => setCurrentWiringStep(step)}
+                      interactive={true}
+                      showControls={true}
+                      embeddedMode={true}
+                      isMaximized={true}
+                      fitHeight={true}
+                      className="w-full h-full shadow-2xl shrink-0"
                     />
                   </div>
 
@@ -1467,7 +1570,7 @@ export const RoboticsHardwareLabView: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="h-full min-h-0 overflow-y-auto space-y-6 custom-scrollbar pr-2">
+                <div className="h-full min-h-0 overflow-y-auto space-y-6 custom-scrollbar pr-2 pb-6">
                   <WokwiVirtualBreadboard
                     experimentId={activeExp.id}
                     activeWiringStep={currentWiringStep}

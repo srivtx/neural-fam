@@ -54,6 +54,7 @@ export interface WokwiVirtualBreadboardProps {
   showControls?: boolean;
   isMaximized?: boolean;
   fitHeight?: boolean;
+  embeddedMode?: boolean;
   onStimulusChange?: (stimulus: InteractiveStimulusState) => void;
 }
 
@@ -363,6 +364,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
   showControls = true,
   isMaximized = false,
   fitHeight = false,
+  embeddedMode = false,
   onStimulusChange,
 }) => {
   // Unique sanitized ID prefix for SVG defs to avoid collisions across multiple instances
@@ -389,6 +391,111 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 20, y: 10 });
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const panStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Refs for zero-latency focal zoom without stale closures
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+  const panRef = useRef(pan);
+  panRef.current = pan;
+
+  // Wire Visibility & Ghosting Mode: 'all' or 'active_glow'
+  const [wireMode, setWireMode] = useState<'all' | 'active_glow'>('all');
+
+  // Collapsible bottom stimulus drawer
+  const [stimulusDrawerOpen, setStimulusDrawerOpen] = useState<boolean>(true);
+
+  // Collapsible step details (step navigation & engineering tips)
+  const [showStepDetails, setShowStepDetails] = useState<boolean>(!embeddedMode);
+
+  useEffect(() => {
+    if (embeddedMode !== undefined) {
+      setShowStepDetails(!embeddedMode);
+    }
+  }, [embeddedMode]);
+
+  // Intelligent Auto-Fit to Screen
+  // Circuit element bounds: Arduino: [40..380, 260..500], Breadboard: [420..1040, 260..490], Modules: [480..1260, 80..520]
+  // Overall circuit bounding box: X in [20, 1280] (width ~1260), Y in [40, 520] (height ~480)
+  const fitToScreen = useCallback(() => {
+    const container = containerRef.current || svgRef.current?.parentElement;
+    if (!container) return;
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    if (!width || !height) return;
+
+    const padding = 40;
+    const targetWidth = 1280;
+    const targetHeight = 520;
+    const scaleX = (width - padding * 2) / targetWidth;
+    const scaleY = (height - padding * 2) / targetHeight;
+    const bestZoom = Math.min(scaleX, scaleY, 1.25);
+    const panX = (width - targetWidth * bestZoom) / 2;
+    const panY = (height - targetHeight * bestZoom) / 2;
+    setZoom(Math.max(0.2, bestZoom));
+    setPan({ x: panX, y: panY });
+  }, []);
+
+  // Trigger fitToScreen() on initial mount and when fitHeight or isMaximized toggles
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fitToScreen();
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [fitToScreen, fitHeight, isMaximized, experimentId]);
+
+  // Non-passive wheel event listener on container to allow preventDefault without intervention warnings
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const onNativeWheel = (e: WheelEvent) => {
+      e.preventDefault();
+    };
+    container.addEventListener('wheel', onNativeWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', onNativeWheel);
+    };
+  }, []);
+
+  // Mouse wheel & trackpad pinch-to-zoom with cursor focal point tracking
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const rect = containerRef.current?.getBoundingClientRect() || svgRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const factor = e.deltaY < 0 ? 1.08 : 0.92;
+    const curZoom = zoomRef.current;
+    const curPan = panRef.current;
+    const newZoom = Math.min(3.0, Math.max(0.2, curZoom * factor));
+    if (Math.abs(newZoom - curZoom) < 0.0001) return;
+
+    // Keep point under mouse cursor stationary
+    const newPanX = mouseX - (mouseX - curPan.x) * (newZoom / curZoom);
+    const newPanY = mouseY - (mouseY - curPan.y) * (newZoom / curZoom);
+
+    setZoom(newZoom);
+    setPan({ x: newPanX, y: newPanY });
+  }, []);
+
+  // Keyboard shortcuts when canvas container is focused
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      setZoom((z) => Math.min(3.0, z * 1.15));
+    } else if (e.key === '-' || e.key === '_') {
+      e.preventDefault();
+      setZoom((z) => Math.max(0.2, z * 0.85));
+    } else if (e.key === '0') {
+      e.preventDefault();
+      setZoom(1.0);
+    } else if (e.key === 'f' || e.key === 'F') {
+      e.preventDefault();
+      fitToScreen();
+    }
+  }, [fitToScreen]);
 
   // Sound state
   const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
@@ -417,7 +524,6 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
 
   // Dragging in SVG canvas (for stimuli)
   const [draggingTarget, setDraggingTarget] = useState<string | null>(null);
-  const svgRef = useRef<SVGSVGElement | null>(null);
 
   // Sync stimulus change
   useEffect(() => {
@@ -741,15 +847,47 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
           </div>
         </div>
 
-        {/* View Controls & Sound */}
+        {/* View Controls, Mode Toggles & Sound */}
         <div className="flex items-center gap-2">
+          {/* Wire Visibility & Ghosting Mode Toggle */}
+          <button
+            onClick={() => setWireMode((m) => (m === 'all' ? 'active_glow' : 'all'))}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all border cursor-pointer ${
+              wireMode === 'active_glow'
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs ring-1 ring-amber-400/20'
+                : 'bg-ink-800/80 text-ink-300 hover:text-white border-ink-700'
+            }`}
+            title={wireMode === 'active_glow' ? 'Mode: Active Wire Glow (Inactive wires dimmed)' : 'Mode: All Wires'}
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">Wire Mode:</span>
+            <span>{wireMode === 'active_glow' ? 'Active Wire Glow' : 'All Wires'}</span>
+          </button>
+
+          {/* Toggle Step Details & Engineering Tips (collapsible chrome) */}
+          {showControls && (
+            <button
+              onClick={() => setShowStepDetails((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all border cursor-pointer ${
+                showStepDetails
+                  ? 'bg-ink-800 text-brand-300 border-brand-500/30'
+                  : 'bg-ink-900/80 text-ink-400 hover:text-white border-ink-800'
+              }`}
+              title={showStepDetails ? 'Collapse Wiring Nav & Tip Card' : 'Expand Wiring Nav & Tip Card'}
+            >
+              <Layers className="w-3.5 h-3.5 text-brand-400" />
+              <span className="hidden sm:inline">Steps & Tips</span>
+              <span className="text-[10px]">{showStepDetails ? '▲' : '▼'}</span>
+            </button>
+          )}
+
           {/* Audio toggle */}
           <button
             onClick={() => {
               setSoundEnabled(!soundEnabled);
               if (!soundEnabled) playTone(1200, 100);
             }}
-            className={`p-2 rounded-xl text-xs font-mono font-bold transition-all border ${
+            className={`p-2 rounded-xl text-xs font-mono font-bold transition-all border cursor-pointer ${
               soundEnabled
                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-xs'
                 : 'bg-ink-800/80 text-ink-400 border-ink-700 hover:text-white'
@@ -758,43 +896,13 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
           >
             {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>
-
-          {/* Zoom In */}
-          <button
-            onClick={() => setZoom((z) => Math.min(2.0, z + 0.1))}
-            className="p-2 rounded-xl bg-ink-800/80 text-ink-300 hover:text-white border border-ink-700 transition-colors"
-            title="Zoom In"
-          >
-            <ZoomIn className="w-4 h-4" />
-          </button>
-
-          {/* Zoom Out */}
-          <button
-            onClick={() => setZoom((z) => Math.max(0.4, z - 0.1))}
-            className="p-2 rounded-xl bg-ink-800/80 text-ink-300 hover:text-white border border-ink-700 transition-colors"
-            title="Zoom Out"
-          >
-            <ZoomOut className="w-4 h-4" />
-          </button>
-
-          {/* Reset Zoom */}
-          <button
-            onClick={() => {
-              setZoom(0.92);
-              setPan({ x: 20, y: 10 });
-            }}
-            className="p-2 rounded-xl bg-ink-800/80 text-ink-300 hover:text-white border border-ink-700 transition-colors"
-            title="Reset Viewport"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
       {/* -------------------------------------------------------------------- */}
       {/* STEP-BY-STEP WIRING NAVIGATION BAR */}
       {/* -------------------------------------------------------------------- */}
-      {showControls && (
+      {showControls && showStepDetails && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-2.5 bg-ink-900/60 border-b border-ink-800/80 text-xs font-mono z-10">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-ink-400 font-semibold">Wiring Mode:</span>
@@ -852,56 +960,123 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
       {/* -------------------------------------------------------------------- */}
       {/* ACTIVE STEP TIP CARD (FLOATING BANNER) */}
       {/* -------------------------------------------------------------------- */}
-      {activeWiringStep === -1 ? (
-        <div className="mx-4 mt-3 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs z-10 animate-fade-in">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <div>
-              <span className="font-bold text-white text-sm">Circuit Fully Wired & Operational</span>
-              <p className="text-emerald-300/80 text-xs font-mono">
-                All {circuit.wires.length} jumper connections active. 60 FPS real-time simulation running.
+      {showControls && showStepDetails && (
+        activeWiringStep === -1 ? (
+          <div className="mx-4 mt-3 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs z-10 animate-fade-in">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div>
+                <span className="font-bold text-white text-sm">Circuit Fully Wired & Operational</span>
+                <p className="text-emerald-300/80 text-xs font-mono">
+                  All {circuit.wires.length} jumper connections active. 60 FPS real-time simulation running.
+                </p>
+              </div>
+            </div>
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-ink-950/80 border border-emerald-500/20 text-[11px] font-mono text-emerald-300">
+              <Sparkles className="w-3 h-3 text-emerald-400" />
+              <span>Ready for Stimulus Testing</span>
+            </div>
+          </div>
+        ) : activeStepDetails ? (
+          <div className="mx-4 mt-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-brand-500/10 to-transparent border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs z-10 animate-fade-in">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono font-bold text-[10px]">
+                  STEP {activeStepDetails.stepIndex + 1} OF {circuit.wiringSteps.length}
+                </span>
+                <span className="font-bold text-white text-sm">{activeStepDetails.title}</span>
+              </div>
+              <p className="text-ink-300 text-xs font-mono">{activeStepDetails.instruction}</p>
+            </div>
+
+            <div className="shrink-0 p-2.5 rounded-xl bg-ink-950/80 border border-white/5 space-y-1 sm:max-w-xs">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-amber-400 font-bold uppercase">
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                <span>Engineering Audit</span>
+              </div>
+              <p className="text-[11px] text-ink-300 leading-snug">
+                {activeStepDetails.engineeringTip}
               </p>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-ink-950/80 border border-emerald-500/20 text-[11px] font-mono text-emerald-300">
-            <Sparkles className="w-3 h-3 text-emerald-400" />
-            <span>Ready for Stimulus Testing</span>
-          </div>
-        </div>
-      ) : activeStepDetails ? (
-        <div className="mx-4 mt-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-brand-500/10 to-transparent border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs z-10 animate-fade-in">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono font-bold text-[10px]">
-                STEP {activeStepDetails.stepIndex + 1} OF {circuit.wiringSteps.length}
-              </span>
-              <span className="font-bold text-white text-sm">{activeStepDetails.title}</span>
-            </div>
-            <p className="text-ink-300 text-xs font-mono">{activeStepDetails.instruction}</p>
-          </div>
-
-          <div className="shrink-0 p-2.5 rounded-xl bg-ink-950/80 border border-white/5 space-y-1 sm:max-w-xs">
-            <div className="flex items-center gap-1.5 text-[10px] font-mono text-amber-400 font-bold uppercase">
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              <span>Engineering Audit</span>
-            </div>
-            <p className="text-[11px] text-ink-300 leading-snug">
-              {activeStepDetails.engineeringTip}
-            </p>
-          </div>
-        </div>
-      ) : null}
+        ) : null
+      )}
 
       {/* -------------------------------------------------------------------- */}
       {/* INTERACTIVE WORKBENCH SVG CANVAS */}
       {/* -------------------------------------------------------------------- */}
       <div
+        ref={containerRef}
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+        onWheel={handleWheel}
         className={`relative w-full ${
           fitHeight || isMaximized
-            ? 'flex-1 min-h-[360px] h-full'
-            : 'h-[480px] sm:h-[580px] lg:h-[640px]'
-        } overflow-hidden bg-[#0d1117] cursor-grab active:cursor-grabbing touch-none`}
+            ? 'flex-1 min-h-[500px] h-full'
+            : 'h-[560px] md:h-[640px] lg:h-[720px] xl:h-[780px]'
+        } overflow-hidden bg-[#0d1117] cursor-grab active:cursor-grabbing touch-none outline-none focus:ring-1 focus:ring-brand-500/30 select-none`}
       >
+        {/* Floating CAD Zoom & Viewport Controller HUD */}
+        <div className="absolute top-3 right-3 z-20 flex items-center gap-1 p-1 rounded-2xl bg-ink-950/85 backdrop-blur-md border border-ink-800/90 text-xs font-mono shadow-2xl">
+          {/* Zoom Out */}
+          <button
+            onClick={() => setZoom((z) => Math.max(0.2, z * 0.88))}
+            className="p-1.5 rounded-xl hover:bg-ink-800 text-ink-300 hover:text-white transition-colors cursor-pointer"
+            title="Zoom Out (-)"
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+
+          {/* Live Zoom Percentage (Click to set 100%) */}
+          <button
+            onClick={() => setZoom(1.0)}
+            className="px-2 py-1 rounded-xl hover:bg-ink-800 text-ink-200 hover:text-white font-bold transition-colors cursor-pointer"
+            title="Click to Set 100% (or press 0)"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+
+          {/* Zoom In */}
+          <button
+            onClick={() => setZoom((z) => Math.min(3.0, z * 1.12))}
+            className="p-1.5 rounded-xl hover:bg-ink-800 text-ink-300 hover:text-white transition-colors cursor-pointer"
+            title="Zoom In (+)"
+          >
+            <ZoomIn className="w-4 h-4" />
+          </button>
+
+          <div className="h-4 w-px bg-ink-800 mx-0.5" />
+
+          {/* Auto-Fit to Screen */}
+          <button
+            onClick={fitToScreen}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-ink-800/60 hover:bg-ink-700 text-ink-200 hover:text-white font-bold transition-colors cursor-pointer"
+            title="Auto-Fit to Screen (F)"
+          >
+            <Maximize2 className="w-3.5 h-3.5 text-brand-400" />
+            <span className="text-[11px]">Fit</span>
+          </button>
+
+          {/* Reset Orientation */}
+          <button
+            onClick={() => {
+              setZoom(0.92);
+              setPan({ x: 20, y: 10 });
+            }}
+            className="flex items-center gap-1 px-2 py-1 rounded-xl hover:bg-ink-800 text-ink-300 hover:text-white transition-colors cursor-pointer"
+            title="Reset to Default (0)"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span className="text-[11px] hidden sm:inline">Reset</span>
+          </button>
+
+          {/* Mini Badge */}
+          <div className="hidden md:flex items-center gap-1.5 px-2 py-1 text-[10px] text-ink-400 font-mono border-l border-ink-800">
+            <Move className="w-3 h-3 text-ink-500" />
+            <span>Scroll/Pinch to Zoom • Drag to Pan</span>
+          </div>
+        </div>
+
         <svg
           ref={svgRef}
           width="100%"
@@ -1767,25 +1942,42 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                 activeWiringStep !== -1 &&
                 wire.stepIndex === activeWiringStep;
 
+              const isDimmed =
+                wireMode === 'active_glow' &&
+                activeWiringStep !== -1 &&
+                activeWiringStep !== undefined &&
+                !isActiveWire;
+              const wireOpacity = isDimmed ? 0.2 : 1.0;
+
               return (
-                <g key={wire.id}>
+                <g
+                  key={wire.id}
+                  opacity={wireOpacity}
+                  className={`transition-opacity duration-300 ${
+                    isActiveWire && wireMode === 'active_glow'
+                      ? 'filter drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]'
+                      : ''
+                  }`}
+                >
                   {/* Layer 1: Ambient Drop Shadow Under Wire */}
-                  <path
-                    d={d}
-                    fill="none"
-                    stroke="#000000"
-                    strokeWidth="5"
-                    strokeOpacity="0.45"
-                    strokeLinecap="round"
-                    transform="translate(2, 4)"
-                  />
+                  {!isDimmed && (
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke="#000000"
+                      strokeWidth="5"
+                      strokeOpacity="0.45"
+                      strokeLinecap="round"
+                      transform="translate(2, 4)"
+                    />
+                  )}
 
                   {/* Layer 2: Main Insulation Jacket Tube */}
                   <path
                     d={d}
                     fill="none"
                     stroke={wire.color}
-                    strokeWidth="3.6"
+                    strokeWidth={isActiveWire && wireMode === 'active_glow' ? '4.2' : '3.6'}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
@@ -1796,7 +1988,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                     fill="none"
                     stroke="#ffffff"
                     strokeWidth="1.1"
-                    strokeOpacity="0.45"
+                    strokeOpacity={isDimmed ? 0.1 : 0.45}
                     strokeLinecap="round"
                   />
 
@@ -1806,7 +1998,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                       d={d}
                       fill="none"
                       stroke="#ffffff"
-                      strokeWidth="3.8"
+                      strokeWidth={wireMode === 'active_glow' ? '4.5' : '3.8'}
                       strokeDasharray="10 8"
                       filter={`url(#neonPulseGlow_${uid})`}
                       className="animate-pulse"
@@ -1822,9 +2014,23 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
 
                   {/* Terminal Pin Shrouds / Jumper Boots at wire ends */}
                   {/* Start Terminal */}
-                  <circle cx={fromCoord.x} cy={fromCoord.y} r="3" fill="#111827" stroke="#e2e8f0" strokeWidth="0.8" />
+                  <circle
+                    cx={fromCoord.x}
+                    cy={fromCoord.y}
+                    r={isActiveWire && wireMode === 'active_glow' ? '3.8' : '3'}
+                    fill="#111827"
+                    stroke={isActiveWire && wireMode === 'active_glow' ? '#fbbf24' : '#e2e8f0'}
+                    strokeWidth={isActiveWire && wireMode === 'active_glow' ? '1.5' : '0.8'}
+                  />
                   {/* End Terminal */}
-                  <circle cx={toCoord.x} cy={toCoord.y} r="3" fill="#111827" stroke="#e2e8f0" strokeWidth="0.8" />
+                  <circle
+                    cx={toCoord.x}
+                    cy={toCoord.y}
+                    r={isActiveWire && wireMode === 'active_glow' ? '3.8' : '3'}
+                    fill="#111827"
+                    stroke={isActiveWire && wireMode === 'active_glow' ? '#fbbf24' : '#e2e8f0'}
+                    strokeWidth={isActiveWire && wireMode === 'active_glow' ? '1.5' : '0.8'}
+                  />
                 </g>
               );
             })}
@@ -1902,9 +2108,22 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
           </g>
         </svg>
 
-        {/* BOTTOM HUD FLOATING SLIDERS FOR DIRECT CONTROL */}
+        {/* BOTTOM HUD COLLAPSIBLE STIMULUS DRAWER */}
         {interactive && (
-          <div className="absolute bottom-3 left-4 right-4 flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-ink-950/85 backdrop-blur-md border border-ink-800 text-xs font-mono z-20">
+          <div className="absolute bottom-3 left-4 right-4 z-20 flex flex-col items-start transition-all">
+            {/* Drawer Header Toggle Button */}
+            <button
+              onClick={() => setStimulusDrawerOpen((prev) => !prev)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-ink-950/90 hover:bg-ink-900 backdrop-blur-md border border-ink-800 text-xs font-mono text-ink-300 hover:text-white shadow-xl cursor-pointer transition-all mb-1.5"
+              title={stimulusDrawerOpen ? "Collapse Stimulus Drawer" : "Expand Stimulus Drawer"}
+            >
+              <span>🎛️ Live Stimuli & Hardware Controls ({circuit.experimentId.replace('exp_', '')})</span>
+              <span className="text-[10px] text-ink-400 font-bold">{stimulusDrawerOpen ? '▼' : '▲'}</span>
+            </button>
+
+            {/* Collapsible Content */}
+            {stimulusDrawerOpen && (
+              <div className="w-full flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-ink-950/90 backdrop-blur-md border border-ink-800 text-xs font-mono shadow-2xl animate-fade-in">
             {/* 1. PIR Sensitivity / Target Distance + Motion Pulse */}
             {circuit.experimentId === 'exp_pir_servo_buzzer' && (
               <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
@@ -2267,6 +2486,8 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
           </div>
         )}
       </div>
+    )}
+  </div>
 
       {/* -------------------------------------------------------------------- */}
       {/* FOOTER WIRING REFERENCE & COLOR CODE LEGEND */}
