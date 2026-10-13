@@ -36,6 +36,7 @@ import {
   ChevronDown,
   Info,
   CornerDownLeft,
+  Cpu,
 } from 'lucide-react';
 import { RoboticsExperiment } from '../data/roboticsExperimentsData';
 import { HardwareFaults, RoboticsHardwareSimCanvas } from './RoboticsHardwareSimCanvas';
@@ -55,6 +56,24 @@ interface LogEntry {
   timestamp: string;
   type: 'telemetry' | 'warn' | 'fault' | 'cal' | 'cmd' | 'reply' | 'system';
   content: string;
+}
+
+export interface AtmegaBitDef {
+  name: string;
+  bitIndex: number;
+  value: number;
+  description: string;
+}
+
+export interface AtmegaRegisterDef {
+  name: string;
+  category: 'timer' | 'adc' | 'gpio' | 'status';
+  address: string;
+  decimalValue: number;
+  hexValue: string;
+  description: string;
+  siliconPurpose: string;
+  bits: AtmegaBitDef[];
 }
 
 const FAULT_DEFINITIONS: Array<{
@@ -145,11 +164,27 @@ export const SerialMonitorFaultsPanel: React.FC<SerialMonitorFaultsPanelProps> =
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [showSimCanvas, setShowSimCanvas] = useState<boolean>(true);
+  const [showRegisters, setShowRegisters] = useState<boolean>(true);
+  const [regCategoryFilter, setRegCategoryFilter] = useState<'all' | 'timer' | 'adc' | 'gpio' | 'status'>('all');
+  const [tickCount, setTickCount] = useState<number>(0);
+
+  const lastTxTimeRef = useRef<number>(0);
+  const lastRxTimeRef = useRef<number>(0);
+  const prevRegsRef = useRef<Record<string, number>>({});
+  const bitFlipTimesRef = useRef<Record<string, number>>({});
 
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const logContainerRef = useRef<HTMLDivElement | null>(null);
   const logCounterRef = useRef<number>(0);
   const startTimeRef = useRef<number>(Date.now());
+
+  // Continuous MCU system timer heartbeat
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTickCount((prev) => prev + 1);
+    }, 380);
+    return () => clearInterval(timer);
+  }, []);
 
   // Active fault count
   const activeFaultCount = useMemo(() => {
@@ -191,6 +226,8 @@ export const SerialMonitorFaultsPanel: React.FC<SerialMonitorFaultsPanelProps> =
 
     const intervalId = setInterval(() => {
       logCounterRef.current += 1;
+      lastTxTimeRef.current = Date.now();
+      setTickCount((prev) => prev + 1);
       const elapsed = Date.now() - startTimeRef.current;
       const mins = Math.floor(elapsed / 60000).toString().padStart(2, '0');
       const secs = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
@@ -344,6 +381,8 @@ export const SerialMonitorFaultsPanel: React.FC<SerialMonitorFaultsPanelProps> =
     if (!rawCmd) return;
 
     soundFX.playTap();
+    lastRxTimeRef.current = Date.now();
+    setTickCount((prev) => prev + 1);
     const cmdUpper = rawCmd.toUpperCase();
     const elapsed = Date.now() - startTimeRef.current;
     const mins = Math.floor(elapsed / 60000).toString().padStart(2, '0');
@@ -625,6 +664,311 @@ export const SerialMonitorFaultsPanel: React.FC<SerialMonitorFaultsPanelProps> =
       soundFX.playSuccess();
       setTimeout(() => setIsCopied(false), 2000);
     }
+  };
+
+  // 9 canonical ATmega328P Silicon Registers
+  const registers = useMemo((): AtmegaRegisterDef[] => {
+    const count = tickCount;
+    const now = Date.now();
+    const isTxActive = now - lastTxTimeRef.current < 350;
+    const isRxActive = now - lastRxTimeRef.current < 350;
+    const isHeartbeatHigh = Math.floor(now / 500) % 2 === 1;
+
+    // 1. TCCR1A (0x80)
+    const tccr1aBits: AtmegaBitDef[] = [
+      { name: 'COM1A1', bitIndex: 7, value: 1, description: 'Clear OC1A on Compare Match (non-inverting PWM)' },
+      { name: 'COM1A0', bitIndex: 6, value: 0, description: 'Normal port operation, OC1A disconnected if 0' },
+      { name: 'COM1B1', bitIndex: 5, value: 0, description: 'Compare Output Mode B bit 1' },
+      { name: 'COM1B0', bitIndex: 4, value: 0, description: 'Compare Output Mode B bit 0' },
+      { name: '-', bitIndex: 3, value: 0, description: 'Reserved bit' },
+      { name: '-', bitIndex: 2, value: 0, description: 'Reserved bit' },
+      { name: 'WGM11', bitIndex: 1, value: 1, description: 'Waveform Generation Mode bit 1' },
+      { name: 'WGM10', bitIndex: 0, value: 0, description: 'Waveform Generation Mode bit 0' },
+    ];
+    const tccr1aVal = 0x82;
+
+    // 2. TCCR1B (0x81)
+    const isNoiseCanceler = activeFaults.groundBounce ? 1 : 0;
+    const tccr1bBits: AtmegaBitDef[] = [
+      { name: 'ICNC1', bitIndex: 7, value: isNoiseCanceler, description: 'Input Capture Noise Canceler (activated during ground bounce EMI)' },
+      { name: 'ICES1', bitIndex: 6, value: 1, description: 'Input Capture Edge Select (1 = Rising edge trigger)' },
+      { name: '-', bitIndex: 5, value: 0, description: 'Reserved bit' },
+      { name: 'WGM13', bitIndex: 4, value: 1, description: 'Waveform Generation Mode bit 3' },
+      { name: 'WGM12', bitIndex: 3, value: 1, description: 'Waveform Generation Mode bit 2' },
+      { name: 'CS12', bitIndex: 2, value: 0, description: 'Clock Select bit 2' },
+      { name: 'CS11', bitIndex: 1, value: 1, description: 'Clock Select bit 1 (Prescaler 8 -> 2.0 MHz Timer Clock)' },
+      { name: 'CS10', bitIndex: 0, value: 0, description: 'Clock Select bit 0' },
+    ];
+    const tccr1bVal = 0x1a | (isNoiseCanceler ? 0x80 : 0x00);
+
+    // 3. OCR1A (0x88/0x89, 16-bit PWM Compare Register)
+    let ocr1aVal = Math.round(3000 + Math.sin(count * 0.35) * 550);
+    if (activeFaults.inductiveSpike) ocr1aVal = Math.min(4800, ocr1aVal + 800);
+    if (activeFaults.opticalOcclusion) ocr1aVal = 4000;
+    const ocr1aBits: AtmegaBitDef[] = [
+      // High Byte: OCR1AH (0x89)
+      { name: 'D15', bitIndex: 15, value: (ocr1aVal >> 15) & 1, description: 'OCR1AH Bit 15 (High Byte)' },
+      { name: 'D14', bitIndex: 14, value: (ocr1aVal >> 14) & 1, description: 'OCR1AH Bit 14 (High Byte)' },
+      { name: 'D13', bitIndex: 13, value: (ocr1aVal >> 13) & 1, description: 'OCR1AH Bit 13 (High Byte)' },
+      { name: 'D12', bitIndex: 12, value: (ocr1aVal >> 12) & 1, description: 'OCR1AH Bit 12 (High Byte)' },
+      { name: 'D11', bitIndex: 11, value: (ocr1aVal >> 11) & 1, description: 'OCR1AH Bit 11 (High Byte)' },
+      { name: 'D10', bitIndex: 10, value: (ocr1aVal >> 10) & 1, description: 'OCR1AH Bit 10 (High Byte)' },
+      { name: 'D9', bitIndex: 9, value: (ocr1aVal >> 9) & 1, description: 'OCR1AH Bit 9 (High Byte)' },
+      { name: 'D8', bitIndex: 8, value: (ocr1aVal >> 8) & 1, description: 'OCR1AH Bit 8 (High Byte)' },
+      // Low Byte: OCR1AL (0x88)
+      { name: 'D7', bitIndex: 7, value: (ocr1aVal >> 7) & 1, description: 'OCR1AL Bit 7 (Low Byte)' },
+      { name: 'D6', bitIndex: 6, value: (ocr1aVal >> 6) & 1, description: 'OCR1AL Bit 6 (Low Byte)' },
+      { name: 'D5', bitIndex: 5, value: (ocr1aVal >> 5) & 1, description: 'OCR1AL Bit 5 (Low Byte)' },
+      { name: 'D4', bitIndex: 4, value: (ocr1aVal >> 4) & 1, description: 'OCR1AL Bit 4 (Low Byte)' },
+      { name: 'D3', bitIndex: 3, value: (ocr1aVal >> 3) & 1, description: 'OCR1AL Bit 3 (Low Byte)' },
+      { name: 'D2', bitIndex: 2, value: (ocr1aVal >> 2) & 1, description: 'OCR1AL Bit 2 (Low Byte)' },
+      { name: 'D1', bitIndex: 1, value: (ocr1aVal >> 1) & 1, description: 'OCR1AL Bit 1 (Low Byte)' },
+      { name: 'D0', bitIndex: 0, value: (ocr1aVal >> 0) & 1, description: 'OCR1AL Bit 0 (Low Byte)' },
+    ];
+
+    // 4. ADMUX (0x7C)
+    const muxChannel = count % 3;
+    const admuxBits: AtmegaBitDef[] = [
+      { name: 'REFS1', bitIndex: 7, value: 0, description: 'Reference Selection Bit 1' },
+      { name: 'REFS0', bitIndex: 6, value: 1, description: 'Reference Selection Bit 0 (1 = AVCC with external C at AREF pin)' },
+      { name: 'ADLAR', bitIndex: 5, value: 0, description: 'ADC Left Adjust Result (0 = 10-bit right aligned)' },
+      { name: '-', bitIndex: 4, value: 0, description: 'Reserved bit' },
+      { name: 'MUX3', bitIndex: 3, value: 0, description: 'Analog Channel Select 3' },
+      { name: 'MUX2', bitIndex: 2, value: 0, description: 'Analog Channel Select 2' },
+      { name: 'MUX1', bitIndex: 1, value: (muxChannel >> 1) & 1, description: 'Analog Channel Select 1' },
+      { name: 'MUX0', bitIndex: 0, value: muxChannel & 1, description: 'Analog Channel Select 0' },
+    ];
+    const admuxVal = 0x40 | muxChannel;
+
+    // 5. ADCSRA (0x7A)
+    const isConverting = isTxActive;
+    const isAdcComplete = !isConverting && count % 2 === 0;
+    const adcsraBits: AtmegaBitDef[] = [
+      { name: 'ADEN', bitIndex: 7, value: 1, description: 'ADC Enable (1 = SAR conversion circuitry energized)' },
+      { name: 'ADSC', bitIndex: 6, value: isConverting ? 1 : 0, description: 'ADC Start Conversion (1 = conversion underway in hardware)' },
+      { name: 'ADATE', bitIndex: 5, value: 0, description: 'ADC Auto Trigger Enable' },
+      { name: 'ADIF', bitIndex: 4, value: isAdcComplete ? 1 : 0, description: 'ADC Interrupt Flag (1 = conversion result latched in ADCL/ADCH)' },
+      { name: 'ADIE', bitIndex: 3, value: 1, description: 'ADC Interrupt Enable' },
+      { name: 'ADPS2', bitIndex: 2, value: 1, description: 'ADC Prescaler Bit 2' },
+      { name: 'ADPS1', bitIndex: 1, value: 1, description: 'ADC Prescaler Bit 1' },
+      { name: 'ADPS0', bitIndex: 0, value: 1, description: 'ADC Prescaler Bit 0 (/128 division -> 125 kHz ADC clock)' },
+    ];
+    const adcsraVal = 0x87 | (isConverting ? 0x40 : 0) | (isAdcComplete ? 0x10 : 0);
+
+    // 6. PORTB (0x25)
+    const isPwmActive = count % 2 === 1;
+    const portbBits: AtmegaBitDef[] = [
+      { name: 'PB7', bitIndex: 7, value: 0, description: 'XTAL2 pin' },
+      { name: 'PB6', bitIndex: 6, value: 1, description: 'XTAL1 oscillator input' },
+      { name: 'PB5', bitIndex: 5, value: isHeartbeatHigh ? 1 : 0, description: 'Pin 13 Builtin LED System Heartbeat (1 Hz toggle)' },
+      { name: 'PB4', bitIndex: 4, value: 0, description: 'Pin 12 (SPI MISO / Sensor input)' },
+      { name: 'PB3', bitIndex: 3, value: activeFaults.acousticMultipath ? (count % 2) : 1, description: 'Pin 11 (SPI MOSI / Ultrasound Trigger)' },
+      { name: 'PB2', bitIndex: 2, value: 1, description: 'Pin 10 (SPI SS / Servo PWM enable)' },
+      { name: 'PB1', bitIndex: 1, value: isPwmActive ? 1 : 0, description: 'Pin 9 (Timer1 OC1A Hardware PWM channel)' },
+      { name: 'PB0', bitIndex: 0, value: 0, description: 'Pin 8 General GPIO' },
+    ];
+    const portbVal =
+      0x40 |
+      (isHeartbeatHigh ? 0x20 : 0) |
+      (portbBits[4].value ? 0x08 : 0) |
+      0x04 |
+      (isPwmActive ? 0x02 : 0);
+
+    // 7. PORTD (0x2B)
+    const portdBits: AtmegaBitDef[] = [
+      { name: 'PD7', bitIndex: 7, value: 0, description: 'Pin 7 General GPIO' },
+      { name: 'PD6', bitIndex: 6, value: isPwmActive ? 1 : 0, description: 'Pin 6 (Timer0 OC0A PWM output)' },
+      { name: 'PD5', bitIndex: 5, value: 0, description: 'Pin 5 (Timer0 OC0B PWM output)' },
+      { name: 'PD4', bitIndex: 4, value: 1, description: 'Pin 4 Direction Output' },
+      { name: 'PD3', bitIndex: 3, value: 0, description: 'Pin 3 (INT1 External Interrupt)' },
+      { name: 'PD2', bitIndex: 2, value: activeFaults.opticalOcclusion ? 0 : 1, description: 'Pin 2 (INT0 External Interrupt / Optical Encoder)' },
+      { name: 'PD1', bitIndex: 1, value: isTxActive ? 1 : 0, description: 'Pin 1 (USART TX - pulses during UART transmission)' },
+      { name: 'PD0', bitIndex: 0, value: isRxActive ? 1 : 0, description: 'Pin 0 (USART RX - pulses during command input)' },
+    ];
+    const portdVal =
+      (isPwmActive ? 0x40 : 0) |
+      0x10 |
+      (portdBits[2].value ? 0x04 : 0) |
+      (isTxActive ? 0x02 : 0) |
+      (isRxActive ? 0x01 : 0);
+
+    // 8. PINB (0x23)
+    const emiNoise = activeFaults.groundBounce && count % 3 === 0;
+    const pinbBits: AtmegaBitDef[] = [
+      { name: 'PINB7', bitIndex: 7, value: 0, description: 'Input pin level 7' },
+      { name: 'PINB6', bitIndex: 6, value: 1, description: 'Input pin level 6' },
+      { name: 'PINB5', bitIndex: 5, value: isHeartbeatHigh ? 1 : 0, description: 'Pin 13 state' },
+      { name: 'PINB4', bitIndex: 4, value: emiNoise ? 1 : 0, description: 'Pin 12 input (flips with ground bounce hum)' },
+      { name: 'PINB3', bitIndex: 3, value: activeFaults.inductiveSpike ? (count % 2) : 1, description: 'Pin 11 echo input' },
+      { name: 'PINB2', bitIndex: 2, value: 1, description: 'Pin 10 input' },
+      { name: 'PINB1', bitIndex: 1, value: emiNoise ? 1 : 0, description: 'Pin 9 input (EMI noise injected)' },
+      { name: 'PINB0', bitIndex: 0, value: 0, description: 'Pin 8 input' },
+    ];
+    const pinbVal =
+      0x40 |
+      (isHeartbeatHigh ? 0x20 : 0) |
+      (emiNoise ? 0x10 : 0) |
+      (pinbBits[4].value ? 0x08 : 0) |
+      0x04 |
+      (emiNoise ? 0x02 : 0);
+
+    // 9. SREG (0x5F)
+    const isNeg = Math.sin(count * 0.35) < -0.2;
+    const isZero = Math.abs(Math.sin(count * 0.35)) < 0.1;
+    const isOverflow = !!activeFaults.inductiveSpike || (!!activeFaults.opticalOcclusion && count % 4 === 0);
+    const sregBits: AtmegaBitDef[] = [
+      { name: 'I', bitIndex: 7, value: 1, description: 'Global Interrupt Enable (1 = SEI enabled)' },
+      { name: 'T', bitIndex: 6, value: 0, description: 'Bit Copy Storage (BLD/BST)' },
+      { name: 'H', bitIndex: 5, value: 0, description: 'Half Carry Flag' },
+      { name: 'S', bitIndex: 4, value: (isNeg ? 1 : 0) ^ (isOverflow ? 1 : 0), description: 'Sign Bit (N XOR V)' },
+      { name: 'V', bitIndex: 3, value: isOverflow ? 1 : 0, description: "Two's Complement Overflow (1 during inductive surge / PID saturation)" },
+      { name: 'N', bitIndex: 2, value: isNeg ? 1 : 0, description: 'Negative Flag (1 if arithmetic result is negative)' },
+      { name: 'Z', bitIndex: 1, value: isZero ? 1 : 0, description: 'Zero Flag (1 if calculation result is exactly zero)' },
+      { name: 'C', bitIndex: 0, value: activeFaults.groundBounce ? (count % 2) : 0, description: 'Carry Flag (1 on arithmetic carry/borrow or false ripple)' },
+    ];
+    const sregVal =
+      0x80 |
+      (sregBits[4].value ? 0x10 : 0) |
+      (isOverflow ? 0x08 : 0) |
+      (isNeg ? 0x04 : 0) |
+      (isZero ? 0x02 : 0) |
+      (sregBits[7].value ? 0x01 : 0);
+
+    const list: AtmegaRegisterDef[] = [
+      {
+        name: 'TCCR1A',
+        category: 'timer',
+        address: '0x80',
+        decimalValue: tccr1aVal,
+        hexValue: `0x${tccr1aVal.toString(16).toUpperCase().padStart(2, '0')}`,
+        description: 'Timer/Counter1 Control Register A',
+        siliconPurpose: 'Configures compare output mode (COM1A/B) and lowest 2 bits of waveform generator for 16-bit Timer 1.',
+        bits: tccr1aBits,
+      },
+      {
+        name: 'TCCR1B',
+        category: 'timer',
+        address: '0x81',
+        decimalValue: tccr1bVal,
+        hexValue: `0x${tccr1bVal.toString(16).toUpperCase().padStart(2, '0')}`,
+        description: 'Timer/Counter1 Control Register B',
+        siliconPurpose: 'Controls Input Capture Noise Canceler, Edge Select, upper waveform bits, and prescaler clock division (16MHz / 8).',
+        bits: tccr1bBits,
+      },
+      {
+        name: 'OCR1A',
+        category: 'timer',
+        address: '0x88/0x89',
+        decimalValue: ocr1aVal,
+        hexValue: `0x${ocr1aVal.toString(16).toUpperCase().padStart(4, '0')}`,
+        description: 'Output Compare Register 1A (16-bit PWM Duty: OCR1AH:OCR1AL)',
+        siliconPurpose: `16-bit comparator matched against TCNT1 continuously. High byte (0x89) buffered via TEMP latch; low byte (0x88) latches full word.`,
+        bits: ocr1aBits,
+      },
+      {
+        name: 'ADMUX',
+        category: 'adc',
+        address: '0x7C',
+        decimalValue: admuxVal,
+        hexValue: `0x${admuxVal.toString(16).toUpperCase().padStart(2, '0')}`,
+        description: 'ADC Multiplexer Selection Register',
+        siliconPurpose: `Connects analog multiplexer input bus to pin A${muxChannel}. Configures AVCC (5.0V) as voltage reference standard.`,
+        bits: admuxBits,
+      },
+      {
+        name: 'ADCSRA',
+        category: 'adc',
+        address: '0x7A',
+        decimalValue: adcsraVal,
+        hexValue: `0x${adcsraVal.toString(16).toUpperCase().padStart(2, '0')}`,
+        description: 'ADC Control and Status Register A',
+        siliconPurpose: 'Controls ADC peripheral power, triggers successive-approximation conversions (ADSC), sets interrupt flag (ADIF) on completion.',
+        bits: adcsraBits,
+      },
+      {
+        name: 'PORTB',
+        category: 'gpio',
+        address: '0x25',
+        decimalValue: portbVal,
+        hexValue: `0x${portbVal.toString(16).toUpperCase().padStart(2, '0')}`,
+        description: 'Port B Data Output Register (Pins 8–13)',
+        siliconPurpose: 'Drives output voltage latches for digital pins 8 to 13, including Pin 13 LED (PB5) and Timer1 PWM (PB1).',
+        bits: portbBits,
+      },
+      {
+        name: 'PORTD',
+        category: 'gpio',
+        address: '0x2B',
+        decimalValue: portdVal,
+        hexValue: `0x${portdVal.toString(16).toUpperCase().padStart(2, '0')}`,
+        description: 'Port D Data Output Register (Pins 0–7 & UART)',
+        siliconPurpose: 'Drives digital pins 0 to 7. PD1 and PD0 connect directly to hardware UART transmitter and receiver shift registers.',
+        bits: portdBits,
+      },
+      {
+        name: 'PINB',
+        category: 'gpio',
+        address: '0x23',
+        decimalValue: pinbVal,
+        hexValue: `0x${pinbVal.toString(16).toUpperCase().padStart(2, '0')}`,
+        description: 'Port B Input Pins Address Register',
+        siliconPurpose: 'Synchronizer latches reading physical voltage levels present on Port B pins. Directly reflects external sensor transitions & EMI bounce.',
+        bits: pinbBits,
+      },
+      {
+        name: 'SREG',
+        category: 'status',
+        address: '0x5F',
+        decimalValue: sregVal,
+        hexValue: `0x${sregVal.toString(16).toUpperCase().padStart(2, '0')}`,
+        description: 'AVR CPU Status Register',
+        siliconPurpose: "Maintains ALU condition flags: Global Interrupts (I), Two's complement Overflow (V), Negative (N), Zero (Z), and Carry (C).",
+        bits: sregBits,
+      },
+    ];
+
+    // Detect bit transitions and record timestamps
+    list.forEach((reg) => {
+      const prev = prevRegsRef.current[reg.name] ?? reg.decimalValue;
+      if (prev !== reg.decimalValue) {
+        reg.bits.forEach((b) => {
+          if (((prev ^ reg.decimalValue) & (1 << b.bitIndex)) !== 0) {
+            bitFlipTimesRef.current[`${reg.name}_${b.bitIndex}`] = Date.now();
+          }
+        });
+        prevRegsRef.current[reg.name] = reg.decimalValue;
+      }
+    });
+
+    return list;
+  }, [tickCount, activeFaults, experiment.id]);
+
+  const filteredRegisters = useMemo(() => {
+    if (regCategoryFilter === 'all') return registers;
+    return registers.filter((r) => r.category === regCategoryFilter);
+  }, [registers, regCategoryFilter]);
+
+  const handleDumpRegisters = () => {
+    soundFX.playTap();
+    const elapsed = Date.now() - startTimeRef.current;
+    const mins = Math.floor(elapsed / 60000).toString().padStart(2, '0');
+    const secs = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
+    const ms = (elapsed % 1000).toString().padStart(3, '0');
+    const timeStr = `${mins}:${secs}.${ms}`;
+
+    const dumpLine = registers
+      .map((r) => `${r.name}=${r.hexValue}`)
+      .join(' | ');
+
+    setLogs((prev) => [
+      ...prev,
+      {
+        id: `regdump-${Date.now()}`,
+        timestamp: timeStr,
+        type: 'reply',
+        content: `[ATmega328P SFR DUMP] ${dumpLine}`,
+      },
+    ]);
   };
 
   return (
@@ -944,6 +1288,177 @@ export const SerialMonitorFaultsPanel: React.FC<SerialMonitorFaultsPanelProps> =
             <CornerDownLeft className="w-3.5 h-3.5" />
           </button>
         </div>
+      </div>
+
+      {/* SECTION 4: ATmega328P SILICON REGISTER & TIMER MATRIX */}
+      <div className="p-6 rounded-3xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink-200/60 dark:border-white/10 pb-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider px-2 py-0.5 rounded-md bg-brand-500/10 border border-brand-500/20">
+                16.0 MHz AVR HARVARD ARCHITECTURE
+              </span>
+              <span className="text-[10px] font-mono font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>CLOCKS RUNNING</span>
+              </span>
+            </div>
+            <h3 className="text-base sm:text-lg font-bold text-ink-900 dark:text-white flex items-center gap-2">
+              <Cpu className="w-5 h-5 text-brand-500" />
+              <span>ATmega328P Silicon Register & Timer Matrix</span>
+            </h3>
+            <p className="text-xs text-ink-500 dark:text-ink-400">
+              Live hardware I/O special function registers (SFRs) controlling Timer 1 PWM, 10-bit Successive Approximation ADC, Port B/D GPIO latches, and the SREG ALU condition flags. Bit transitions reflect live physics and injected faults.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDumpRegisters}
+              title="Dump All Registers to Serial Monitor"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-ink-100 hover:bg-ink-200 dark:bg-ink-950 dark:hover:bg-ink-800 text-ink-700 dark:text-ink-300 border border-ink-200 dark:border-white/10 text-xs font-mono font-bold transition-colors cursor-pointer"
+            >
+              <Terminal className="w-3.5 h-3.5 text-brand-500" />
+              <span>Dump to UART</span>
+            </button>
+            <button
+              onClick={() => setShowRegisters(!showRegisters)}
+              className="flex items-center gap-1 text-xs font-mono font-bold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer"
+            >
+              <span>{showRegisters ? 'Collapse Registers' : 'Expand Registers'}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showRegisters ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+        </div>
+
+        {showRegisters && (
+          <div className="space-y-4 animate-fade-in">
+            {/* Category Filter Pills & Bit Legend */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
+                {[
+                  { id: 'all', label: 'All SFRs (9)' },
+                  { id: 'timer', label: 'Timers (TCCR1A, TCCR1B, OCR1A)' },
+                  { id: 'adc', label: 'ADC (ADMUX, ADCSRA)' },
+                  { id: 'gpio', label: 'GPIO (PORTB, PORTD, PINB)' },
+                  { id: 'status', label: 'ALU Status (SREG)' },
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setRegCategoryFilter(cat.id as any);
+                      soundFX.playTap();
+                    }}
+                    className={`px-2.5 py-1 rounded-lg font-bold transition-all border cursor-pointer ${
+                      regCategoryFilter === cat.id
+                        ? 'bg-brand-500 text-white border-brand-400 shadow-xs'
+                        : 'bg-ink-100 dark:bg-ink-950 text-ink-600 dark:text-ink-400 border-ink-200 dark:border-white/10 hover:text-ink-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="text-[11px] font-mono text-ink-500 flex items-center gap-3">
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 rounded-sm bg-emerald-500/20 border border-emerald-500 text-[8px] flex items-center justify-center font-bold text-emerald-400">1</span>
+                  <span>Set (High)</span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 rounded-sm bg-ink-200 dark:bg-ink-950 border border-ink-400 text-[8px] flex items-center justify-center font-bold text-ink-400">0</span>
+                  <span>Clear (Low)</span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 rounded-sm ring-1 ring-cyan-400 bg-cyan-500/40 text-[8px] flex items-center justify-center font-bold text-cyan-200 animate-pulse">●</span>
+                  <span>Bit Flip</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Register Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {filteredRegisters.map((reg) => (
+                <div
+                  key={reg.name}
+                  className="rounded-2xl border border-ink-200 dark:border-white/10 bg-white/70 dark:bg-ink-950/70 p-4 space-y-3 shadow-xs transition-all hover:border-brand-500/40"
+                >
+                  {/* Card Header */}
+                  <div className="flex items-center justify-between border-b border-ink-200/50 dark:border-white/10 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm font-black text-ink-900 dark:text-white">
+                        {reg.name}
+                      </span>
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-ink-100 dark:bg-ink-900 text-ink-500 border border-ink-200 dark:border-white/10">
+                        {reg.address}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 font-mono">
+                      <span className="px-2 py-0.5 rounded-md bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold text-xs border border-brand-500/20">
+                        {reg.hexValue}
+                      </span>
+                      <span className="text-[10px] text-ink-400">
+                        ({reg.decimalValue})
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Register Silicon Function Description */}
+                  <p className="text-[11px] text-ink-600 dark:text-ink-400 leading-snug line-clamp-2">
+                    {reg.siliconPurpose}
+                  </p>
+
+                  {/* 8-Bit Interactive Graphic Matrix */}
+                  <div className="space-y-1 pt-1 overflow-x-auto no-scrollbar">
+                    <div className="grid grid-cols-8 gap-1 min-w-[220px]">
+                      {reg.bits.map((b) => {
+                        const isFlipped = (Date.now() - (bitFlipTimesRef.current[`${reg.name}_${b.bitIndex}`] || 0)) < 600;
+                        return (
+                          <div
+                            key={b.bitIndex}
+                            onClick={() => {
+                              soundFX.playTap();
+                              const now = new Date();
+                              const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}`;
+                              setLogs((prev) => [
+                                ...prev,
+                                {
+                                  id: `sfr_${Date.now()}_${b.bitIndex}`,
+                                  timestamp: timeStr,
+                                  type: 'telemetry',
+                                  content: `[SFR PROBE] ${reg.name}[${b.bitIndex}] (${b.name}) = ${b.value} | ${b.description}`,
+                                },
+                              ]);
+                            }}
+                            title={`Bit ${b.bitIndex} (${b.name}): ${b.value === 1 ? 'HIGH (1)' : 'LOW (0)'}\n${b.description}\n(Click to probe in UART)`}
+                            className={`flex flex-col items-center justify-center p-1 rounded-lg border text-center transition-all cursor-pointer min-w-0 select-none ${
+                              isFlipped
+                                ? 'ring-2 ring-cyan-400 bg-cyan-500/40 text-cyan-200 scale-105 shadow-md animate-pulse'
+                                : b.value === 1
+                                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-500/25'
+                                : 'bg-ink-50 dark:bg-ink-900/60 border-ink-200 dark:border-white/10 text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800'
+                            }`}
+                          >
+                            <span className="text-[7.5px] font-mono opacity-60 uppercase truncate max-w-full">
+                              {b.name}
+                            </span>
+                            <span className="text-xs font-mono font-black pt-0.5">
+                              {b.value}
+                            </span>
+                            <span className="text-[6.5px] font-mono text-ink-400 opacity-50">
+                              b{b.bitIndex}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

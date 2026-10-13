@@ -23,6 +23,9 @@ import {
   Maximize2,
   Minimize2,
   AlertTriangle,
+  Radio,
+  Zap,
+  Crosshair,
 } from 'lucide-react';
 import { RoboticsExperiment } from '../data/roboticsExperimentsData';
 import { soundFX } from '../utils/audio';
@@ -33,6 +36,144 @@ export interface HardwareFaults {
   acousticMultipath?: boolean;
   inductiveSpike?: boolean;
   thermalDrift?: boolean;
+}
+
+export interface FftResult {
+  mags: number[];
+  freqs: number[];
+  f0: number;
+  peakMag: number;
+  thdPercent: number;
+}
+
+// Precomputed lookup tables for 128-point Radix-2 Cooley-Tukey FFT
+const FFT_N = 128;
+const HANN_WINDOW_128 = new Float64Array(FFT_N);
+for (let n = 0; n < FFT_N; n++) {
+  HANN_WINDOW_128[n] = 0.5 * (1 - Math.cos((2 * Math.PI * n) / (FFT_N - 1)));
+}
+
+const BIT_REVERSE_128 = new Uint8Array(FFT_N);
+for (let i = 0; i < FFT_N; i++) {
+  let rev = 0;
+  for (let j = 0; j < 7; j++) {
+    if ((i >> j) & 1) rev |= (1 << (6 - j));
+  }
+  BIT_REVERSE_128[i] = rev;
+}
+
+function radix2FftInPlace128(real: Float64Array, imag: Float64Array): void {
+  // 1. Bit-reversal permutation
+  for (let i = 0; i < FFT_N; i++) {
+    const j = BIT_REVERSE_128[i];
+    if (i < j) {
+      const tempR = real[i]; real[i] = real[j]; real[j] = tempR;
+      const tempI = imag[i]; imag[i] = imag[j]; imag[j] = tempI;
+    }
+  }
+
+  // 2. Butterfly stages (log2(128) = 7 stages)
+  for (let len = 2; len <= FFT_N; len <<= 1) {
+    const halfLen = len >> 1;
+    const angleStep = (-2 * Math.PI) / len;
+    const wStepReal = Math.cos(angleStep);
+    const wStepImag = Math.sin(angleStep);
+    for (let i = 0; i < FFT_N; i += len) {
+      let wReal = 1.0;
+      let wImag = 0.0;
+      for (let j = 0; j < halfLen; j++) {
+        const idx1 = i + j;
+        const idx2 = idx1 + halfLen;
+        const uReal = real[idx1];
+        const uImag = imag[idx1];
+        const vReal = real[idx2] * wReal - imag[idx2] * wImag;
+        const vImag = real[idx2] * wImag + imag[idx2] * wReal;
+        real[idx1] = uReal + vReal;
+        imag[idx1] = uImag + vImag;
+        real[idx2] = uReal - vReal;
+        imag[idx2] = uImag - vImag;
+        const nextWReal = wReal * wStepReal - wImag * wStepImag;
+        wImag = wReal * wStepImag + wImag * wStepReal;
+        wReal = nextWReal;
+      }
+    }
+  }
+}
+
+export function computeHannFft128(samples: number[], samplingRate: number = 500): FftResult {
+  const N = FFT_N;
+  const halfN = N / 2;
+  const inReal = new Float64Array(N);
+  const inImag = new Float64Array(N);
+
+  const offset = samples.length - N;
+  let mean = 0;
+  for (let i = 0; i < N; i++) {
+    const idx = offset + i;
+    const val = idx >= 0 && idx < samples.length ? samples[idx] : (samples[0] ?? 0);
+    inReal[i] = val;
+    mean += val;
+  }
+  mean /= N;
+
+  // Windowing with precomputed Hann window
+  for (let n = 0; n < N; n++) {
+    inReal[n] = (inReal[n] - mean) * HANN_WINDOW_128[n];
+  }
+
+  // In-place Radix-2 FFT execution
+  radix2FftInPlace128(inReal, inImag);
+
+  const mags: number[] = new Array(halfN);
+  const freqs: number[] = new Array(halfN);
+  const df = samplingRate / N;
+
+  let peakMag = 0;
+  let peakK = 0;
+
+  for (let k = 0; k < halfN; k++) {
+    freqs[k] = k * df;
+    const mag = (Math.sqrt(inReal[k] * inReal[k] + inImag[k] * inImag[k]) * 4) / N;
+    mags[k] = mag;
+
+    if (k > 0 && mag > peakMag) {
+      peakMag = mag;
+      peakK = k;
+    }
+  }
+
+  let f0 = 0.0;
+  if (peakMag > 0.05 && peakK > 0) {
+    let interpolatedK = peakK;
+    if (peakK > 1 && peakK < halfN - 1) {
+      const alpha = mags[peakK - 1];
+      const beta = mags[peakK];
+      const gamma = mags[peakK + 1];
+      const denom = alpha - 2 * beta + gamma;
+      if (Math.abs(denom) > 1e-6) {
+        const delta = (0.5 * (alpha - gamma)) / denom;
+        if (Math.abs(delta) < 1.0) {
+          interpolatedK = peakK + delta;
+        }
+      }
+    }
+    f0 = Math.round(interpolatedK * df * 10) / 10;
+  }
+
+  // Standard IEEE Harmonic Distortion (sum of integer harmonics h >= 2)
+  let harmonicEnergy = 0;
+  if (peakK > 0) {
+    for (let h = 2; h <= 8; h++) {
+      const hk = Math.round(h * peakK);
+      if (hk < halfN) {
+        harmonicEnergy += mags[hk] * mags[hk];
+      }
+    }
+  }
+
+  const thdPercent = peakMag > 0.05 ? Math.min(99.9, (Math.sqrt(harmonicEnergy) / peakMag) * 100) : 0.0;
+
+  return { mags, freqs, f0, peakMag, thdPercent };
 }
 
 export interface RoboticsHardwareSimCanvasProps {
@@ -137,12 +278,55 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number }>({ x: 200, y: 150 });
   const [oscilloscopeSpeed, setOscilloscopeSpeed] = useState<number>(1);
+  const [oscMode, setOscMode] = useState<'time' | 'fft'>('time');
+  const [showDmm, setShowDmm] = useState<boolean>(true);
+  const [dmmChannel, setDmmChannel] = useState<number>(0);
+  const [dmmFunction, setDmmFunction] = useState<'vdc' | 'vac_rms' | 'resistance' | 'current'>('vdc');
+  const [dmmHold, setDmmHold] = useState<boolean>(false);
+  const [dmmRel, setDmmRel] = useState<boolean>(false);
+  const [dmmRelBase, setDmmRelBase] = useState<number>(0);
+  const [dmmStats, setDmmStats] = useState({
+    vdc: 0,
+    vacRms: 0,
+    resistance: 0,
+    currentMa: 0,
+    min: 0,
+    max: 5,
+    f0: 0,
+    thd: 0,
+  });
+
+  const [showCursors, setShowCursors] = useState<boolean>(false);
+  const [cursorX1, setCursorX1] = useState<number>(0.25);
+  const [cursorX2, setCursorX2] = useState<number>(0.75);
+  const showCursorsRef = useRef<boolean>(showCursors);
+  const cursorX1Ref = useRef<number>(cursorX1);
+  const cursorX2Ref = useRef<number>(cursorX2);
+  const activeCursorDragRef = useRef<'c1' | 'c2' | null>(null);
+  useEffect(() => { showCursorsRef.current = showCursors; }, [showCursors]);
+  useEffect(() => { cursorX1Ref.current = cursorX1; }, [cursorX1]);
+  useEffect(() => { cursorX2Ref.current = cursorX2; }, [cursorX2]);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const simStateRef = useRef<any>(getDefaultSimState(experiment.id));
   const lastSoundTimeRef = useRef<number>(0);
   const oscHistoryRef = useRef<Array<number[]>>([]);
   const tRef = useRef<number>(0);
+
+  const oscModeRef = useRef<'time' | 'fft'>(oscMode);
+  useEffect(() => {
+    oscModeRef.current = oscMode;
+  }, [oscMode]);
+
+  const dmmChannelRef = useRef<number>(dmmChannel);
+  useEffect(() => {
+    dmmChannelRef.current = dmmChannel;
+  }, [dmmChannel]);
+
+  const dmmHoldRef = useRef<boolean>(dmmHold);
+  useEffect(() => {
+    dmmHoldRef.current = dmmHold;
+  }, [dmmHold]);
 
   const activeFaultsRef = useRef<HardwareFaults>(activeFaults);
   useEffect(() => {
@@ -197,6 +381,20 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
     } catch {
       // ignore
+    }
+
+    if (showCursorsRef.current && y >= height - 65) {
+      const oscInnerW = width - 30;
+      const c1X = 15 + cursorX1Ref.current * oscInnerW;
+      const c2X = 15 + cursorX2Ref.current * oscInnerW;
+      if (Math.abs(x - c1X) <= Math.abs(x - c2X)) {
+        activeCursorDragRef.current = 'c1';
+        setCursorX1(Math.max(0.02, Math.min(0.98, (x - 15) / oscInnerW)));
+      } else {
+        activeCursorDragRef.current = 'c2';
+        setCursorX2(Math.max(0.02, Math.min(0.98, (x - 15) / oscInnerW)));
+      }
+      return;
     }
 
     const state = simStateRef.current;
@@ -270,6 +468,17 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
     const y = Math.max(15, Math.min(height - 15, e.clientY - rect.top));
     setDragPos({ x, y });
 
+    if (activeCursorDragRef.current === 'c1') {
+      const oscInnerW = width - 30;
+      setCursorX1(Math.max(0.02, Math.min(0.98, (x - 15) / oscInnerW)));
+      return;
+    }
+    if (activeCursorDragRef.current === 'c2') {
+      const oscInnerW = width - 30;
+      setCursorX2(Math.max(0.02, Math.min(0.98, (x - 15) / oscInnerW)));
+      return;
+    }
+
     const state = simStateRef.current;
     if (!state) return;
 
@@ -331,6 +540,7 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
       state.isDraggingThrottle = false;
       state.isDraggingForce = false;
     }
+    activeCursorDragRef.current = null;
   };
 
   // Main 60 FPS Canvas Simulation Loop
@@ -2087,57 +2297,260 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
       ctx.fill();
       ctx.stroke();
 
-      // Oscilloscope center zero line
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(15, oscY + oscH / 2);
-      ctx.lineTo(width - 15, oscY + oscH / 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
       // Store samples
       if (running && frameCount % speed === 0) {
         oscHistoryRef.current.push([oscVal1, oscVal2, oscVal3]);
         if (oscHistoryRef.current.length > MAX_OSC_SAMPLES) oscHistoryRef.current.shift();
       }
+
+      // Live DMM Statistics Calculation (throttled to ~7.5 Hz)
+      if (frameCount % 8 === 0 && !dmmHoldRef.current && oscHistoryRef.current.length > 5) {
+        const history = oscHistoryRef.current;
+        const chIdx = Math.min(dmmChannelRef.current, Math.max(0, experiment.oscilloscopeChannels.length - 1));
+        const windowSize = Math.min(60, history.length);
+        const recent = history.slice(-windowSize).map((h) => h[chIdx] ?? 0);
+
+        let sum = 0;
+        let minV = Infinity;
+        let maxV = -Infinity;
+        for (let i = 0; i < recent.length; i++) {
+          const v = recent[i];
+          sum += v;
+          if (v < minV) minV = v;
+          if (v > maxV) maxV = v;
+        }
+        const vdc = sum / recent.length;
+
+        let sumSqDiff = 0;
+        for (let i = 0; i < recent.length; i++) {
+          const diff = recent[i] - vdc;
+          sumSqDiff += diff * diff;
+        }
+        const vacRms = Math.sqrt(sumSqDiff / recent.length);
+
+        let rVal = 10000;
+        if (experiment.id === 'exp_ldr_solar_tracker') {
+          rVal = 10000 * (vdc / Math.max(0.05, 5.0 - vdc));
+        } else if (experiment.id === 'exp_loadcell_smart_gripper') {
+          rVal = 350 + (vdc - 2.5) * 28;
+        } else if (experiment.id === 'exp_ir_line_follower') {
+          rVal = 800 + (5.0 - vdc) * 1600;
+        } else {
+          rVal = Math.max(10, vdc / 0.0005);
+        }
+
+        let iMa = 15;
+        if (
+          experiment.id === 'exp_encoder_motor_pid' ||
+          experiment.id === 'exp_mpu6050_balancing' ||
+          experiment.id === 'exp_pir_servo_buzzer'
+        ) {
+          iMa = 85 + (vdc / 5.0) * 420;
+          if (faults.inductiveSpike && flybackSpike !== 0) {
+            iMa += Math.abs(flybackSpike) * 45;
+          }
+        } else {
+          iMa = (vdc / 220) * 1000;
+        }
+
+        const fullChSamples = history.map((h) => h[chIdx] ?? 0);
+        const fftData = computeHannFft128(fullChSamples, 500);
+
+        setDmmStats({
+          vdc,
+          vacRms,
+          resistance: rVal,
+          currentMa: iMa,
+          min: minV === Infinity ? 0 : minV,
+          max: maxV === -Infinity ? 5 : maxV,
+          f0: fftData.f0,
+          thd: fftData.thdPercent,
+        });
+      }
       frameCount++;
 
-      // Render Oscilloscope Channels
-      experiment.oscilloscopeChannels.forEach((ch, idx) => {
-        ctx.strokeStyle = ch.color;
-        ctx.lineWidth = 1.8;
+      const isFft = oscModeRef.current === 'fft';
+
+      if (!isFft) {
+        // TIME DOMAIN OSCILLOSCOPE
+        // Oscilloscope center zero line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.setLineDash([4, 4]);
         ctx.beginPath();
-
-        const stepX = (width - 30) / MAX_OSC_SAMPLES;
-        const history = oscHistoryRef.current;
-        for (let i = 0; i < history.length; i++) {
-          const val = history[i][idx] ?? 0;
-          const range = ch.rangeMax - ch.rangeMin || 1;
-          const normVal = Math.max(0, Math.min(1, (val - ch.rangeMin) / range));
-          const px = 15 + i * stepX;
-          const py = oscY + oscH - 6 - normVal * (oscH - 12);
-          if (i === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
-        }
+        ctx.moveTo(15, oscY + oscH / 2);
+        ctx.lineTo(width - 15, oscY + oscH / 2);
         ctx.stroke();
-      });
+        ctx.setLineDash([]);
 
-      // Oscilloscope Legend Pill & Trigger Status
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '8px monospace';
-      ctx.textAlign = 'left';
-      ctx.fillText('OSCILLOSCOPE', 18, oscY + 12);
+        // Render Oscilloscope Channels
+        experiment.oscilloscopeChannels.forEach((ch, idx) => {
+          ctx.strokeStyle = ch.color;
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
 
-      ctx.fillStyle = '#10b981';
-      ctx.fillText('● TRIG\'D (AUTO)', 90, oscY + 12);
+          const stepX = (width - 30) / MAX_OSC_SAMPLES;
+          const history = oscHistoryRef.current;
+          for (let i = 0; i < history.length; i++) {
+            const val = history[i][idx] ?? 0;
+            const range = ch.rangeMax - ch.rangeMin || 1;
+            const normVal = Math.max(0, Math.min(1, (val - ch.rangeMin) / range));
+            const px = 15 + i * stepX;
+            const py = oscY + oscH - 6 - normVal * (oscH - 12);
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        });
 
-      let legOffset = 185;
-      experiment.oscilloscopeChannels.forEach((ch) => {
-        ctx.fillStyle = ch.color;
-        ctx.fillText(`■ ${ch.name}`, legOffset, oscY + 12);
-        legOffset += 130;
-      });
+        // Dual Measurement Cursors (Cursor 1 & Cursor 2)
+        if (showCursorsRef.current) {
+          const oscInnerW = width - 30;
+          const c1X = 15 + cursorX1Ref.current * oscInnerW;
+          const c2X = 15 + cursorX2Ref.current * oscInnerW;
+
+          // Cursor 1 Line (Cyan)
+          ctx.strokeStyle = '#06b6d4';
+          ctx.lineWidth = 1.2;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(c1X, oscY + 16);
+          ctx.lineTo(c1X, oscY + oscH - 4);
+          ctx.stroke();
+
+          // Cursor 2 Line (Amber)
+          ctx.strokeStyle = '#f59e0b';
+          ctx.beginPath();
+          ctx.moveTo(c2X, oscY + 16);
+          ctx.lineTo(c2X, oscY + oscH - 4);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Cursor Top Flags
+          ctx.fillStyle = '#06b6d4';
+          ctx.font = 'bold 8px monospace';
+          ctx.fillText('▲ X1', c1X - 8, oscY + 22);
+
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillText('▲ X2', c2X - 8, oscY + 22);
+
+          // Delta Measurements Readout
+          const deltaFrac = Math.abs(cursorX2Ref.current - cursorX1Ref.current);
+          const deltaMs = Math.max(0.1, deltaFrac * 360);
+          const cursorFreq = 1000 / deltaMs;
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 8px monospace';
+          ctx.textAlign = 'right';
+          ctx.fillText(
+            `Δt=${deltaMs.toFixed(1)}ms (${cursorFreq >= 1000 ? (cursorFreq / 1000).toFixed(2) + 'kHz' : cursorFreq.toFixed(1) + 'Hz'})`,
+            width - 20,
+            oscY + 12
+          );
+          ctx.textAlign = 'left';
+        }
+
+        // Legend Pill & Trigger Status
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '8px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText('DSO TIME DOMAIN', 18, oscY + 12);
+
+        ctx.fillStyle = '#10b981';
+        ctx.fillText('● TRIG\'D (AUTO)', 105, oscY + 12);
+
+        let legOffset = 200;
+        experiment.oscilloscopeChannels.forEach((ch) => {
+          ctx.fillStyle = ch.color;
+          ctx.fillText(`■ ${ch.name}`, legOffset, oscY + 12);
+          legOffset += 130;
+        });
+      } else {
+        // FREQUENCY DOMAIN FFT SPECTRUM ANALYZER
+        const fs = 500;
+        const nyquist = fs / 2; // 250 Hz
+        const numTicks = 5;
+        const spectrumW = width - 40;
+        const spectrumX = 20;
+
+        // Frequency Grid Lines (0, 50, 100, 150, 200, 250 Hz)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.font = '7px monospace';
+        ctx.textAlign = 'center';
+
+        for (let t = 0; t <= numTicks; t++) {
+          const fx = (nyquist / numTicks) * t;
+          const px = spectrumX + (t / numTicks) * spectrumW;
+          ctx.beginPath();
+          ctx.moveTo(px, oscY + 16);
+          ctx.lineTo(px, oscY + oscH - 4);
+          ctx.stroke();
+          ctx.fillText(`${Math.round(fx)}Hz`, px, oscY + oscH - 1);
+        }
+
+        // Render FFT spectrum for each channel
+        const history = oscHistoryRef.current;
+        let legendX = 220;
+
+        experiment.oscilloscopeChannels.forEach((ch, chIdx) => {
+          if (history.length < 8) return;
+          const chSamples = history.map((h) => h[chIdx] ?? 0);
+          const fft = computeHannFft128(chSamples, fs);
+
+          // Spectrum curve
+          ctx.strokeStyle = ch.color;
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+
+          const numBins = fft.mags.length; // 64 bins
+          for (let k = 0; k < numBins; k++) {
+            const mag = fft.mags[k];
+            const normMag = Math.min(1, mag / 3.5);
+            const bx = spectrumX + (k / (numBins - 1)) * spectrumW;
+            const by = oscY + oscH - 8 - normMag * (oscH - 26);
+            if (k === 0) ctx.moveTo(bx, by);
+            else ctx.lineTo(bx, by);
+          }
+          ctx.stroke();
+
+          // Peak indicator
+          if (fft.peakMag > 0.08) {
+            const peakBin = Math.min(63, Math.round(fft.f0 / (fs / 128)));
+            const pkX = spectrumX + (peakBin / (numBins - 1)) * spectrumW;
+            const pkY = oscY + oscH - 8 - Math.min(1, fft.peakMag / 3.5) * (oscH - 26);
+            ctx.fillStyle = ch.color;
+            ctx.beginPath();
+            ctx.arc(pkX, pkY, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          if (chIdx === 0) {
+            ctx.fillStyle = ch.color;
+            ctx.textAlign = 'left';
+            ctx.font = '8px monospace';
+            ctx.fillText(
+              `f₀=${fft.f0.toFixed(1)}Hz  THD=${fft.thdPercent.toFixed(1)}%`,
+              legendX,
+              oscY + 12
+            );
+            legendX += 140;
+          }
+        });
+
+        // 50Hz Ground Bounce Marker
+        if (faults.groundBounce) {
+          const humBin = Math.round(50 / (fs / 128));
+          const humX = spectrumX + (humBin / 63) * spectrumW;
+          ctx.fillStyle = '#f59e0b';
+          ctx.textAlign = 'center';
+          ctx.font = '7px monospace';
+          ctx.fillText('▲ 50Hz HUM', humX, oscY + 24);
+        }
+
+        ctx.fillStyle = '#c084fc';
+        ctx.font = '8px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText('128-PT HANN FFT (250Hz NYQUIST)', 18, oscY + 12);
+      }
 
       const numActiveFaults = [
         faults.groundBounce,
@@ -2150,6 +2563,7 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
       if (numActiveFaults > 0) {
         ctx.fillStyle = '#ef4444';
         ctx.textAlign = 'right';
+        ctx.font = '8px monospace';
         ctx.fillText(`⚡ [${numActiveFaults} FAULT${numActiveFaults > 1 ? 'S' : ''} ACTIVE]`, width - 20, oscY + 12);
         ctx.textAlign = 'left';
       }
@@ -2160,6 +2574,55 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
     animId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animId);
   }, [experiment.id]);
+
+  const renderDmmValue = useCallback(() => {
+    let raw = dmmStats.vdc;
+    if (dmmRel) raw -= dmmRelBase;
+
+    if (dmmFunction === 'vdc') {
+      const sign = raw >= 0 ? '+' : '';
+      return `${sign}${raw.toFixed(3)}`;
+    }
+    if (dmmFunction === 'vac_rms') {
+      return dmmStats.vacRms.toFixed(3);
+    }
+    if (dmmFunction === 'resistance') {
+      const r = dmmStats.resistance;
+      if (r >= 1000000) return (r / 1000000).toFixed(3);
+      if (r >= 1000) return (r / 1000).toFixed(2);
+      return r.toFixed(1);
+    }
+    if (dmmFunction === 'current') {
+      return dmmStats.currentMa.toFixed(1);
+    }
+    return '0.000';
+  }, [dmmStats, dmmFunction, dmmRel, dmmRelBase]);
+
+  const renderDmmUnit = useCallback(() => {
+    if (dmmFunction === 'vdc') return 'V DC';
+    if (dmmFunction === 'vac_rms') return 'V AC (RMS)';
+    if (dmmFunction === 'resistance') {
+      const r = dmmStats.resistance;
+      if (r >= 1000000) return 'MΩ';
+      if (r >= 1000) return 'kΩ';
+      return 'Ω';
+    }
+    if (dmmFunction === 'current') return 'mA';
+    return '';
+  }, [dmmFunction, dmmStats.resistance]);
+
+  const renderDmmBarPct = useCallback(() => {
+    if (dmmFunction === 'vdc' || dmmFunction === 'vac_rms') {
+      return Math.min(100, Math.max(0, (dmmStats.vdc / 5.0) * 100));
+    }
+    if (dmmFunction === 'resistance') {
+      return Math.min(100, Math.max(0, (Math.log10(Math.max(1, dmmStats.resistance)) / 6) * 100));
+    }
+    if (dmmFunction === 'current') {
+      return Math.min(100, Math.max(0, (dmmStats.currentMa / 500) * 100));
+    }
+    return 0;
+  }, [dmmFunction, dmmStats]);
 
   return (
     <div className="relative w-full rounded-2xl border border-white/10 bg-ink-950 overflow-hidden shadow-xl space-y-3 p-4">
@@ -2182,6 +2645,72 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
 
         {/* Action Controls */}
         <div className="flex items-center gap-2">
+          {/* Oscilloscope Mode Selector (TIME vs FFT) */}
+          <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-0.5 text-[10px] font-mono">
+            <button
+              onClick={() => {
+                setOscMode('time');
+                soundFX.playTap();
+              }}
+              className={`px-2 py-0.5 rounded-lg font-bold transition-all cursor-pointer ${
+                oscMode === 'time'
+                  ? 'bg-brand-500 text-white shadow-xs'
+                  : 'text-ink-400 hover:text-white'
+              }`}
+              title="Time-Domain Voltage Oscilloscope"
+            >
+              TIME
+            </button>
+            <button
+              onClick={() => {
+                setOscMode('fft');
+                soundFX.playTap();
+              }}
+              className={`px-2 py-0.5 rounded-lg font-bold transition-all cursor-pointer ${
+                oscMode === 'fft'
+                  ? 'bg-purple-600 text-white shadow-xs'
+                  : 'text-ink-400 hover:text-white'
+              }`}
+              title="128-pt Hann FFT Frequency Spectrum & THD Analyzer"
+            >
+              FFT
+            </button>
+          </div>
+
+          {/* DMM HUD Toggle */}
+          <button
+            onClick={() => {
+              setShowDmm(!showDmm);
+              soundFX.playTap();
+            }}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition-colors cursor-pointer border ${
+              showDmm
+                ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                : 'bg-white/5 border-white/10 text-ink-400 hover:text-white'
+            }`}
+            title="Digital Multimeter (DMM) Virtual HUD"
+          >
+            <Gauge className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">DMM</span>
+          </button>
+
+          {/* Dual Cursors Toggle */}
+          <button
+            onClick={() => {
+              setShowCursors(!showCursors);
+              soundFX.playTap();
+            }}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition-colors cursor-pointer border ${
+              showCursors
+                ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300'
+                : 'bg-white/5 border-white/10 text-ink-400 hover:text-white'
+            }`}
+            title="DSO Dual Measurement Cursors (Time & Delta Frequency)"
+          >
+            <Crosshair className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">CURSORS</span>
+          </button>
+
           {/* Timebase Speed Selector */}
           <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-0.5 text-[10px] font-mono">
             {[1, 2, 4].map((s) => (
@@ -2259,6 +2788,172 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
           <span>Click & Drag Object in Canvas</span>
         </div>
       </div>
+
+      {/* Virtual Digital Multimeter (DMM) Benchtop HUD */}
+      {showDmm && (
+        <div className="rounded-2xl border border-amber-500/30 bg-[#090d16] p-4 shadow-xl space-y-3 animate-fade-in">
+          {/* DMM Header Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2">
+            <div className="flex items-center gap-2">
+              <div className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-mono text-[10px] font-bold uppercase tracking-wider border border-amber-500/30 flex items-center gap-1.5">
+                <Gauge className="w-3 h-3 text-amber-400" />
+                <span>TRUE RMS DIGITAL MULTIMETER</span>
+              </div>
+              <span className="text-[10px] font-mono text-ink-400">
+                6000-Count Precision Dual-Slope ADC
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs font-mono">
+              <button
+                onClick={() => {
+                  setDmmHold(!dmmHold);
+                  soundFX.playTap();
+                }}
+                className={`px-2.5 py-0.5 rounded-lg font-bold border transition-all cursor-pointer ${
+                  dmmHold
+                    ? 'bg-amber-500 text-black border-amber-400 shadow-xs'
+                    : 'bg-white/5 text-ink-400 border-white/10 hover:text-white'
+                }`}
+              >
+                HOLD
+              </button>
+              <button
+                onClick={() => {
+                  setDmmRel(!dmmRel);
+                  setDmmRelBase(dmmStats.vdc);
+                  soundFX.playTap();
+                }}
+                className={`px-2.5 py-0.5 rounded-lg font-bold border transition-all cursor-pointer ${
+                  dmmRel
+                    ? 'bg-cyan-500 text-black border-cyan-400 shadow-xs'
+                    : 'bg-white/5 text-ink-400 border-white/10 hover:text-white'
+                }`}
+              >
+                REL &Delta;
+              </button>
+            </div>
+          </div>
+
+          {/* DMM OLED High-Contrast Display & Controls Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="md:col-span-2 rounded-xl bg-[#02050b] border border-emerald-500/40 p-4 font-mono shadow-inner space-y-2 relative overflow-hidden">
+              <div className="flex items-center justify-between text-[11px] text-emerald-500/70 border-b border-emerald-500/20 pb-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-emerald-400">
+                    {dmmHold ? '● [HOLD ACTIVE]' : 'AUTO RANGE'}
+                  </span>
+                  {dmmRel && <span className="text-cyan-400">REL &Delta; ACTIVE</span>}
+                </div>
+                <span>
+                  PROBE: {experiment.oscilloscopeChannels[dmmChannel]?.name || `CH${dmmChannel + 1}`}
+                </span>
+              </div>
+
+              {/* Primary 7-Segment Value */}
+              <div className="flex items-baseline justify-between py-1">
+                <div className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-wider">
+                  {renderDmmValue()}
+                </div>
+                <div className="text-sm font-bold text-emerald-500 uppercase tracking-widest">
+                  {renderDmmUnit()}
+                </div>
+              </div>
+
+              {/* Analog Bargraph Meter */}
+              <div className="space-y-1">
+                <div className="w-full h-2 rounded-full bg-emerald-950 border border-emerald-500/30 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 transition-all duration-100"
+                    style={{ width: `${renderDmmBarPct()}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-[8px] text-emerald-500/60 font-mono">
+                  <span>0</span>
+                  <span>1.0</span>
+                  <span>2.5</span>
+                  <span>4.0</span>
+                  <span>5.0+</span>
+                </div>
+              </div>
+
+              {/* Secondary Sub-metrics */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[10px] text-emerald-400/80 border-t border-emerald-500/20">
+                <span>MIN: {dmmStats.min.toFixed(2)}V</span>
+                <span>MAX: {dmmStats.max.toFixed(2)}V</span>
+                <span>&Delta; P-P: {(dmmStats.max - dmmStats.min).toFixed(2)}V</span>
+                <span>f₀: {dmmStats.f0.toFixed(1)}Hz</span>
+                <span>THD: {dmmStats.thd.toFixed(1)}%</span>
+              </div>
+            </div>
+
+            {/* DMM Controls & Mode Selector */}
+            <div className="space-y-3 flex flex-col justify-between">
+              {/* Function Selector Buttons */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-mono text-ink-400 uppercase font-bold">
+                  Measurement Mode
+                </span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { id: 'vdc', label: 'V DC' },
+                    { id: 'vac_rms', label: 'V AC (RMS)' },
+                    { id: 'resistance', label: 'Ω RES' },
+                    { id: 'current', label: 'mA I' },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => {
+                        setDmmFunction(f.id as any);
+                        soundFX.playTap();
+                      }}
+                      className={`px-2 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all border cursor-pointer ${
+                        dmmFunction === f.id
+                          ? 'bg-amber-500 text-black border-amber-400 shadow-xs'
+                          : 'bg-white/5 text-ink-300 border-white/10 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Probe Channel Selector */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-mono text-ink-400 uppercase font-bold">
+                  Probed Channel
+                </span>
+                <div className="space-y-1">
+                  {experiment.oscilloscopeChannels.map((ch, idx) => (
+                    <button
+                      key={ch.name}
+                      onClick={() => {
+                        setDmmChannel(idx);
+                        soundFX.playTap();
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-1 rounded-lg text-xs font-mono transition-all border cursor-pointer ${
+                        dmmChannel === idx
+                          ? 'bg-brand-500/20 border-brand-500/50 text-white font-bold'
+                          : 'bg-white/5 border-white/10 text-ink-400 hover:text-white'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: ch.color }}
+                        />
+                        <span className="truncate">{ch.name}</span>
+                      </span>
+                      <span className="text-[10px] opacity-70">CH{idx + 1}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

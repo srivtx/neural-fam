@@ -41,6 +41,7 @@ import {
   Columns2,
   Move,
   Play,
+  Pause,
   Terminal,
   Copy,
   Check,
@@ -111,7 +112,66 @@ export const CURIOSITY_JOURNEYS: CuriosityJourney[] = [
     description: 'Traverse the memory wall bottlenecks: SRAM tiling in attention, KV cache explosion, DeepSeek latent compression, and sparse MoE routing.',
     nodeIds: ['q_attention_scaling', 'q_kv_cache', 'q_mla_compression', 'q_moe_decoupling', 'q_mixture_of_depths'],
   },
+  {
+    id: 'quantum_to_analog_singularity',
+    title: 'The Quantum-to-Analog Singularity',
+    subtitle: 'Bandgap → Activation Folds → Loss Landscape → Systolic PEs → Photonic GEMM → Grand Unification',
+    themeColor: '#38bdf8',
+    badge: 'Physics to Singularity',
+    description: 'From quantum electrons and continuous non-linear folds to TPU systolic arrays, optical matrix meshes, and thermodynamic grand unification.',
+    nodeIds: ['q_electron', 'q_nonlinearity', 'q_loss_potentials', 'q_systolic_arrays_data_reuse', 'q_optical_analog_computing', 'q_the_grand_unification'],
+  },
+  {
+    id: 'thermodynamics_information_bottleneck',
+    title: 'Thermodynamics & Information Bottleneck',
+    subtitle: 'Physical Bit → Boltzmann Softmax → Tishby IB → Renormalization → Reversible Logic',
+    themeColor: '#f43f5e',
+    badge: 'Information Theory',
+    description: 'Track the physics of information: thermodynamic bit erasure, Boltzmann distributions, Tishby compression, and reversible zero-dissipation computing.',
+    nodeIds: ['q_data_bit', 'q_softmax_boltzmann', 'q_information_bottleneck', 'q_renormalization_group', 'q_thermodynamic_reversible_computing', 'q_the_grand_unification'],
+  },
 ];
+
+/**
+ * Computes the shortest deductive trajectory between any two Socratic nodes
+ * using Breadth-First Search on both causal and reciprocal graph links.
+ */
+export function findShortestSocraticPath(startId: string, targetId: string): string[] {
+  if (startId === targetId) return [startId];
+  const queue: string[][] = [[startId]];
+  const visited = new Set<string>([startId]);
+
+  const adj = new Map<string, Set<string>>();
+  SOCRATIC_QUESTION_NODES.forEach((node) => {
+    if (!adj.has(node.id)) adj.set(node.id, new Set<string>());
+    const neighbors = [...node.connectedQuestionIds, ...node.originQuestionIds];
+    for (const nbr of neighbors) {
+      adj.get(node.id)!.add(nbr);
+      if (!adj.has(nbr)) adj.set(nbr, new Set<string>());
+      adj.get(nbr)!.add(node.id);
+    }
+  });
+
+  while (queue.length > 0) {
+    const currentPath = queue.shift()!;
+    const lastNode = currentPath[currentPath.length - 1];
+
+    const neighbors = adj.get(lastNode);
+    if (!neighbors) continue;
+    for (const neighbor of neighbors) {
+      if (neighbor === targetId) {
+        return [...currentPath, neighbor];
+      }
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        queue.push([...currentPath, neighbor]);
+      }
+    }
+  }
+
+  return [startId];
+}
+
 
 type LayoutMode = 'split' | 'graph' | 'dossier';
 
@@ -137,6 +197,21 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
   // Curiosity Journey Guided Path Runner State
   const [activeJourneyId, setActiveJourneyId] = useState<string | null>(null);
   const [activeJourneyStepIndex, setActiveJourneyStepIndex] = useState<number>(0);
+
+  // Dynamic Knowledge Pathfinder & Trajectory Synthesizer State
+  const [isPathfinderActive, setIsPathfinderActive] = useState<boolean>(false);
+  const [pathfinderSourceId, setPathfinderSourceId] = useState<string>('q_wigner_math');
+  const [pathfinderTargetId, setPathfinderTargetId] = useState<string>('q_the_grand_unification');
+  const [pathfinderStepIndex, setPathfinderStepIndex] = useState<number>(0);
+  const [isPathfinderAutoPlaying, setIsPathfinderAutoPlaying] = useState<boolean>(false);
+
+  const pathfinderPath = useMemo(() => {
+    return findShortestSocraticPath(pathfinderSourceId, pathfinderTargetId);
+  }, [pathfinderSourceId, pathfinderTargetId]);
+
+  const activePathfinderNodeIdsSet = useMemo(() => {
+    return new Set(isPathfinderActive ? pathfinderPath : []);
+  }, [isPathfinderActive, pathfinderPath]);
 
   // Canvas Viewport Ref
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -281,6 +356,66 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
     setActiveJourneyStepIndex(0);
     soundFX.playTap();
   };
+
+  const handleSelectPathfinderPreset = (srcId: string, tgtId: string) => {
+    setPathfinderSourceId(srcId);
+    setPathfinderTargetId(tgtId);
+    setPathfinderStepIndex(0);
+    setIsPathfinderActive(true);
+    setActiveJourneyId(null);
+    handleSelectNode(srcId);
+    centerNodeOnCanvas(srcId);
+    soundFX.playTap();
+  };
+
+  const handleNextPathfinderStep = () => {
+    if (pathfinderStepIndex < pathfinderPath.length - 1) {
+      const nextIdx = pathfinderStepIndex + 1;
+      setPathfinderStepIndex(nextIdx);
+      const nextNodeId = pathfinderPath[nextIdx];
+      handleSelectNode(nextNodeId);
+      centerNodeOnCanvas(nextNodeId);
+      soundFX.playTap();
+    }
+  };
+
+  const handlePrevPathfinderStep = () => {
+    if (pathfinderStepIndex > 0) {
+      const prevIdx = pathfinderStepIndex - 1;
+      setPathfinderStepIndex(prevIdx);
+      const prevNodeId = pathfinderPath[prevIdx];
+      handleSelectNode(prevNodeId);
+      centerNodeOnCanvas(prevNodeId);
+      soundFX.playTap();
+    }
+  };
+
+  const handleExitPathfinder = () => {
+    setIsPathfinderActive(false);
+    setIsPathfinderAutoPlaying(false);
+    setPathfinderStepIndex(0);
+    soundFX.playTap();
+  };
+
+  // Trajectory automated deduction step playback
+  useEffect(() => {
+    if (!isPathfinderActive || !isPathfinderAutoPlaying || pathfinderPath.length <= 1) return;
+    const interval = setInterval(() => {
+      setPathfinderStepIndex((prev) => {
+        if (prev >= pathfinderPath.length - 1) {
+          setIsPathfinderAutoPlaying(false);
+          return prev;
+        }
+        const next = prev + 1;
+        const nextNodeId = pathfinderPath[next];
+        handleSelectNode(nextNodeId);
+        centerNodeOnCanvas(nextNodeId);
+        soundFX.playTap();
+        return next;
+      });
+    }, 2200);
+    return () => clearInterval(interval);
+  }, [isPathfinderActive, isPathfinderAutoPlaying, pathfinderPath, handleSelectNode, centerNodeOnCanvas]);
 
   const handleUndoPath = () => {
     if (historyTrail.length > 1) {
@@ -986,7 +1121,7 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                 Thematic Guided Pathways
               </span>
               <span className="text-xs text-ink-500 font-mono hidden sm:inline">
-                4 Curated First-Principles Explorations
+                6 Curated First-Principles Explorations
               </span>
             </div>
             <h2 className="text-base font-bold text-ink-900 dark:text-white flex items-center gap-2">
@@ -1010,8 +1145,8 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
           )}
         </div>
 
-        {/* 4 Thematic Journey Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* 6 Thematic Journey Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           {CURIOSITY_JOURNEYS.map((journey) => {
             const isActive = activeJourneyId === journey.id;
             return (
@@ -1183,6 +1318,241 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                   );
                 })}
               </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Dynamic Knowledge Pathfinder & Trajectory Synthesizer */}
+      <div className="p-5 bg-gradient-to-r from-cyan-950/40 via-surface dark:via-ink-900 to-emerald-950/40 rounded-2xl border border-cyan-500/30 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-ink-200/60 dark:border-white/10 pb-3">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30">
+                <Compass className="w-3 h-3 text-cyan-400" />
+                Deductive Geodesic Synthesizer
+              </span>
+              <span className="text-xs text-ink-500 font-mono hidden sm:inline">
+                Shortest Epistemic Path Between Any Two Inquiries
+              </span>
+            </div>
+            <h2 className="text-base font-bold text-ink-900 dark:text-white flex items-center gap-2">
+              <span>Dynamic Knowledge Pathfinder</span>
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const nextState = !isPathfinderActive;
+                setIsPathfinderActive(nextState);
+                if (nextState) {
+                  setActiveJourneyId(null);
+                  handleSelectNode(pathfinderPath[0]);
+                  centerNodeOnCanvas(pathfinderPath[0]);
+                }
+                soundFX.playTap();
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer border ${
+                isPathfinderActive
+                  ? 'bg-cyan-500 text-ink-950 border-cyan-400 shadow-md font-extrabold'
+                  : 'bg-ink-100 dark:bg-ink-800 text-ink-700 dark:text-ink-300 border-ink-200 dark:border-white/10 hover:border-cyan-500'
+              }`}
+            >
+              {isPathfinderActive ? '● Pathfinder Active' : 'Engage Pathfinder'}
+            </button>
+            {isPathfinderActive && (
+              <button
+                onClick={handleExitPathfinder}
+                className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-ink-100 dark:bg-ink-800 text-ink-600 dark:text-ink-300 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer transition-colors"
+                title="Exit Pathfinder Mode"
+              >
+                ✕ Exit
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Source & Destination Selectors + Instant Presets */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+          {/* Origin Node Selector */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-mono font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider flex items-center gap-1">
+              <span>1. Origin Inquiry (Axiom)</span>
+            </label>
+            <select
+              value={pathfinderSourceId}
+              onChange={(e) => {
+                setPathfinderSourceId(e.target.value);
+                setPathfinderStepIndex(0);
+                setIsPathfinderActive(true);
+                setActiveJourneyId(null);
+                handleSelectNode(e.target.value);
+                centerNodeOnCanvas(e.target.value);
+                soundFX.playTap();
+              }}
+              className="w-full text-xs font-mono bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/10 rounded-xl px-3 py-2 text-ink-900 dark:text-white cursor-pointer focus:outline-none focus:border-cyan-500"
+            >
+              {SOCRATIC_QUESTION_NODES.map((n) => (
+                <option key={`src-${n.id}`} value={n.id}>
+                  #{n.stepNumber}: {n.question.slice(0, 48)}...
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Destination Node Selector */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+              <span>2. Destination Inquiry (Frontier)</span>
+            </label>
+            <select
+              value={pathfinderTargetId}
+              onChange={(e) => {
+                setPathfinderTargetId(e.target.value);
+                setPathfinderStepIndex(0);
+                setIsPathfinderActive(true);
+                setActiveJourneyId(null);
+                soundFX.playTap();
+              }}
+              className="w-full text-xs font-mono bg-ink-50 dark:bg-ink-950 border border-ink-200 dark:border-white/10 rounded-xl px-3 py-2 text-ink-900 dark:text-white cursor-pointer focus:outline-none focus:border-emerald-500"
+            >
+              {SOCRATIC_QUESTION_NODES.map((n) => (
+                <option key={`tgt-${n.id}`} value={n.id}>
+                  #{n.stepNumber}: {n.question.slice(0, 48)}...
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Quick Trajectory Presets */}
+          <div className="space-y-1.5 md:col-span-2 lg:col-span-1">
+            <label className="text-[11px] font-mono font-bold text-ink-500 uppercase tracking-wider">
+              <span>Trajectory Presets</span>
+            </label>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                onClick={() => handleSelectPathfinderPreset('q_wigner_math', 'q_the_grand_unification')}
+                className="px-2 py-1.5 rounded-lg text-[10px] font-mono font-semibold bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-left truncate cursor-pointer"
+                title="Symmetry → The Grand Unification"
+              >
+                Symmetry → Unification
+              </button>
+              <button
+                onClick={() => handleSelectPathfinderPreset('q_electron', 'q_mla_compression')}
+                className="px-2 py-1.5 rounded-lg text-[10px] font-mono font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-left truncate cursor-pointer"
+                title="Quantum Bandgap → DeepSeek MLA"
+              >
+                Bandgap → DeepSeek MLA
+              </button>
+              <button
+                onClick={() => handleSelectPathfinderPreset('q_data_bit', 'q_mixture_of_depths')}
+                className="px-2 py-1.5 rounded-lg text-[10px] font-mono font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-left truncate cursor-pointer"
+                title="Physical Bit → Mixture of Depths"
+              >
+                Landauer → MoD Routing
+              </button>
+              <button
+                onClick={() => handleSelectPathfinderPreset('q_continuous_vectors', 'q_grokking_phase')}
+                className="px-2 py-1.5 rounded-lg text-[10px] font-mono font-semibold bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 text-left truncate cursor-pointer"
+                title="Vectors → Grokking Phase Transition"
+              >
+                Vectors → Grokking
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Pathfinder Active Stepper HUD */}
+        {isPathfinderActive && (
+          <div className="p-4 rounded-xl bg-ink-950 border border-cyan-500/30 space-y-3 animate-in fade-in duration-200">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                    Step {pathfinderPath.length > 0 ? pathfinderStepIndex + 1 : 0} of {pathfinderPath.length} ({Math.max(0, pathfinderPath.length - 1)} Deductive Hops)
+                  </span>
+                  <span className="text-xs font-bold text-white">
+                    {activeNode.question}
+                  </span>
+                </div>
+                <p className="text-xs text-ink-300 italic line-clamp-1">
+                  "{activeNode.oneLiner}"
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => {
+                    setIsPathfinderAutoPlaying((prev) => !prev);
+                    soundFX.playTap();
+                  }}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all cursor-pointer ${
+                    isPathfinderAutoPlaying
+                      ? 'bg-amber-400 text-ink-950 font-black shadow-md ring-1 ring-amber-300'
+                      : 'bg-ink-800 hover:bg-ink-700 text-cyan-300 shadow-xs border border-cyan-500/30'
+                  }`}
+                  title={isPathfinderAutoPlaying ? 'Pause Automated Trajectory' : 'Autoplay Deductive Steps'}
+                >
+                  {isPathfinderAutoPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                  <span>{isPathfinderAutoPlaying ? 'Pause' : 'Autoplay'}</span>
+                </button>
+
+                <button
+                  onClick={handlePrevPathfinderStep}
+                  disabled={pathfinderStepIndex === 0}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all cursor-pointer ${
+                    pathfinderStepIndex === 0
+                      ? 'bg-ink-800 text-ink-500 cursor-not-allowed opacity-50'
+                      : 'bg-ink-800 hover:bg-ink-700 text-white shadow-xs'
+                  }`}
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Prev Hop</span>
+                </button>
+
+                <button
+                  onClick={handleNextPathfinderStep}
+                  disabled={pathfinderStepIndex === pathfinderPath.length - 1}
+                  className={`flex items-center gap-1 px-3.5 py-1.5 rounded-lg text-xs font-bold font-mono transition-all cursor-pointer text-ink-950 font-extrabold bg-cyan-400 hover:bg-cyan-300 shadow-xs ${
+                    pathfinderStepIndex === pathfinderPath.length - 1
+                      ? 'bg-ink-600 text-ink-400 opacity-60 cursor-not-allowed'
+                      : 'hover:brightness-110 active:scale-95'
+                  }`}
+                >
+                  <span>Next Hop</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Trajectory Hop Waypoint Chain */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 border-t border-white/10 text-xs font-mono">
+              {pathfinderPath.map((stepId, idx) => {
+                const stepNode = SOCRATIC_QUESTION_NODES.find((n) => n.id === stepId);
+                const isCur = idx === pathfinderStepIndex;
+                return (
+                  <button
+                    key={`p-hop-${stepId}-${idx}`}
+                    onClick={() => {
+                      setPathfinderStepIndex(idx);
+                      handleSelectNode(stepId);
+                      centerNodeOnCanvas(stepId);
+                      soundFX.playTap();
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                      isCur
+                        ? 'bg-cyan-500 text-ink-950 font-bold shadow-xs scale-105'
+                        : 'bg-white/5 text-ink-400 hover:text-white hover:bg-white/10 border border-white/5'
+                    }`}
+                  >
+                    <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-black/30">
+                      {idx + 1}
+                    </span>
+                    <span>#{stepNode?.stepNumber}: {stepNode?.id.replace('q_', '')}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -1458,6 +1828,68 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                     </g>
                   )}
 
+                  {/* Active Knowledge Pathfinder Glowing Trail */}
+                  {isPathfinderActive && !activeJourney && (
+                    <g id="pathfinder-trail" className="pointer-events-none">
+                      {pathfinderPath.slice(0, -1).map((sourceId, idx) => {
+                        const targetId = pathfinderPath[idx + 1];
+                        const source = SOCRATIC_QUESTION_NODES.find((n) => n.id === sourceId);
+                        const target = SOCRATIC_QUESTION_NODES.find((n) => n.id === targetId);
+                        if (!source || !target) return null;
+
+                        const isCurrentSegment = idx === pathfinderStepIndex || idx === pathfinderStepIndex - 1;
+                        const dx = target.x - source.x;
+                        const dy = target.y - source.y;
+                        const cx1 = source.x + dx * 0.5;
+                        const cy1 = source.y;
+                        const cx2 = source.x + dx * 0.5;
+                        const cy2 = target.y;
+                        const pathD = `M ${source.x} ${source.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${target.x} ${target.y}`;
+
+                        return (
+                          <g key={`pathfinder-edge-${sourceId}-${targetId}`}>
+                            {/* Outer Cyan Neon Glow */}
+                            <path
+                              d={pathD}
+                              fill="none"
+                              stroke="#06b6d4"
+                              strokeWidth={isCurrentSegment ? 9 : 5.5}
+                              opacity={isCurrentSegment ? 0.6 : 0.3}
+                              strokeLinecap="round"
+                            />
+                            {/* Central Path */}
+                            <path
+                              d={pathD}
+                              fill="none"
+                              stroke="#22d3ee"
+                              strokeWidth={isCurrentSegment ? 3.5 : 2.2}
+                              strokeDasharray={isCurrentSegment ? 'none' : '5 4'}
+                              opacity={0.95}
+                            />
+                            {/* Flowing Cyan Particle */}
+                            <circle r="4.5" fill="#ffffff" stroke="#06b6d4" strokeWidth="2.5">
+                              <animateMotion path={pathD} dur={`${2.0 + idx * 0.2}s`} repeatCount="indefinite" />
+                            </circle>
+                            {/* Sequential Waypoint Badge */}
+                            <g transform={`translate(${(source.x + target.x) / 2}, ${(source.y + target.y) / 2})`}>
+                              <circle r="10" fill="#0b0f19" stroke="#06b6d4" strokeWidth="2" />
+                              <text
+                                textAnchor="middle"
+                                dy="3.5"
+                                fill="#22d3ee"
+                                fontSize="8"
+                                fontFamily="monospace"
+                                fontWeight="bold"
+                              >
+                                {idx + 1}
+                              </text>
+                            </g>
+                          </g>
+                        );
+                      })}
+                    </g>
+                  )}
+
                   {/* Render All Question Nodes with Focal Spotlight */}
                   {SOCRATIC_QUESTION_NODES.map((node) => {
                     const isSelected = selectedNodeId === node.id;
@@ -1469,18 +1901,33 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                     const journeyStepIdx = activeJourney ? activeJourney.nodeIds.indexOf(node.id) : -1;
                     const isCurrentJourneyStep = activeJourney && journeyStepIdx === activeJourneyStepIndex;
 
-                    const nodeRadius = isSelected || isCurrentJourneyStep ? 23 : isJourneyNode ? 19 : isHovered ? 20 : isNeighbor ? 17 : 14;
+                    const isPathNode = activePathfinderNodeIdsSet.has(node.id);
+                    const pathStepIdx = isPathfinderActive ? pathfinderPath.indexOf(node.id) : -1;
+                    const isCurrentPathStep = isPathfinderActive && pathStepIdx === pathfinderStepIndex;
+
+                    const nodeRadius =
+                      isSelected || isCurrentJourneyStep || isCurrentPathStep
+                        ? 23
+                        : isJourneyNode || isPathNode
+                        ? 19
+                        : isHovered
+                        ? 20
+                        : isNeighbor
+                        ? 17
+                        : 14;
+
                     const nodeOpacity = isMatch
-                      ? isSelected || isHovered || isCurrentJourneyStep
+                      ? isSelected || isHovered || isCurrentJourneyStep || isCurrentPathStep
                         ? 1
-                        : isJourneyNode
+                        : isJourneyNode || isPathNode
                         ? 0.95
-                        : activeJourney
+                        : activeJourney || isPathfinderActive
                         ? 0.22
                         : isNeighbor
                         ? 0.9
                         : 0.4
                       : 0.12;
+
 
                     return (
                       <g
@@ -1497,13 +1944,19 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                         <title>{`#${node.stepNumber}: ${node.question}`}</title>
 
                         {/* Active Halo Pulse */}
-                        {(isSelected || isHovered || isCurrentJourneyStep) && (
+                        {(isSelected || isHovered || isCurrentJourneyStep || isCurrentPathStep) && (
                           <circle
                             cx={node.x}
                             cy={node.y}
                             r={nodeRadius + 14}
-                            fill={isCurrentJourneyStep && activeJourney ? activeJourney.themeColor : 'url(#nodeGlow)'}
-                            opacity={isCurrentJourneyStep ? 0.35 : 0.7}
+                            fill={
+                              isCurrentJourneyStep && activeJourney
+                                ? activeJourney.themeColor
+                                : isCurrentPathStep
+                                ? '#06b6d4'
+                                : 'url(#nodeGlow)'
+                            }
+                            opacity={isCurrentJourneyStep || isCurrentPathStep ? 0.35 : 0.7}
                             className="animate-pulse"
                           />
                         )}
@@ -1518,18 +1971,38 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                               ? node.realmColor
                               : isCurrentJourneyStep && activeJourney
                               ? activeJourney.themeColor
+                              : isCurrentPathStep
+                              ? '#06b6d4'
                               : isHovered
                               ? '#1e293b'
                               : isNeighbor
                               ? '#1e293b'
                               : isJourneyNode && activeJourney
                               ? `${activeJourney.themeColor}25`
+                              : isPathNode
+                              ? '#06b6d425'
                               : isExplored
                               ? '#101726'
                               : '#070b14'
                           }
-                          stroke={isJourneyNode && activeJourney ? activeJourney.themeColor : node.realmColor}
-                          strokeWidth={isSelected || isCurrentJourneyStep ? 3.2 : isJourneyNode ? 2.5 : isHovered ? 2.2 : isNeighbor ? 1.8 : 1}
+                          stroke={
+                            isJourneyNode && activeJourney
+                              ? activeJourney.themeColor
+                              : isPathNode
+                              ? '#06b6d4'
+                              : node.realmColor
+                          }
+                          strokeWidth={
+                            isSelected || isCurrentJourneyStep || isCurrentPathStep
+                              ? 3.2
+                              : isJourneyNode || isPathNode
+                              ? 2.5
+                              : isHovered
+                              ? 2.2
+                              : isNeighbor
+                              ? 1.8
+                              : 1
+                          }
                           className="transition-all duration-200"
                         />
 

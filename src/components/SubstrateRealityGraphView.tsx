@@ -143,14 +143,16 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
       selectedNodeId === 'sub_cmos_complementary' ||
       selectedNodeId === 'sub_mosfet_field_effect' ||
       selectedNodeId === 'sub_logic_gates_switches' ||
-      selectedNodeId === 'sub_voltage_definition'
+      selectedNodeId === 'sub_voltage_definition' ||
+      selectedNodeId === 'sub_voltage_field'
     ) {
       return 'cmos_inverter';
     }
     if (
       selectedNodeId === 'sub_pn_junction' ||
       selectedNodeId === 'pn_junction_diode' ||
-      selectedNodeId === 'sub_pn_junction_diode'
+      selectedNodeId === 'sub_pn_junction_diode' ||
+      selectedNodeId === 'sub_closed_loop'
     ) {
       return 'pn_junction';
     }
@@ -159,20 +161,44 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
       selectedNodeId === 'instruction_pipeline' ||
       selectedNodeId === 'sub_instruction_pipeline' ||
       selectedNodeId === 'superscalar_pipeline' ||
-      selectedNodeId === 'sub_superscalar_pipeline'
+      selectedNodeId === 'sub_superscalar_pipeline' ||
+      selectedNodeId === 'sub_why_microcontroller' ||
+      selectedNodeId === 'sub_why_one_chip'
     ) {
       return 'superscalar_pipeline';
     }
     if (
+      selectedNodeId === 'sub_flash_tunneling' ||
+      selectedNodeId === 'sub_flash_memory' ||
+      selectedNodeId === 'sub_quantum_tunneling'
+    ) {
+      return 'quantum_tunneling';
+    }
+    if (
+      selectedNodeId === 'sub_transformer_silicon_tiling' ||
+      selectedNodeId === 'sub_gpu_vs_cpu_silicon' ||
+      selectedNodeId === 'sub_quantization_energy_mechanics' ||
+      selectedNodeId === 'sub_tpu_v1' ||
+      selectedNodeId === 'sub_systolic_array'
+    ) {
+      return 'systolic_array';
+    }
+    if (
+      selectedNodeId === 'sub_landauer_limit' ||
+      selectedNodeId === 'sub_what_is_computation' ||
+      selectedNodeId === 'sub_charge_to_thought' ||
+      selectedNodeId === 'sub_reversible_computing'
+    ) {
+      return 'landauer_reversible';
+    }
+    if (
       selectedNodeId === 'sub_hbm_memory_wall' ||
       selectedNodeId === 'sub_von_neumann_bottleneck' ||
-      selectedNodeId === 'sub_gpu_vs_cpu_silicon' ||
-      selectedNodeId === 'sub_transformer_silicon_tiling' ||
-      selectedNodeId === 'sub_quantization_energy_mechanics' ||
       selectedNodeId === 'sub_processing_in_memory' ||
       selectedNodeId === 'sub_silicon_photonics_optical_interconnect' ||
       selectedNodeId === 'sub_interconnect_speed_of_light' ||
-      selectedNodeId === 'sub_landauer_limit'
+      selectedNodeId === 'sub_interconnect_stack' ||
+      selectedNodeId === 'sub_electromigration'
     ) {
       return 'roofline_memory_wall';
     }
@@ -1495,6 +1521,46 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
               </div>
               <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
                 Instruction pipelines overlap Fetch (IF), Decode (ID), Execute (EX), Memory (MEM), and WriteBack (WB) to attain ideal CPI ≈ 1.0. Bypass forwarding buses eliminate RAW data stalls by routing ALU results directly from EX/MEM stages into ALU inputs, while branch mispredictions trigger hardware squashing flushes.
+              </p>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-teal-400 font-mono">
+                <Sparkles className="w-4 h-4 text-teal-500" />
+                <span>9. Quantum Tunneling & Fowler-Nordheim NAND Flash</span>
+              </div>
+              <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+                Wavefunctions decay exponentially through thin oxide barriers &psi;(x) &prop; exp(-&kappa;x). Under strong program fields (E &gt; 10 MV/cm), triangular barrier thinning triggers Fowler-Nordheim tunneling, trapping discrete electron packets in isolated polysilicon floating gates to shift threshold voltage Vth across SLC (1-bit), MLC (2-bit), TLC (3-bit), and QLC (4-bit, 16 distinct Gaussian threshold voltage levels).
+              </p>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-rose-700 dark:text-rose-400 font-mono">
+                <Network className="w-4 h-4 text-rose-500" />
+                <span>10. Google TPU Systolic Array & 2D Wavefront Compute</span>
+              </div>
+              <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+                Rather than repeatedly reading and writing intermediate matrix products to high-capacitance register files, a 2D grid of Multiply-Accumulate (MAC) processing elements pumps data rhythmically across silicon. Input activations flow horizontally and partial sums flow vertically in diagonal wavefront steps, achieving $O(N)$ memory reads for $O(N^3)$ operations and sustaining peak arithmetic intensity.
+              </p>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-400 font-mono">
+                <Flame className="w-4 h-4 text-amber-500" />
+                <span>11. Landauer Limit & Reversible Computing</span>
+              </div>
+              <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+                Rolf Landauer demonstrated that erasing 1 bit of information irreversibly compresses phase space, necessarily dumping at least kB·T·ln(2) &approx; 2.87 zJ into thermal entropy at 300K. To bypass this thermodynamic thermal wall, reversible computing architectures (Fredkin Controlled-SWAP and Toffoli CCNOT gates) preserve bijective information conservation, enabling theoretical zero-dissipation computation.
+              </p>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-blue-700 dark:text-blue-400 font-mono">
+                <Compass className="w-4 h-4 text-blue-500" />
+                <span>12. The Cosmic Scale Ladder of Computing</span>
+              </div>
+              <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+                Traverse 10 orders of physical magnitude from macro server racks (1 m) down to silicon wafers (10⁻¹ m), monolithic chips (10⁻² m), interconnect traces (10⁻⁵ m), gate oxides (10⁻⁸ m), and sub-nanometer electron wave packets (10⁻¹⁰ m), anchoring abstract software abstractions to tangible physical matter.
               </p>
             </div>
           </div>
