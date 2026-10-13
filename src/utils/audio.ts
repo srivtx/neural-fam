@@ -476,6 +476,366 @@ class SoundFX {
       // ignore
     }
   }
+
+  // --- Authentic Physical Computing & Substrate Audio Synthesizers ---
+
+  /**
+   * Resonant piezoelectric square wave buzzer with characteristic sharp rise/fall
+   * and high-Q odd-harmonic buzz.
+   */
+  public playPiezoBuzzer(freqHz: number = 2400, duration: number = 0.15) {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freqHz, now);
+
+      // Resonant bandpass filter peaking at the buzzer's acoustic chamber resonance
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(freqHz, now);
+      filter.Q.setValueAtTime(3.5, now);
+
+      const attack = 0.003; // sharp 3ms rise
+      const release = 0.015; // sharp mechanical decay
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.07, now + attack);
+      const sustainEnd = Math.max(now + attack, now + duration - release);
+      gain.gain.setValueAtTime(0.07, sustainEnd);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+    } catch {
+      // Audio safety fallback
+    }
+  }
+
+  /**
+   * High-frequency 40kHz Doppler-downshifted ultrasonic radar ping.
+   * Sine chirp sweep 2200Hz -> 880Hz with subtle exponential acoustic echo tail.
+   */
+  public playUltrasonicPing() {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      // Fast downshifted Doppler sweep: 2200Hz -> 880Hz -> 440Hz tail
+      osc.frequency.setValueAtTime(2200, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.05);
+      osc.frequency.exponentialRampToValueAtTime(440, now + 0.12);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.065, now + 0.004);
+      gain.gain.exponentialRampToValueAtTime(0.018, now + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } catch {
+      // Audio safety fallback
+    }
+  }
+
+  /**
+   * Micro-pulse 490Hz / 980Hz Arduino timer carrier hum with subtle mechanical resonance.
+   * Simulates motor stator coil chopping at PWM timer clock rates.
+   */
+  public playMotorPWMHum(dutyCycle: number = 0.5) {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const carrierFreq = dutyCycle > 0.65 ? 980 : 490; // Standard Arduino timer PWM carrier
+      const duration = 0.10;
+
+      // PWM switching carrier oscillator
+      const oscCarrier = this.ctx.createOscillator();
+      const filter = this.ctx.createBiquadFilter();
+      const gainCarrier = this.ctx.createGain();
+
+      oscCarrier.type = 'square';
+      oscCarrier.frequency.setValueAtTime(carrierFreq, now);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1200, now);
+      filter.Q.setValueAtTime(1.8, now);
+
+      // Low-frequency mechanical rotor vibration (60-80Hz)
+      const oscRotor = this.ctx.createOscillator();
+      const gainRotor = this.ctx.createGain();
+      oscRotor.type = 'triangle';
+      oscRotor.frequency.setValueAtTime(70, now);
+
+      const normDuty = Math.max(0.05, Math.min(1.0, dutyCycle));
+      const amp = 0.035 * normDuty;
+
+      gainCarrier.gain.setValueAtTime(0.0001, now);
+      gainCarrier.gain.linearRampToValueAtTime(amp, now + 0.005);
+      gainCarrier.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      gainRotor.gain.setValueAtTime(0.0001, now);
+      gainRotor.gain.linearRampToValueAtTime(amp * 0.5, now + 0.005);
+      gainRotor.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      oscCarrier.connect(filter);
+      filter.connect(gainCarrier);
+      gainCarrier.connect(this.ctx.destination);
+
+      oscRotor.connect(gainRotor);
+      gainRotor.connect(this.ctx.destination);
+
+      oscCarrier.start(now);
+      oscCarrier.stop(now + duration + 0.01);
+      oscRotor.start(now);
+      oscRotor.stop(now + duration + 0.01);
+    } catch {
+      // Audio safety fallback
+    }
+  }
+
+  /**
+   * Ultra-short 5ms transient impulse click for optical encoder slot crossings.
+   * Damped high-frequency impulse simulating photodiode state toggle.
+   */
+  public playEncoderTick() {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(3200, now);
+      osc.frequency.exponentialRampToValueAtTime(900, now + 0.005);
+
+      gain.gain.setValueAtTime(0.03, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.005);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.006);
+    } catch {
+      // Audio safety fallback
+    }
+  }
+
+  /**
+   * Granular noise burst simulating physical shell fracture under compressive load.
+   * Multi-stage micro-fracture acoustic impulses with high-frequency brittle crunch.
+   */
+  public playEggCrack() {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+
+      const sampleRate = this.ctx.sampleRate;
+      const duration = 0.16;
+      const bufferSize = Math.floor(sampleRate * duration);
+      const buffer = this.ctx.createBuffer(1, bufferSize, sampleRate);
+      const data = buffer.getChannelData(0);
+
+      // Procedural brittle fracture synthesis: multiple overlapping fracture snaps
+      for (let i = 0; i < bufferSize; i++) {
+        const t = i / sampleRate;
+        const snap1 = Math.exp(-t * 90);
+        const snap2 = t > 0.02 ? Math.exp(-(t - 0.02) * 110) : 0;
+        const snap3 = t > 0.05 ? Math.exp(-(t - 0.05) * 140) : 0;
+        const snap4 = t > 0.09 ? Math.exp(-(t - 0.09) * 160) : 0;
+        const envelope = snap1 * 0.9 + snap2 * 0.75 + snap3 * 0.55 + snap4 * 0.4;
+        const white = Math.random() * 2 - 1;
+        data[i] = white * envelope;
+      }
+
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(1400, this.ctx.currentTime);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.07, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      noise.start(this.ctx.currentTime);
+      noise.stop(this.ctx.currentTime + duration + 0.01);
+    } catch {
+      // Audio safety fallback
+    }
+  }
+
+  /**
+   * Dual mechanical transient (contact bounce) for electromagnetic switch toggling.
+   * Initial armature strike followed ~7ms later by secondary bounce transient.
+   */
+  public playRelayClick() {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+
+      // Primary contact impact
+      const osc1 = this.ctx.createOscillator();
+      const gain1 = this.ctx.createGain();
+      osc1.type = 'square';
+      osc1.frequency.setValueAtTime(1200, now);
+      osc1.frequency.exponentialRampToValueAtTime(350, now + 0.007);
+      gain1.gain.setValueAtTime(0.045, now);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.007);
+      osc1.connect(gain1);
+      gain1.connect(this.ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.008);
+
+      // Contact bounce transient (~7ms later)
+      const bounceTime = now + 0.007;
+      const osc2 = this.ctx.createOscillator();
+      const gain2 = this.ctx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(2000, bounceTime);
+      osc2.frequency.exponentialRampToValueAtTime(500, bounceTime + 0.005);
+      gain2.gain.setValueAtTime(0.03, bounceTime);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, bounceTime + 0.005);
+      osc2.connect(gain2);
+      gain2.connect(this.ctx.destination);
+      osc2.start(bounceTime);
+      osc2.stop(bounceTime + 0.006);
+    } catch {
+      // Audio safety fallback
+    }
+  }
+
+  /**
+   * Low-frequency avalanche noise burst simulating Zener/avalanche breakdown.
+   * Procedural micro-plasma ionization discharge with thermal shot noise.
+   */
+  public playDiodeBreakdown() {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+
+      const sampleRate = this.ctx.sampleRate;
+      const duration = 0.22;
+      const bufferSize = Math.floor(sampleRate * duration);
+      const buffer = this.ctx.createBuffer(1, bufferSize, sampleRate);
+      const data = buffer.getChannelData(0);
+
+      let prev = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const t = i / sampleRate;
+        const decay = Math.exp(-t * 14);
+        const white = Math.random() * 2 - 1;
+        prev = (prev + 0.08 * white) / 1.08; // Brown noise low-pass integration
+        const plasmaSpike = Math.random() < 0.04 ? (Math.random() * 2 - 1) * 0.7 : 0;
+        data[i] = (prev * 2.2 + plasmaSpike) * decay;
+      }
+
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(450, this.ctx.currentTime);
+      filter.Q.setValueAtTime(3.0, this.ctx.currentTime);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.065, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      noise.start(this.ctx.currentTime);
+      noise.stop(this.ctx.currentTime + duration + 0.01);
+    } catch {
+      // Audio safety fallback
+    }
+  }
+
+  /**
+   * Descending frequency chirp (600Hz -> 200Hz) for processor instruction stall bubbles.
+   * Simulates CPU clock-cycle bubble insertion on hazard or branch misprediction.
+   */
+  public playPipelineStall() {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.16);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1100, now);
+      filter.frequency.exponentialRampToValueAtTime(320, now + 0.16);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.045, now + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.19);
+    } catch {
+      // Audio safety fallback
+    }
+  }
 }
 
 export const soundFX = new SoundFX();
+
+// Standalone functional exports for ergonomic procedural audio access
+export const playPiezoBuzzer = (freqHz?: number, duration?: number) => soundFX.playPiezoBuzzer(freqHz, duration);
+export const playUltrasonicPing = () => soundFX.playUltrasonicPing();
+export const playMotorPWMHum = (dutyCycle?: number) => soundFX.playMotorPWMHum(dutyCycle);
+export const playEncoderTick = () => soundFX.playEncoderTick();
+export const playEggCrack = () => soundFX.playEggCrack();
+export const playRelayClick = () => soundFX.playRelayClick();
+export const playDiodeBreakdown = () => soundFX.playDiodeBreakdown();
+export const playPipelineStall = () => soundFX.playPipelineStall();
+

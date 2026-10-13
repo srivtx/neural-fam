@@ -47,6 +47,8 @@ import {
   Share2,
   ExternalLink,
   Gauge,
+  Radio,
+  Workflow,
 } from 'lucide-react';
 import {
   SUBSTRATE_REALITY_NODES,
@@ -112,7 +114,6 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
       selectedNodeId === 'sub_charges_doing_math' ||
       selectedNodeId === 'sub_alu_opcodes' ||
       selectedNodeId === 'sub_bus_tristate' ||
-      selectedNodeId === 'sub_pipeline_branch_prediction' ||
       selectedNodeId === 'sub_virtual_memory_tlb'
     ) {
       return 'full_adder';
@@ -142,10 +143,25 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
       selectedNodeId === 'sub_cmos_complementary' ||
       selectedNodeId === 'sub_mosfet_field_effect' ||
       selectedNodeId === 'sub_logic_gates_switches' ||
-      selectedNodeId === 'sub_voltage_definition' ||
-      selectedNodeId === 'sub_pn_junction'
+      selectedNodeId === 'sub_voltage_definition'
     ) {
       return 'cmos_inverter';
+    }
+    if (
+      selectedNodeId === 'sub_pn_junction' ||
+      selectedNodeId === 'pn_junction_diode' ||
+      selectedNodeId === 'sub_pn_junction_diode'
+    ) {
+      return 'pn_junction';
+    }
+    if (
+      selectedNodeId === 'sub_pipeline_branch_prediction' ||
+      selectedNodeId === 'instruction_pipeline' ||
+      selectedNodeId === 'sub_instruction_pipeline' ||
+      selectedNodeId === 'superscalar_pipeline' ||
+      selectedNodeId === 'sub_superscalar_pipeline'
+    ) {
+      return 'superscalar_pipeline';
     }
     if (
       selectedNodeId === 'sub_hbm_memory_wall' ||
@@ -1459,6 +1475,26 @@ export const SubstrateRealityGraphView: React.FC<SubstrateRealityGraphViewProps>
               </div>
               <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
                 Why GPUs starve on naive attention: with an arithmetic intensity of only 2 FLOPs/byte, Tensor Cores achieve less than 1% utilization due to the HBM memory wall. Fusing attention inside 256 KB on-chip SRAM via FlashAttention catapults intensity past the ridge point into 100% compute saturation.
+              </p>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-cyan-700 dark:text-cyan-400 font-mono">
+                <Radio className="w-4 h-4 text-cyan-500" />
+                <span>7. PN Junction Diode & Depletion Dynamics</span>
+              </div>
+              <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+                Connecting P-type and N-type semiconductors causes carriers to diffuse until uncovered ionized cores create a built-in potential barrier Vbi = (kT/q)·ln(NA·ND / ni²). Reverse bias expands the space-charge depletion width W(V), while forward bias collapses the barrier to unleash exponential Shockley diffusion current I = Is·(exp(qV / nkT) - 1).
+              </p>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-indigo-700 dark:text-indigo-400 font-mono">
+                <Workflow className="w-4 h-4 text-indigo-500" />
+                <span>8. RISC-V 5-Stage Superscalar Pipeline & Hazards</span>
+              </div>
+              <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">
+                Instruction pipelines overlap Fetch (IF), Decode (ID), Execute (EX), Memory (MEM), and WriteBack (WB) to attain ideal CPI ≈ 1.0. Bypass forwarding buses eliminate RAW data stalls by routing ALU results directly from EX/MEM stages into ALU inputs, while branch mispredictions trigger hardware squashing flushes.
               </p>
             </div>
           </div>

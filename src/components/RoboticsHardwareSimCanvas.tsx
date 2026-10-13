@@ -22,12 +22,22 @@ import {
   Move,
   Maximize2,
   Minimize2,
+  AlertTriangle,
 } from 'lucide-react';
 import { RoboticsExperiment } from '../data/roboticsExperimentsData';
 import { soundFX } from '../utils/audio';
 
-interface RoboticsHardwareSimCanvasProps {
+export interface HardwareFaults {
+  groundBounce?: boolean;
+  opticalOcclusion?: boolean;
+  acousticMultipath?: boolean;
+  inductiveSpike?: boolean;
+  thermalDrift?: boolean;
+}
+
+export interface RoboticsHardwareSimCanvasProps {
   experiment: RoboticsExperiment;
+  activeFaults?: HardwareFaults;
 }
 
 const getDefaultSimState = (id: string) => {
@@ -120,6 +130,7 @@ const getDefaultSimState = (id: string) => {
 
 export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps> = ({
   experiment,
+  activeFaults = {},
 }) => {
   const [isRunning, setIsRunning] = useState<boolean>(true);
   const [isSoundMuted, setIsSoundMuted] = useState<boolean>(() => soundFX.getMuted());
@@ -132,6 +143,11 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
   const lastSoundTimeRef = useRef<number>(0);
   const oscHistoryRef = useRef<Array<number[]>>([]);
   const tRef = useRef<number>(0);
+
+  const activeFaultsRef = useRef<HardwareFaults>(activeFaults);
+  useEffect(() => {
+    activeFaultsRef.current = activeFaults;
+  }, [activeFaults]);
 
   const isRunningRef = useRef<boolean>(isRunning);
   useEffect(() => {
@@ -372,6 +388,15 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
       let oscVal2 = 0;
       let oscVal3 = 0;
 
+      // Fault injection synthesis
+      const faults = activeFaultsRef.current || {};
+      const hum50Hz = faults.groundBounce ? Math.sin(t * 50) * 0.45 : 0;
+      const spikePhase = (t * 2.2) % 2.5;
+      let flybackSpike = 0;
+      if (faults.inductiveSpike && spikePhase < 0.12) {
+        flybackSpike = Math.sin(spikePhase * 180) * Math.exp(-spikePhase * 35) * 8.5;
+      }
+
       // =======================================================================
       // EXPERIMENT 1: PIR + SERVO GATE + BUZZER
       // =======================================================================
@@ -423,7 +448,7 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
           // Sound effect trigger throttle
           if (performance.now() - lastSoundTimeRef.current > 600) {
             lastSoundTimeRef.current = performance.now();
-            soundFX.playTap();
+            soundFX.playPiezoBuzzer(2400, 0.15);
           }
         } else {
           if (state.triggerTimer > 0) {
@@ -520,10 +545,18 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
           ctx.fillText('BEEP!', pirX + 22, pirY - 55);
         }
 
+        // Thermal drift spurious trigger
+        if (faults.thermalDrift && running && (Math.sin(t * 1.5) > 0.72) && !state.isTriggered) {
+          state.isTriggered = true;
+          state.triggerTimer = 50;
+          state.targetGateAngle = 90;
+          state.buzzerAlpha = 1.0;
+        }
+
         // Oscilloscope channel values
-        oscVal1 = state.isTriggered ? 5.0 : 0.0; // PIR digital out (5V)
-        oscVal2 = 1.0 + (state.gateAngle / 90.0); // Servo PWM pulse width (1.0ms to 2.0ms)
-        oscVal3 = state.buzzerAlpha > 0.1 ? (Math.sin(t * 30) > 0 ? 5.0 : 0.0) : 0.0;
+        oscVal1 = (state.isTriggered ? 5.0 : 0.0) + hum50Hz; // PIR digital out (5V)
+        oscVal2 = 1.0 + (state.gateAngle / 90.0) + (faults.inductiveSpike ? flybackSpike * 0.2 : 0); // Servo PWM pulse width (1.0ms to 2.0ms)
+        oscVal3 = (state.buzzerAlpha > 0.1 ? (Math.sin(t * 30) > 0 ? 5.0 : 0.0) : 0.0) + (faults.inductiveSpike ? flybackSpike * 0.4 : 0);
       }
 
       // =======================================================================
@@ -620,6 +653,10 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
         if (Math.abs(state.radarAngle - targetAngleDeg) < 4 && distCm < 100) {
           state.echoDistance = distCm;
           state.blips.push({ angle: targetAngleDeg, dist: distCm, alpha: 1.0 });
+          if (performance.now() - lastSoundTimeRef.current > 200) {
+            lastSoundTimeRef.current = performance.now();
+            soundFX.playUltrasonicPing();
+          }
         }
 
         // Bounded blips array
@@ -656,9 +693,25 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
         ctx.font = 'bold 11px monospace';
         ctx.fillText(`Angle: ${Math.round(state.radarAngle)}°  Distance: ${state.echoDistance.toFixed(1)} cm`, radarCenterX, 25);
 
+        // Acoustic Multipath Reflection: Spurious ghost radar blips
+        if (faults.acousticMultipath && running) {
+          if (frameCount % 18 === 0) {
+            const ghostAngle = (state.radarAngle + Math.sin(t * 7) * 45 + 180) % 180;
+            const ghostDist = 12 + Math.abs(Math.sin(t * 4)) * 60;
+            state.blips.push({ angle: ghostAngle, dist: ghostDist, alpha: 0.95 });
+          }
+          if (Math.sin(t * 9) > 0.15) {
+            state.echoDistance = (state.echoDistance * 0.35 + 14.5 + Math.sin(t * 15) * 8);
+          }
+        }
+
         oscVal1 = (t * 20) % 20 < 1 ? 5.0 : 0.0; // Trigger pulse (10us)
-        oscVal2 = (t * 20) % 20 < Math.max(0.5, state.echoDistance / 10) ? 5.0 : 0.0; // Echo pulse width
-        oscVal3 = Math.max(0, Math.min(180, state.radarAngle)); // Servo angle in degrees (0 to 180)
+        let echoPulseDur = Math.max(0.5, state.echoDistance / 10);
+        if (faults.acousticMultipath && Math.sin(t * 14) > 0.3) {
+          echoPulseDur = (echoPulseDur * 0.4 + 1.2);
+        }
+        oscVal2 = ((t * 20) % 20 < echoPulseDur ? 5.0 : 0.0) + hum50Hz; // Echo pulse width
+        oscVal3 = Math.max(0, Math.min(180, state.radarAngle)) + (faults.inductiveSpike ? flybackSpike * 3 : 0); // Servo angle in degrees (0 to 180)
       }
 
       // =======================================================================
@@ -693,6 +746,13 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
           state.poleAngularVel += poleAngularAcc * dt;
           state.poleAngularVel *= 0.992; // Viscous damping
           state.poleAngle += state.poleAngularVel * dt;
+
+          if (faults.thermalDrift) {
+            state.poleAngularVel += 0.05 * dt; // gyro zero-rate bias drift
+          }
+          if (faults.groundBounce) {
+            state.poleAngle += Math.sin(t * 50) * 0.002;
+          }
 
           // Cart acceleration with track friction
           const cartAcc = controlForce * 0.8;
@@ -782,9 +842,9 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
         ctx.font = '9px monospace';
         ctx.fillText('Drag Pendulum Tip to Disturb Balance', width * 0.5, 48);
 
-        oscVal1 = (state.poleAngle * 180) / Math.PI; // Filtered Pitch Angle in Degrees (-25 to +25)
-        oscVal2 = (state.poleAngularVel * 180) / Math.PI; // Gyro rate in °/s (-200 to +200)
-        oscVal3 = Math.max(-255, Math.min(255, controlForce * 14)); // Motor PWM Output (-255 to +255)
+        oscVal1 = (state.poleAngle * 180) / Math.PI + (faults.groundBounce ? hum50Hz * 3 : 0); // Filtered Pitch Angle in Degrees (-25 to +25)
+        oscVal2 = (state.poleAngularVel * 180) / Math.PI + (faults.thermalDrift ? 24 : 0) + (faults.inductiveSpike ? flybackSpike * 8 : 0); // Gyro rate in °/s (-200 to +200)
+        oscVal3 = Math.max(-255, Math.min(255, controlForce * 14)) + (faults.inductiveSpike ? flybackSpike * 25 : 0); // Motor PWM Output (-255 to +255)
       }
 
       // =======================================================================
@@ -889,6 +949,16 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
         // Transduction: Black tape absorbs 950nm (4.5V), White reflects 950nm (0.6V)
         state.leftIR = minDistL <= 6 ? 4.5 : Math.max(0.6, 4.5 - (minDistL - 6) * 0.35);
         state.rightIR = minDistR <= 6 ? 4.5 : Math.max(0.6, 4.5 - (minDistR - 6) * 0.35);
+
+        // Fault: Optical dust occlusion drops 950nm IR reflection by 80%
+        if (faults.opticalOcclusion) {
+          state.leftIR *= 0.2;
+          state.rightIR *= 0.2;
+        }
+        if (faults.groundBounce) {
+          state.leftIR = Math.max(0, Math.min(5, state.leftIR + hum50Hz));
+          state.rightIR = Math.max(0, Math.min(5, state.rightIR + hum50Hz));
+        }
 
         // Proportional Closed-Loop Steering Dynamics
         if (running && !state.isDraggingRobot) {
@@ -1031,9 +1101,9 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
         ctx.fillText(`ΔV Error: ${(state.leftIR - state.rightIR).toFixed(2)}V (Differential Drive)`, 22, 52);
 
         // Oscilloscope Channels
-        oscVal1 = state.leftIR; // A0 analog voltage (0.5V to 4.5V)
-        oscVal2 = state.rightIR; // A1 analog voltage (0.5V to 4.5V)
-        oscVal3 = state.leftPWM - state.rightPWM; // Differential effort (-255 to 255)
+        oscVal1 = state.leftIR + (faults.inductiveSpike ? flybackSpike * 0.4 : 0); // A0 analog voltage (0.5V to 4.5V)
+        oscVal2 = state.rightIR + (faults.inductiveSpike ? flybackSpike * 0.4 : 0); // A1 analog voltage (0.5V to 4.5V)
+        oscVal3 = (state.leftPWM - state.rightPWM) + (faults.inductiveSpike ? flybackSpike * 25 : 0); // Differential effort (-255 to 255)
       }
 
       // =======================================================================
@@ -1108,6 +1178,21 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
 
         state.leftV = isLeftShaded ? 0.8 : Math.min(5.0, 1.2 + cosIncidence * 3.7);
         state.rightV = isRightShaded ? 0.8 : Math.min(5.0, 1.2 + cosIncidence * 3.7);
+
+        // Fault: Optical dust occlusion drops LDR sunlight lux by 80%
+        if (faults.opticalOcclusion) {
+          state.leftV *= 0.2;
+          state.rightV *= 0.2;
+        }
+        // Fault: Thermal resistance drift unbalances CdS cell baseline
+        if (faults.thermalDrift) {
+          state.leftV = Math.min(5.0, state.leftV + 0.95);
+        }
+        // Fault: 50Hz mains hum ripple
+        if (faults.groundBounce) {
+          state.leftV = Math.max(0, Math.min(5, state.leftV + hum50Hz));
+          state.rightV = Math.max(0, Math.min(5, state.rightV + hum50Hz));
+        }
 
         // Pan Servo Closed-Loop Feedback Control with Deadband
         if (running) {
@@ -1225,7 +1310,7 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
 
         oscVal1 = state.leftV; // Left light voltage (0 to 5V)
         oscVal2 = state.rightV; // Right light voltage (0 to 5V)
-        oscVal3 = state.panelAngle; // Servo pan angle (0° to 180°)
+        oscVal3 = state.panelAngle + (faults.inductiveSpike ? flybackSpike * 4 : 0); // Servo pan angle (0° to 180°)
       }
 
       // =======================================================================
@@ -1248,7 +1333,10 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
           state.actualRPM += (motorTorque - loadTorque) * 0.04;
           state.actualRPM = Math.max(15, Math.min(300, state.actualRPM));
 
-          const rpmError = targetRPM - state.actualRPM;
+          // Closed-Loop Velocity PI Controller Loop
+          // Fault: Optical dust occlusion drops slotted encoder pulse amplitude below TTL logic threshold, dropping 80% of pulses
+          const measuredRPM = faults.opticalOcclusion ? state.actualRPM * 0.2 : state.actualRPM;
+          const rpmError = targetRPM - measuredRPM;
           state.integral = Math.max(-100, Math.min(100, (state.integral || 0) + rpmError * 0.05));
           const Kp = 1.8;
           const Ki = 0.35;
@@ -1262,8 +1350,20 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
         // Authentic 90° Phase Shift Quadrature A & B Waveforms
         const thetaElecA = ((state.wheelAngle || 0) * numSlots) % (Math.PI * 2);
         const thetaElecB = ((state.wheelAngle || 0) * numSlots + Math.PI / 2) % (Math.PI * 2);
-        state.channelAState = thetaElecA < Math.PI ? 5.0 : 0.0;
-        state.channelBState = thetaElecB < Math.PI ? 5.0 : 0.0;
+        const newChanA = thetaElecA < Math.PI ? 5.0 : 0.0;
+        const newChanB = thetaElecB < Math.PI ? 5.0 : 0.0;
+
+        // Optical encoder slot crossing click (throttled to avoid audio buffer saturation)
+        if (state.channelAState !== undefined && newChanA !== state.channelAState) {
+          const now = performance.now();
+          if (now - (state.lastTickTime || 0) > 35) {
+            state.lastTickTime = now;
+            soundFX.playEncoderTick();
+          }
+        }
+
+        state.channelAState = faults.opticalOcclusion ? newChanA * 0.2 : newChanA;
+        state.channelBState = faults.opticalOcclusion ? newChanB * 0.2 : newChanB;
 
         // 1. Draw DC Motor Chassis Body (Behind Disc)
         ctx.fillStyle = '#1e293b';
@@ -1458,8 +1558,8 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
         ctx.fillStyle = '#f59e0b';
         ctx.fillText(`Phase Shift: 90° Quadrature (A: ${state.channelAState.toFixed(0)}V, B: ${state.channelBState.toFixed(0)}V)`, 22, 54);
 
-        oscVal1 = state.channelAState; // Pin 2 Channel A square wave (0V to 5V)
-        oscVal2 = state.channelBState; // Pin 3 Channel B square wave (0V to 5V, 90° out of phase)
+        oscVal1 = state.channelAState + (faults.inductiveSpike ? flybackSpike : 0) + (faults.groundBounce ? hum50Hz : 0); // Pin 2 Channel A square wave (0V to 5V)
+        oscVal2 = state.channelBState + (faults.inductiveSpike ? flybackSpike : 0) + (faults.groundBounce ? hum50Hz : 0); // Pin 3 Channel B square wave (0V to 5V, 90° out of phase)
         oscVal3 = state.actualRPM; // Motor rotational velocity (0 to 300 RPM)
       }
 
@@ -1500,6 +1600,15 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
         } else {
           state.hallOutV = 5.0; // 10k pull-up holds at 5V
           state.pulseActive = false;
+        }
+
+        // Faults: Flyback inductive spikes trigger false interrupt pulses; 50Hz mains hum
+        if (faults.inductiveSpike && Math.abs(flybackSpike) > 2.5) {
+          state.hallOutV = 0.0;
+          state.pulseActive = true;
+        }
+        if (faults.groundBounce) {
+          state.hallOutV = Math.max(0, Math.min(5, state.hallOutV + hum50Hz));
         }
 
         // 1. Draw High-Speed Rotating Spindle Hub
@@ -1681,8 +1790,8 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
 
         // Pin Voltage Oscilloscope Channels
         oscVal1 = state.hallOutV; // Pin 2 digital output (5V pull-up idle, 0V falling pulse)
-        oscVal2 = state.spindleRPM; // Calculated shaft speed (0 to 6000 RPM)
-        oscVal3 = state.pulseActive ? 0.0 : 5.0; // Interrupt falling-edge trigger pulse (0V active / 5V idle)
+        oscVal2 = state.spindleRPM + (faults.inductiveSpike && Math.abs(flybackSpike) > 2.5 ? 1200 : 0); // Calculated shaft speed (0 to 6000 RPM)
+        oscVal3 = (state.pulseActive ? 0.0 : 5.0) + (faults.inductiveSpike ? flybackSpike * 0.5 : 0); // Interrupt falling-edge trigger pulse (0V active / 5V idle)
       }
 
       // =======================================================================
@@ -1702,7 +1811,8 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
         if (state.measuredForceGrams > 300) {
           if (!state.isEggCracked) {
             state.isEggCracked = true;
-            soundFX.playTap();
+            soundFX.playEggCrack();
+            soundFX.playPiezoBuzzer(3000, 0.25);
           }
         }
 
@@ -1716,7 +1826,16 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
         }
 
         // HX711 24-Bit ADC Digitization (120,000 zero tare + 2,400 counts/g)
-        state.rawCounts = 120000 + Math.round(state.measuredForceGrams * 2400);
+        let thermalOffset = 0;
+        if (faults.thermalDrift) {
+          thermalOffset = Math.sin(t * 0.15) * 150000 + 120000;
+          state.measuredForceGrams += thermalOffset / 2400;
+        }
+        if (faults.groundBounce) {
+          state.measuredForceGrams += hum50Hz * 37.5;
+        }
+
+        state.rawCounts = 120000 + Math.round(state.measuredForceGrams * 2400) + Math.round(thermalOffset) + (faults.groundBounce ? Math.round(hum50Hz * 90000) : 0);
         const jawOpeningPx = state.gripperJawPos * 1.8;
         const servoAngle = Math.max(0, Math.min(90, (48 - state.gripperJawPos) * 5.2));
 
@@ -1913,9 +2032,9 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
         ctx.fillText(`HX711 24-bit: ${state.rawCounts} counts`, 254, 41);
         ctx.fillText(`Beam Deflection: ${(deflectionY * 0.1).toFixed(2)} mm`, 254, 53);
 
-        oscVal1 = state.rawCounts; // HX711 24-bit count
-        oscVal2 = state.measuredForceGrams; // Grams force (0 to 1000g)
-        oscVal3 = servoAngle; // Gripper jaw closure angle (0° to 90°)
+        oscVal1 = state.rawCounts + (faults.inductiveSpike ? flybackSpike * 25000 : 0); // HX711 24-bit count
+        oscVal2 = Math.max(0, state.measuredForceGrams); // Grams force (0 to 1000g)
+        oscVal3 = servoAngle + (faults.inductiveSpike ? flybackSpike * 2 : 0); // Gripper jaw closure angle (0° to 90°)
       }
 
       // =======================================================================
@@ -2020,6 +2139,21 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
         legOffset += 130;
       });
 
+      const numActiveFaults = [
+        faults.groundBounce,
+        faults.opticalOcclusion,
+        faults.acousticMultipath,
+        faults.inductiveSpike,
+        faults.thermalDrift,
+      ].filter(Boolean).length;
+
+      if (numActiveFaults > 0) {
+        ctx.fillStyle = '#ef4444';
+        ctx.textAlign = 'right';
+        ctx.fillText(`⚡ [${numActiveFaults} FAULT${numActiveFaults > 1 ? 'S' : ''} ACTIVE]`, width - 20, oscY + 12);
+        ctx.textAlign = 'left';
+      }
+
       animId = requestAnimationFrame(render);
     };
 
@@ -2038,6 +2172,12 @@ export const RoboticsHardwareSimCanvas: React.FC<RoboticsHardwareSimCanvasProps>
           <span className="text-xs font-mono text-ink-400">
             60 FPS Real-Time Physics & Pin Voltage Oscilloscope
           </span>
+          {Object.values(activeFaults).some(Boolean) && (
+            <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-mono text-[10px] font-bold uppercase tracking-wider border border-rose-500/40 flex items-center gap-1 animate-pulse">
+              <AlertTriangle className="w-3 h-3 text-rose-400" />
+              Faults Injected ({Object.values(activeFaults).filter(Boolean).length})
+            </span>
+          )}
         </div>
 
         {/* Action Controls */}

@@ -46,6 +46,10 @@ import {
   Check,
   Clock,
   Code2,
+  Route,
+  Milestone,
+  ChevronRight,
+  ChevronLeft,
 } from 'lucide-react';
 import {
   SOCRATIC_QUESTION_NODES,
@@ -59,6 +63,55 @@ import {
   executePythonVerification,
   PythonVerificationResult,
 } from '../utils/pyodideRunner';
+
+export interface CuriosityJourney {
+  id: string;
+  title: string;
+  subtitle: string;
+  themeColor: string;
+  badge: string;
+  description: string;
+  nodeIds: string[];
+}
+
+export const CURIOSITY_JOURNEYS: CuriosityJourney[] = [
+  {
+    id: 'silicon_to_transformers',
+    title: 'From Silicon to Transformers',
+    subtitle: 'Bandgap → Logic → Memory Wall → Tokenization → Self-Attention',
+    themeColor: '#06b6d4',
+    badge: 'Physics to Language',
+    description: 'Trace the unbroken physical chain from quantum electron bandgaps in silicon to discrete logic, memory walls, and multi-head attention.',
+    nodeIds: ['q_electron', 'q_data_bit', 'q_program_vm', 'q_memory_bus', 'q_language_nature', 'q_attention_qkv'],
+  },
+  {
+    id: 'geometry_of_generalization',
+    title: 'The Geometry of Generalization',
+    subtitle: 'High-Dim Spheres → Residual Highways → Loss Landscapes → Grokking',
+    themeColor: '#8b5cf6',
+    badge: 'Geometric Topology',
+    description: 'Explore how 4,096-dimensional spherical volume concentration, identity residual highways, and weight decay basins trigger grokking.',
+    nodeIds: ['q_continuous_vectors', 'q_high_dim_geometry', 'q_residual_highways', 'q_loss_potentials', 'q_grokking_phase'],
+  },
+  {
+    id: 'optimization_thermodynamic_limits',
+    title: 'Optimization & Thermodynamic Limits',
+    subtitle: 'Landauer → Gradient Descent → AdamW Decoupled Decay → Muon',
+    themeColor: '#f59e0b',
+    badge: 'Thermodynamics & Energy',
+    description: 'From Landauer heat dissipation bounds to high-dimensional gradient compasses, AdamW decoupled decay, and maximal update parameter scaling.',
+    nodeIds: ['q_data_bit', 'q_gradient_random', 'q_adamw_ravines', 'q_adam_second_moment_outliers', 'q_mu_transfer_maximal_update'],
+  },
+  {
+    id: 'frontiers_of_scale',
+    title: 'Frontiers of Scale',
+    subtitle: 'FlashAttention → KV Cache → MLA → MoE Expert Routing',
+    themeColor: '#10b981',
+    badge: 'Hardware & Scaling',
+    description: 'Traverse the memory wall bottlenecks: SRAM tiling in attention, KV cache explosion, DeepSeek latent compression, and sparse MoE routing.',
+    nodeIds: ['q_attention_scaling', 'q_kv_cache', 'q_mla_compression', 'q_moe_decoupling', 'q_mixture_of_depths'],
+  },
+];
 
 type LayoutMode = 'split' | 'graph' | 'dossier';
 
@@ -80,6 +133,10 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
   const [showMinimap, setShowMinimap] = useState<boolean>(true);
   const [dossierTab, setDossierTab] = useState<'cot' | 'dossier' | 'python'>('cot');
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('split');
+
+  // Curiosity Journey Guided Path Runner State
+  const [activeJourneyId, setActiveJourneyId] = useState<string | null>(null);
+  const [activeJourneyStepIndex, setActiveJourneyStepIndex] = useState<number>(0);
 
   // Canvas Viewport Ref
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -104,6 +161,14 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
   const activeNode = useMemo(() => {
     return SOCRATIC_QUESTION_NODES.find((n) => n.id === selectedNodeId) || SOCRATIC_QUESTION_NODES[0];
   }, [selectedNodeId]);
+
+  const activeJourney = useMemo(() => {
+    return CURIOSITY_JOURNEYS.find((j) => j.id === activeJourneyId) || null;
+  }, [activeJourneyId]);
+
+  const activeJourneyNodeIdsSet = useMemo(() => {
+    return new Set(activeJourney ? activeJourney.nodeIds : []);
+  }, [activeJourney]);
 
   // Focused causal neighborhood (active node + its immediate prerequisites and consequences)
   const activeNeighborIds = useMemo(() => {
@@ -146,10 +211,74 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
     return counts;
   }, []);
 
+  const centerNodeOnCanvas = useCallback((nodeId: string) => {
+    const node = SOCRATIC_QUESTION_NODES.find((n) => n.id === nodeId);
+    if (!node) return;
+    const container = canvasContainerRef.current;
+    const cw = container ? container.clientWidth : 600;
+    const ch = container ? container.clientHeight : 500;
+    setPan({
+      x: cw / 2 - node.x * zoom,
+      y: ch / 2 - node.y * zoom,
+    });
+  }, [zoom]);
+
   const handleSelectNode = (nodeId: string) => {
     setSelectedNodeId(nodeId);
     setHistoryTrail((prev) => (prev[prev.length - 1] === nodeId ? prev : [...prev, nodeId]));
     setExploredNodeIds((prev) => new Set([...prev, nodeId]));
+    if (activeJourney) {
+      const stepIdx = activeJourney.nodeIds.indexOf(nodeId);
+      if (stepIdx !== -1) {
+        setActiveJourneyStepIndex(stepIdx);
+      }
+    }
+    soundFX.playTap();
+  };
+
+  const handleSelectJourney = (journeyId: string) => {
+    const j = CURIOSITY_JOURNEYS.find((x) => x.id === journeyId);
+    if (!j) return;
+    if (activeJourneyId === journeyId) {
+      setActiveJourneyStepIndex(0);
+      handleSelectNode(j.nodeIds[0]);
+      centerNodeOnCanvas(j.nodeIds[0]);
+    } else {
+      setActiveJourneyId(journeyId);
+      setActiveJourneyStepIndex(0);
+      handleSelectNode(j.nodeIds[0]);
+      centerNodeOnCanvas(j.nodeIds[0]);
+    }
+    soundFX.playTap();
+  };
+
+  const handleNextJourneyStep = () => {
+    if (!activeJourney) return;
+    if (activeJourneyStepIndex < activeJourney.nodeIds.length - 1) {
+      const nextIdx = activeJourneyStepIndex + 1;
+      setActiveJourneyStepIndex(nextIdx);
+      const nextNodeId = activeJourney.nodeIds[nextIdx];
+      handleSelectNode(nextNodeId);
+      centerNodeOnCanvas(nextNodeId);
+      soundFX.playTap();
+    }
+  };
+
+  const handlePrevJourneyStep = () => {
+    if (!activeJourney) return;
+    if (activeJourneyStepIndex > 0) {
+      const prevIdx = activeJourneyStepIndex - 1;
+      setActiveJourneyStepIndex(prevIdx);
+      const prevNodeId = activeJourney.nodeIds[prevIdx];
+      handleSelectNode(prevNodeId);
+      centerNodeOnCanvas(prevNodeId);
+      soundFX.playTap();
+    }
+  };
+
+  const handleExitJourney = () => {
+    setActiveJourneyId(null);
+    setActiveJourneyStepIndex(0);
     soundFX.playTap();
   };
 
@@ -847,6 +976,218 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
         </div>
       </div>
 
+      {/* Curiosity Journey Guided Path Runner */}
+      <div className="p-5 bg-surface dark:bg-ink-900 rounded-2xl border border-ink-200 dark:border-white/10 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-ink-200/60 dark:border-white/10 pb-3">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                <Route className="w-3 h-3 text-emerald-500" />
+                Thematic Guided Pathways
+              </span>
+              <span className="text-xs text-ink-500 font-mono hidden sm:inline">
+                4 Curated First-Principles Explorations
+              </span>
+            </div>
+            <h2 className="text-base font-bold text-ink-900 dark:text-white flex items-center gap-2">
+              <span>Curiosity Journeys: Guided Pedagogical Trajectories</span>
+            </h2>
+          </div>
+
+          {activeJourney && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                Step {activeJourneyStepIndex + 1} of {activeJourney.nodeIds.length}
+              </span>
+              <button
+                onClick={handleExitJourney}
+                className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-ink-100 dark:bg-ink-800 text-ink-600 dark:text-ink-300 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer transition-colors"
+                title="Exit Current Guided Journey"
+              >
+                ✕ Exit Journey
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 4 Thematic Journey Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {CURIOSITY_JOURNEYS.map((journey) => {
+            const isActive = activeJourneyId === journey.id;
+            return (
+              <button
+                key={journey.id}
+                onClick={() => handleSelectJourney(journey.id)}
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2.5 ${
+                  isActive
+                    ? 'bg-ink-950 dark:bg-ink-950 text-white shadow-md ring-2 ring-emerald-500/50'
+                    : 'bg-ink-50/70 dark:bg-ink-950/40 text-ink-800 dark:text-ink-200 border-ink-200 dark:border-white/10 hover:border-emerald-500/40 hover:bg-ink-100/50 dark:hover:bg-ink-900/60'
+                }`}
+                style={{
+                  borderColor: isActive ? journey.themeColor : undefined,
+                }}
+              >
+                {/* Active Indicator Top Stripe */}
+                {isActive && (
+                  <div
+                    className="absolute top-0 left-0 right-0 h-1"
+                    style={{ backgroundColor: journey.themeColor }}
+                  />
+                )}
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] font-mono font-bold">
+                    <span
+                      className="px-2 py-0.5 rounded-full border text-[9px] uppercase tracking-wider"
+                      style={{
+                        color: journey.themeColor,
+                        borderColor: `${journey.themeColor}40`,
+                        backgroundColor: `${journey.themeColor}15`,
+                      }}
+                    >
+                      {journey.badge}
+                    </span>
+                    <span className="text-ink-400 font-mono">
+                      {journey.nodeIds.length} Steps
+                    </span>
+                  </div>
+
+                  <h3 className="text-xs font-bold text-ink-900 dark:text-white leading-snug">
+                    {journey.title}
+                  </h3>
+
+                  <p className="text-[11px] text-ink-500 dark:text-ink-400 font-mono line-clamp-2 leading-relaxed">
+                    {journey.subtitle}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-ink-200/40 dark:border-white/5 text-[11px] font-semibold">
+                  <span
+                    className="font-bold flex items-center gap-1"
+                    style={{ color: journey.themeColor }}
+                  >
+                    {isActive ? '● Journey Active' : 'Begin Journey'}
+                  </span>
+                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0.5' : ''}`} style={{ color: journey.themeColor }} />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Active Journey Step Runner Toolbar */}
+        {activeJourney && (
+          <div
+            className="p-4 rounded-xl border space-y-3 animate-in fade-in duration-200"
+            style={{
+              borderColor: `${activeJourney.themeColor}40`,
+              backgroundColor: `${activeJourney.themeColor}08`,
+            }}
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full"
+                    style={{
+                      backgroundColor: `${activeJourney.themeColor}20`,
+                      color: activeJourney.themeColor,
+                    }}
+                  >
+                    Step {activeJourneyStepIndex + 1} of {activeJourney.nodeIds.length}
+                  </span>
+                  <span className="text-xs font-bold text-ink-900 dark:text-white">
+                    {activeNode.question}
+                  </span>
+                </div>
+                <p className="text-xs text-ink-600 dark:text-ink-300 italic line-clamp-1">
+                  "{activeNode.oneLiner}"
+                </p>
+              </div>
+
+              {/* Next/Prev Navigation Buttons */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={handlePrevJourneyStep}
+                  disabled={activeJourneyStepIndex === 0}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all cursor-pointer ${
+                    activeJourneyStepIndex === 0
+                      ? 'bg-ink-100 dark:bg-ink-800 text-ink-400 cursor-not-allowed opacity-50'
+                      : 'bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-800 dark:text-white shadow-2xs'
+                  }`}
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Prev Inquiry</span>
+                </button>
+
+                <button
+                  onClick={handleNextJourneyStep}
+                  disabled={activeJourneyStepIndex === activeJourney.nodeIds.length - 1}
+                  className={`flex items-center gap-1 px-3.5 py-1.5 rounded-lg text-xs font-bold font-mono transition-all cursor-pointer text-white shadow-xs ${
+                    activeJourneyStepIndex === activeJourney.nodeIds.length - 1
+                      ? 'bg-ink-500 opacity-60 cursor-not-allowed'
+                      : 'hover:brightness-110 active:scale-95'
+                  }`}
+                  style={{
+                    backgroundColor: activeJourney.themeColor,
+                  }}
+                >
+                  <span>Next Inquiry</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Stepper Progress Bar & Waypoint Pills */}
+            <div className="space-y-2 pt-1 border-t border-ink-200/40 dark:border-white/5">
+              <div className="w-full h-1.5 bg-ink-200 dark:bg-ink-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full transition-all duration-300"
+                  style={{
+                    width: `${((activeJourneyStepIndex + 1) / activeJourney.nodeIds.length) * 100}%`,
+                    backgroundColor: activeJourney.themeColor,
+                  }}
+                />
+              </div>
+
+              {/* Step Waypoint Clickable Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                {activeJourney.nodeIds.map((stepNodeId, idx) => {
+                  const stepNode = SOCRATIC_QUESTION_NODES.find((n) => n.id === stepNodeId);
+                  const isCur = idx === activeJourneyStepIndex;
+                  const isPast = idx < activeJourneyStepIndex;
+                  return (
+                    <button
+                      key={stepNodeId}
+                      onClick={() => {
+                        setActiveJourneyStepIndex(idx);
+                        handleSelectNode(stepNodeId);
+                        centerNodeOnCanvas(stepNodeId);
+                      }}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all cursor-pointer whitespace-nowrap ${
+                        isCur
+                          ? 'font-bold text-white shadow-xs'
+                          : isPast
+                          ? 'bg-ink-200/70 dark:bg-ink-800/60 text-ink-700 dark:text-ink-300 hover:text-white'
+                          : 'bg-ink-100 dark:bg-ink-900/60 text-ink-400 dark:text-ink-500 hover:text-ink-300'
+                      }`}
+                      style={{
+                        backgroundColor: isCur ? activeJourney.themeColor : undefined,
+                      }}
+                    >
+                      <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-black/30">
+                        {idx + 1}
+                      </span>
+                      <span>#{stepNode?.stepNumber}: {stepNode?.id.replace('q_', '')}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 bg-surface dark:bg-ink-900 rounded-xl border border-ink-200 dark:border-white/10 shadow-xs max-w-full overflow-hidden">
         {/* Realm Filter Tabs */}
@@ -1055,6 +1396,68 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                     });
                   })}
 
+                  {/* Active Curiosity Journey Glowing Trail */}
+                  {activeJourney && (
+                    <g id="curiosity-journey-trail" className="pointer-events-none">
+                      {activeJourney.nodeIds.slice(0, -1).map((sourceId, idx) => {
+                        const targetId = activeJourney.nodeIds[idx + 1];
+                        const source = SOCRATIC_QUESTION_NODES.find((n) => n.id === sourceId);
+                        const target = SOCRATIC_QUESTION_NODES.find((n) => n.id === targetId);
+                        if (!source || !target) return null;
+
+                        const isCurrentSegment = idx === activeJourneyStepIndex || idx === activeJourneyStepIndex - 1;
+                        const dx = target.x - source.x;
+                        const dy = target.y - source.y;
+                        const cx1 = source.x + dx * 0.5;
+                        const cy1 = source.y;
+                        const cx2 = source.x + dx * 0.5;
+                        const cy2 = target.y;
+                        const pathD = `M ${source.x} ${source.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${target.x} ${target.y}`;
+
+                        return (
+                          <g key={`curiosity-edge-${sourceId}-${targetId}`}>
+                            {/* Outer Neon Glow */}
+                            <path
+                              d={pathD}
+                              fill="none"
+                              stroke={activeJourney.themeColor}
+                              strokeWidth={isCurrentSegment ? 9 : 5.5}
+                              opacity={isCurrentSegment ? 0.55 : 0.3}
+                              strokeLinecap="round"
+                            />
+                            {/* Central Path */}
+                            <path
+                              d={pathD}
+                              fill="none"
+                              stroke={activeJourney.themeColor}
+                              strokeWidth={isCurrentSegment ? 3.5 : 2.2}
+                              strokeDasharray={isCurrentSegment ? 'none' : '6 4'}
+                              opacity={0.95}
+                            />
+                            {/* Flowing Quantum Particle */}
+                            <circle r="4.5" fill="#ffffff" stroke={activeJourney.themeColor} strokeWidth="2.5">
+                              <animateMotion path={pathD} dur={`${2.2 + idx * 0.25}s`} repeatCount="indefinite" />
+                            </circle>
+                            {/* Sequential Waypoint Badge */}
+                            <g transform={`translate(${(source.x + target.x) / 2}, ${(source.y + target.y) / 2})`}>
+                              <circle r="10.5" fill="#0b0f19" stroke={activeJourney.themeColor} strokeWidth="2" />
+                              <text
+                                textAnchor="middle"
+                                dy="3.5"
+                                fill={activeJourney.themeColor}
+                                fontSize="8.5"
+                                fontFamily="monospace"
+                                fontWeight="bold"
+                              >
+                                {idx + 1}→{idx + 2}
+                              </text>
+                            </g>
+                          </g>
+                        );
+                      })}
+                    </g>
+                  )}
+
                   {/* Render All Question Nodes with Focal Spotlight */}
                   {SOCRATIC_QUESTION_NODES.map((node) => {
                     const isSelected = selectedNodeId === node.id;
@@ -1062,11 +1465,18 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                     const isNeighbor = activeNeighborIds.has(node.id) && !isSelected;
                     const isMatch = filteredNodes.some((fn) => fn.id === node.id);
                     const isExplored = exploredNodeIds.has(node.id);
+                    const isJourneyNode = activeJourneyNodeIdsSet.has(node.id);
+                    const journeyStepIdx = activeJourney ? activeJourney.nodeIds.indexOf(node.id) : -1;
+                    const isCurrentJourneyStep = activeJourney && journeyStepIdx === activeJourneyStepIndex;
 
-                    const nodeRadius = isSelected ? 22 : isHovered ? 20 : isNeighbor ? 17 : 14;
+                    const nodeRadius = isSelected || isCurrentJourneyStep ? 23 : isJourneyNode ? 19 : isHovered ? 20 : isNeighbor ? 17 : 14;
                     const nodeOpacity = isMatch
-                      ? isSelected || isHovered
+                      ? isSelected || isHovered || isCurrentJourneyStep
                         ? 1
+                        : isJourneyNode
+                        ? 0.95
+                        : activeJourney
+                        ? 0.22
                         : isNeighbor
                         ? 0.9
                         : 0.4
@@ -1087,13 +1497,14 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                         <title>{`#${node.stepNumber}: ${node.question}`}</title>
 
                         {/* Active Halo Pulse */}
-                        {(isSelected || isHovered) && (
+                        {(isSelected || isHovered || isCurrentJourneyStep) && (
                           <circle
                             cx={node.x}
                             cy={node.y}
                             r={nodeRadius + 14}
-                            fill="url(#nodeGlow)"
-                            className="animate-pulse opacity-70"
+                            fill={isCurrentJourneyStep && activeJourney ? activeJourney.themeColor : 'url(#nodeGlow)'}
+                            opacity={isCurrentJourneyStep ? 0.35 : 0.7}
+                            className="animate-pulse"
                           />
                         )}
 
@@ -1102,9 +1513,23 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                           cx={node.x}
                           cy={node.y}
                           r={nodeRadius}
-                          fill={isSelected ? node.realmColor : isHovered ? '#1e293b' : isNeighbor ? '#1e293b' : isExplored ? '#101726' : '#070b14'}
-                          stroke={node.realmColor}
-                          strokeWidth={isSelected ? 3 : isHovered ? 2.2 : isNeighbor ? 1.8 : 1}
+                          fill={
+                            isSelected
+                              ? node.realmColor
+                              : isCurrentJourneyStep && activeJourney
+                              ? activeJourney.themeColor
+                              : isHovered
+                              ? '#1e293b'
+                              : isNeighbor
+                              ? '#1e293b'
+                              : isJourneyNode && activeJourney
+                              ? `${activeJourney.themeColor}25`
+                              : isExplored
+                              ? '#101726'
+                              : '#070b14'
+                          }
+                          stroke={isJourneyNode && activeJourney ? activeJourney.themeColor : node.realmColor}
+                          strokeWidth={isSelected || isCurrentJourneyStep ? 3.2 : isJourneyNode ? 2.5 : isHovered ? 2.2 : isNeighbor ? 1.8 : 1}
                           className="transition-all duration-200"
                         />
 
@@ -1113,23 +1538,46 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
                           x={node.x}
                           y={node.y + 4}
                           textAnchor="middle"
-                          fill={isSelected ? '#ffffff' : node.realmColor}
-                          fontSize={isSelected ? '10' : '9'}
+                          fill={isSelected || isCurrentJourneyStep ? '#ffffff' : isJourneyNode && activeJourney ? activeJourney.themeColor : node.realmColor}
+                          fontSize={isSelected || isCurrentJourneyStep ? '10' : '9'}
                           fontFamily="monospace"
                           fontWeight="bold"
                         >
                           {node.stepNumber}
                         </text>
 
+                        {/* Journey Step Order Badge */}
+                        {isJourneyNode && activeJourney && (
+                          <g transform={`translate(${node.x + 15}, ${node.y - 15})`}>
+                            <circle
+                              r="8.5"
+                              fill={activeJourney.themeColor}
+                              stroke="#ffffff"
+                              strokeWidth="1.5"
+                              className={isCurrentJourneyStep ? 'animate-bounce' : ''}
+                            />
+                            <text
+                              textAnchor="middle"
+                              dy="3"
+                              fill="#ffffff"
+                              fontSize="8"
+                              fontFamily="monospace"
+                              fontWeight="bold"
+                            >
+                              J{journeyStepIdx + 1}
+                            </text>
+                          </g>
+                        )}
+
                         {/* Node Label Below */}
                         <text
                           x={node.x}
-                          y={node.y + (isSelected ? 34 : 28)}
+                          y={node.y + (isSelected || isCurrentJourneyStep ? 35 : 28)}
                           textAnchor="middle"
-                          fill={isSelected ? '#ffffff' : isNeighbor || isHovered ? '#e2e8f0' : '#64748b'}
-                          fontSize={isSelected ? '9.5' : '8.5'}
+                          fill={isSelected || isCurrentJourneyStep ? '#ffffff' : isJourneyNode && activeJourney ? activeJourney.themeColor : isNeighbor || isHovered ? '#e2e8f0' : '#64748b'}
+                          fontSize={isSelected || isCurrentJourneyStep ? '10' : '8.5'}
                           fontFamily="sans-serif"
-                          fontWeight={isSelected ? 'bold' : isNeighbor || isHovered ? '600' : 'normal'}
+                          fontWeight={isSelected || isCurrentJourneyStep ? 'bold' : isJourneyNode ? 'bold' : isNeighbor || isHovered ? '600' : 'normal'}
                           className="pointer-events-none select-none transition-all duration-200"
                         >
                           {node.question.length > 22 ? `${node.question.slice(0, 21)}...` : node.question}

@@ -32,12 +32,17 @@ import {
   ChevronRight,
   ArrowRight,
   ExternalLink,
+  Terminal,
 } from 'lucide-react';
 import {
   ROBOTICS_EXPERIMENTS,
   RoboticsExperiment,
 } from '../data/roboticsExperimentsData';
-import { RoboticsHardwareSimCanvas } from './RoboticsHardwareSimCanvas';
+import {
+  RoboticsHardwareSimCanvas,
+  HardwareFaults,
+} from './RoboticsHardwareSimCanvas';
+import { SerialMonitorFaultsPanel } from './SerialMonitorFaultsPanel';
 import { MathView } from './MathView';
 import { CodeBlock } from './CodeBlock';
 import { soundFX } from '../utils/audio';
@@ -46,7 +51,16 @@ import { copyTextToClipboard } from '../utils/clipboard';
 export const RoboticsHardwareLabView: React.FC = () => {
   const [selectedExpId, setSelectedExpId] = useState<string>(ROBOTICS_EXPERIMENTS[0].id);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'simulation' | 'transduction' | 'wiring' | 'traps' | 'firmware'>('simulation');
+  const [activeTab, setActiveTab] = useState<
+    'simulation' | 'transduction' | 'wiring' | 'traps' | 'firmware' | 'serial_console'
+  >('simulation');
+  const [activeFaults, setActiveFaults] = useState<HardwareFaults>({
+    groundBounce: false,
+    opticalOcclusion: false,
+    acousticMultipath: false,
+    inductiveSpike: false,
+    thermalDrift: false,
+  });
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
   const activeExp = useMemo(() => {
@@ -213,6 +227,7 @@ export const RoboticsHardwareLabView: React.FC = () => {
               { id: 'wiring', label: 'Circuit & Pinout', icon: Layers },
               { id: 'traps', label: 'Hardware Traps', icon: AlertTriangle },
               { id: 'firmware', label: 'Arduino C++ Code', icon: Code2 },
+              { id: 'serial_console', label: 'Serial Monitor & Faults', icon: Terminal },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -240,7 +255,26 @@ export const RoboticsHardwareLabView: React.FC = () => {
         {/* TAB 1: INTERACTIVE 60 FPS SIMULATION CANVAS */}
         {activeTab === 'simulation' && (
           <div className="space-y-6 animate-fade-in">
-            <RoboticsHardwareSimCanvas experiment={activeExp} />
+            {Object.values(activeFaults).some(Boolean) && (
+              <div className="flex items-center justify-between p-3.5 px-4 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-xs">
+                <span className="flex items-center gap-2 text-rose-300 font-mono">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>
+                    <strong>Hardware Faults Active:</strong> Injected anomalies are distorting canvas physics &amp; oscilloscope traces.
+                  </span>
+                </span>
+                <button
+                  onClick={() => {
+                    setActiveTab('serial_console');
+                    soundFX.playTap();
+                  }}
+                  className="text-xs font-mono font-bold text-rose-400 hover:text-rose-300 underline cursor-pointer shrink-0 ml-3"
+                >
+                  Inspect Serial &amp; Faults →
+                </button>
+              </div>
+            )}
+            <RoboticsHardwareSimCanvas experiment={activeExp} activeFaults={activeFaults} />
 
             {/* Live Oscilloscope Probe & Channel Inspector */}
             <div className="p-6 rounded-3xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 space-y-4 shadow-xs">
@@ -473,6 +507,33 @@ export const RoboticsHardwareLabView: React.FC = () => {
               <CodeBlock code={activeExp.arduinoCode} language="cpp" filename={`${activeExp.id}.ino`} />
             </div>
           </div>
+        )}
+
+        {/* TAB 6: ATmega328P UART SERIAL MONITOR & HARDWARE FAULT INJECTION */}
+        {activeTab === 'serial_console' && (
+          <SerialMonitorFaultsPanel
+            experiment={activeExp}
+            activeFaults={activeFaults}
+            onToggleFault={(f) => setActiveFaults((prev) => ({ ...prev, [f]: !prev[f] }))}
+            onResetFaults={() =>
+              setActiveFaults({
+                groundBounce: false,
+                opticalOcclusion: false,
+                acousticMultipath: false,
+                inductiveSpike: false,
+                thermalDrift: false,
+              })
+            }
+            onSetAllFaults={(val) =>
+              setActiveFaults({
+                groundBounce: val,
+                opticalOcclusion: val,
+                acousticMultipath: val,
+                inductiveSpike: val,
+                thermalDrift: val,
+              })
+            }
+          />
         )}
       </div>
     </div>
