@@ -23,14 +23,15 @@ import {
   Download,
   Lightbulb,
   Atom,
+  Bot,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useLearningProgress, USER_PROFILE } from '../utils/progressStore';
 import { computeUserStats } from '../data/badgesData';
 
 interface TopNavProps {
-  activeView: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph' | 'reality_graph';
-  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph' | 'reality_graph') => void;
+  activeView: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph' | 'reality_graph' | 'robotics';
+  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph' | 'reality_graph' | 'robotics') => void;
   activeLabId: string;
   onSelectLab: (labId: string) => void;
   onOpenGlossary: () => void;
@@ -250,6 +251,20 @@ export const TopNav: React.FC<TopNavProps> = ({
             <span className="hidden 2xl:inline">Reality Graph</span>
             <span className="2xl:hidden">Reality</span>
           </button>
+
+          <button
+            onClick={() => onSelectView('robotics')}
+            title="Robotics & Physical Computing Lab: Transducers & Actuators (Press 0)"
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+              activeView === 'robotics'
+                ? 'bg-indigo-600 text-white font-bold shadow-xs'
+                : 'text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300'
+            }`}
+          >
+            <Bot className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="hidden 2xl:inline">Robotics Lab</span>
+            <span className="2xl:hidden">Robotics</span>
+          </button>
         </nav>
 
         {/* Zone 3: Utility Controls & User Profile (Never cut off at any desktop breakpoint) */}
@@ -459,6 +474,17 @@ export const TopNav: React.FC<TopNavProps> = ({
         >
           <Atom className="w-3 h-3 text-cyan-400" />
           <span>Reality Graph</span>
+        </button>
+        <button
+          onClick={() => onSelectView('robotics')}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+            activeView === 'robotics'
+              ? 'bg-indigo-600 text-white font-bold shadow-2xs'
+              : 'text-indigo-600 dark:text-indigo-400 hover:text-indigo-700'
+          }`}
+        >
+          <Bot className="w-3 h-3 text-indigo-400" />
+          <span>Robotics</span>
         </button>
       </nav>
     </header>

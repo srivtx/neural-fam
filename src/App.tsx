@@ -18,12 +18,13 @@ import { ArchitectureSynthesisStudio } from './components/ArchitectureSynthesisS
 import { TheoryThinkingSanctuary } from './components/TheoryThinkingSanctuary';
 import { SocraticQuestionGraphView } from './components/SocraticQuestionGraphView';
 import { SubstrateRealityGraphView } from './components/SubstrateRealityGraphView';
+import { RoboticsHardwareLabView } from './components/RoboticsHardwareLabView';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { soundFX } from './utils/audio';
 import { Eye, Search, Sliders, Trophy, BookOpen, ExternalLink, ChevronUp } from 'lucide-react';
 
 export default function App() {
-  const [activeView, setActiveView] = useState<'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph' | 'reality_graph'>('home');
+  const [activeView, setActiveView] = useState<'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph' | 'reality_graph' | 'robotics'>('home');
   const [activeLabId, setActiveLabId] = useState<string>('perceptron');
   const [isGlossaryOpen, setIsGlossaryOpen] = useState<boolean>(false);
   const [isShareOpen, setIsShareOpen] = useState<boolean>(false);
@@ -94,6 +95,9 @@ export default function App() {
           soundFX.playTap();
         } else if (e.key === '9') {
           setActiveView('reality_graph');
+          soundFX.playTap();
+        } else if (e.key === '0') {
+          setActiveView('robotics');
           soundFX.playTap();
         } else if (e.key === '?' || (e.shiftKey && e.key === '/')) {
           e.preventDefault();
@@ -238,6 +242,8 @@ export default function App() {
               onOpenView={(v) => setActiveView(v as any)}
             />
           )}
+
+          {activeView === 'robotics' && <RoboticsHardwareLabView />}
         </ErrorBoundary>
       </main>
 

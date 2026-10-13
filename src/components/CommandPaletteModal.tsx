@@ -11,7 +11,7 @@ import { LAB_QUIZZES } from '../data/labQuizzes';
 interface CommandPaletteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph' | 'reality_graph') => void;
+  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph' | 'reality_graph' | 'robotics') => void;
   onSelectLab: (labId: string) => void;
   onOpenGlossary: () => void;
   onOpenBadges: () => void;
@@ -141,6 +141,17 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         badge: 'Cosmic Scale',
         action: () => {
           onSelectView('reality_graph');
+          onClose();
+        },
+      },
+      {
+        id: 'nav-robotics',
+        title: 'Robotics & Physical Computing Lab',
+        subtitle: 'From PIR thermal tripwires & Ultrasonic ToF to Inverted Pendulums & Load Cells: 8 interactive hardware simulations',
+        category: 'feature',
+        badge: 'Hardware Lab',
+        action: () => {
+          onSelectView('robotics');
           onClose();
         },
       },
