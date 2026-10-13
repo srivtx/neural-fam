@@ -109,11 +109,11 @@ export const TopNav: React.FC<TopNavProps> = ({
           <button
             onClick={onOpenSearch}
             title="Search architectures, labs, or formulas (Ctrl+K)"
-            className="hidden md:flex items-center gap-1.5 px-2.5 py-1 text-xs text-ink-500 dark:text-ink-400 bg-ink-100 hover:bg-ink-200/80 dark:bg-ink-800/80 dark:hover:bg-ink-800 rounded-lg border border-ink-200/60 dark:border-white/10 transition-colors cursor-pointer shrink-0"
+            className="hidden md:flex items-center gap-1.5 px-2 xl:px-2.5 py-1 text-xs text-ink-500 dark:text-ink-400 bg-ink-100 hover:bg-ink-200/80 dark:bg-ink-800/80 dark:hover:bg-ink-800 rounded-lg border border-ink-200/60 dark:border-white/10 transition-colors cursor-pointer shrink-0"
           >
             <Search className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
             <span className="hidden xl:inline">Search</span>
-            <kbd className="text-[10px] font-mono px-1 py-0.2 rounded bg-white dark:bg-ink-900 border border-ink-200 dark:border-white/10 text-ink-400">
+            <kbd className="hidden xl:inline-block text-[10px] font-mono px-1 py-0.2 rounded bg-white dark:bg-ink-900 border border-ink-200 dark:border-white/10 text-ink-400">
               Ctrl+K
             </kbd>
           </button>
@@ -130,11 +130,11 @@ export const TopNav: React.FC<TopNavProps> = ({
         </div>
 
         {/* Zone 2: Navigation Links (Responsive compact labels on lg, full on 2xl) */}
-        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 text-xs font-semibold text-ink-600 dark:text-ink-300 shrink-0 p-0.5 bg-ink-100/70 dark:bg-ink-900/60 rounded-xl border border-ink-200/60 dark:border-white/5 no-scrollbar">
+        <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-0.5 xl:gap-1 text-xs font-semibold text-ink-600 dark:text-ink-300 p-0.5 bg-ink-100/70 dark:bg-ink-900/60 rounded-xl border border-ink-200/60 dark:border-white/5 overflow-x-auto no-scrollbar max-w-full">
           <button
             onClick={() => onSelectView('home')}
-            title="Home (Press 1)"
-            className={`px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            title="Home Overview (Press 1)"
+            className={`px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'home'
                 ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
@@ -145,8 +145,8 @@ export const TopNav: React.FC<TopNavProps> = ({
 
           <button
             onClick={() => onSelectView('atlas')}
-            title="Tree Atlas (Press 2)"
-            className={`px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            title="Tree Atlas: Evolutionary Lineage Graph (Press 2)"
+            className={`px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'atlas'
                 ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
@@ -158,8 +158,8 @@ export const TopNav: React.FC<TopNavProps> = ({
 
           <button
             onClick={() => onSelectView('labs')}
-            title="Project Labs (Press 3)"
-            className={`px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            title="Project Labs: 9 Progressive Interactive Levels (Press 3)"
+            className={`px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'labs'
                 ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
@@ -171,8 +171,8 @@ export const TopNav: React.FC<TopNavProps> = ({
 
           <button
             onClick={() => onSelectView('taxonomy')}
-            title="Taxonomy Matrix (Press 4)"
-            className={`px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            title="Taxonomy Matrix: 3-Question Selection Grid (Press 4)"
+            className={`px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'taxonomy'
                 ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
@@ -185,8 +185,8 @@ export const TopNav: React.FC<TopNavProps> = ({
           {/* Architecture Synthesis Studio Tab */}
           <button
             onClick={() => onSelectView('synthesis')}
-            title="Synthesis Studio (Press 5)"
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            title="Architecture Synthesis Studio: Invent New Hybrids (Press 5)"
+            className={`flex items-center gap-1 px-1.5 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'synthesis'
                 ? 'bg-white dark:bg-ink-800 text-brand-700 dark:text-brand-300 font-bold shadow-xs'
                 : 'text-brand-700 dark:text-brand-400 hover:text-brand-800 dark:hover:text-white'
@@ -194,13 +194,13 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             <Compass className="w-3.5 h-3.5" />
             <span className="hidden 2xl:inline">Synthesis Studio</span>
-            <span className="2xl:hidden">Synthesis</span>
+            <span className="hidden xl:inline 2xl:hidden">Synthesis</span>
           </button>
 
           <button
             onClick={() => onSelectView('code')}
-            title="Code Workshop (Press 6)"
-            className={`px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            title="Code Workshop: PyTorch & JAX Implementations (Press 6)"
+            className={`px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'code'
                 ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
@@ -212,22 +212,22 @@ export const TopNav: React.FC<TopNavProps> = ({
 
           <button
             onClick={() => onSelectView('epistemology')}
-            title="Theory Thinking: How Breakthroughs Are Conceived (Press 7)"
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            title="Theory Thinking: Cosmic Ladder, Loss Landscape & 5 Gedankenexperiments (Press 7)"
+            className={`flex items-center gap-1 px-1.5 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'epistemology'
-                ? 'bg-brand-500 text-white font-bold shadow-xs'
-                : 'text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300'
+                ? 'bg-amber-500 text-white font-bold shadow-xs'
+                : 'text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300'
             }`}
           >
             <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
             <span className="hidden 2xl:inline">Theory Thinking</span>
-            <span className="2xl:hidden">Theory</span>
+            <span className="hidden xl:inline 2xl:hidden">Theory</span>
           </button>
 
           <button
             onClick={() => onSelectView('questions_graph')}
-            title="Socratic Question Graph: The Ontological Inquiry Web (Press 8)"
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            title="Socratic Question Graph: 50 Inquiries with Python Wasm Proofs (Press 8)"
+            className={`flex items-center gap-1 px-1.5 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'questions_graph'
                 ? 'bg-emerald-600 text-white font-bold shadow-xs'
                 : 'text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300'
@@ -235,13 +235,13 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             <Network className="w-3.5 h-3.5 text-emerald-500" />
             <span className="hidden 2xl:inline">Question Graph</span>
-            <span className="2xl:hidden">Graph</span>
+            <span className="hidden xl:inline 2xl:hidden">Q-Graph</span>
           </button>
 
           <button
             onClick={() => onSelectView('reality_graph')}
             title="Substrate & Reality: From Quantum Wells to Python VMs (Press 9)"
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-1 px-1.5 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'reality_graph'
                 ? 'bg-cyan-600 text-white font-bold shadow-xs'
                 : 'text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300'
@@ -249,13 +249,13 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             <Atom className="w-3.5 h-3.5 text-cyan-400" />
             <span className="hidden 2xl:inline">Reality Graph</span>
-            <span className="2xl:hidden">Reality</span>
+            <span className="hidden xl:inline 2xl:hidden">Reality</span>
           </button>
 
           <button
             onClick={() => onSelectView('robotics')}
-            title="Robotics & Physical Computing Lab: Transducers & Actuators (Press 0)"
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            title="Robotics & Physical Computing: 8 Hardware Experiments, Oscilloscope & Arduino Firmware (Press 0)"
+            className={`flex items-center gap-1 px-1.5 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'robotics'
                 ? 'bg-indigo-600 text-white font-bold shadow-xs'
                 : 'text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300'
@@ -263,7 +263,7 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             <Bot className="w-3.5 h-3.5 text-indigo-400" />
             <span className="hidden 2xl:inline">Robotics Lab</span>
-            <span className="2xl:hidden">Robotics</span>
+            <span className="hidden xl:inline 2xl:hidden">Robotics</span>
           </button>
         </nav>
 
@@ -358,11 +358,11 @@ export const TopNav: React.FC<TopNavProps> = ({
 
             <div className="flex flex-col text-left shrink-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold text-ink-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors max-w-[70px] sm:max-w-none truncate">
+                <span className="text-xs font-semibold text-ink-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors max-w-[70px] sm:max-w-none truncate hidden sm:inline">
                   <span className="lg:hidden xl:inline">{USER_PROFILE.displayName}</span>
                   <span className="hidden lg:inline xl:hidden">Learner</span>
                 </span>
-                <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-brand-200/60 dark:bg-brand-500/20 text-brand-800 dark:text-brand-300 font-bold shrink-0">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-brand-200/60 dark:bg-brand-500/20 text-brand-800 dark:text-brand-300 font-bold shrink-0">
                   Lv.{stats.level}
                 </span>
               </div>
@@ -383,7 +383,8 @@ export const TopNav: React.FC<TopNavProps> = ({
       <nav aria-label="Mobile navigation" className="flex lg:hidden overflow-x-auto overscroll-x-contain no-scrollbar px-3 py-1.5 border-t border-ink-100 dark:border-white/5 gap-1.5 bg-ink-50/70 dark:bg-ink-950/70 text-xs">
         <button
           onClick={() => onSelectView('home')}
-          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+          title="Home Overview"
+          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium cursor-pointer ${
             activeView === 'home'
               ? 'bg-brand-500 text-white font-bold shadow-2xs'
               : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
@@ -393,7 +394,8 @@ export const TopNav: React.FC<TopNavProps> = ({
         </button>
         <button
           onClick={() => onSelectView('atlas')}
-          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+          title="Tree Atlas: Evolutionary Lineage Graph"
+          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium cursor-pointer ${
             activeView === 'atlas'
               ? 'bg-brand-500 text-white font-bold shadow-2xs'
               : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
@@ -403,7 +405,8 @@ export const TopNav: React.FC<TopNavProps> = ({
         </button>
         <button
           onClick={() => onSelectView('labs')}
-          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+          title="Project Labs: 9 Interactive Levels"
+          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium cursor-pointer ${
             activeView === 'labs'
               ? 'bg-brand-500 text-white font-bold shadow-2xs'
               : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
@@ -413,28 +416,31 @@ export const TopNav: React.FC<TopNavProps> = ({
         </button>
         <button
           onClick={() => onSelectView('taxonomy')}
-          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+          title="Taxonomy Matrix: 3-Question Selection Grid"
+          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium cursor-pointer ${
             activeView === 'taxonomy'
               ? 'bg-brand-500 text-white font-bold shadow-2xs'
               : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
           }`}
         >
-          3-Question Matrix
+          Matrix
         </button>
         <button
           onClick={() => onSelectView('synthesis')}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+          title="Architecture Synthesis Studio: Invent New Hybrids"
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium cursor-pointer ${
             activeView === 'synthesis'
               ? 'bg-brand-500 text-white font-bold shadow-2xs'
-              : 'text-brand-600 dark:text-brand-400 hover:text-brand-700'
+              : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
           }`}
         >
           <Compass className="w-3 h-3" />
-          <span>Synthesis Studio</span>
+          <span>Synthesis</span>
         </button>
         <button
           onClick={() => onSelectView('code')}
-          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+          title="Code Workshop: PyTorch & JAX Implementations"
+          className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium cursor-pointer ${
             activeView === 'code'
               ? 'bg-brand-500 text-white font-bold shadow-2xs'
               : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
@@ -444,46 +450,50 @@ export const TopNav: React.FC<TopNavProps> = ({
         </button>
         <button
           onClick={() => onSelectView('epistemology')}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+          title="Theory Thinking: Cosmic Ladder & Gedankenexperiments"
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium cursor-pointer ${
             activeView === 'epistemology'
-              ? 'bg-brand-500 text-white font-bold shadow-2xs'
-              : 'text-brand-600 dark:text-brand-400 hover:text-brand-700'
+              ? 'bg-amber-500 text-white font-bold shadow-2xs'
+              : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
           }`}
         >
-          <Lightbulb className="w-3 h-3 text-amber-500" />
-          <span>Theory Thinking</span>
+          <Lightbulb className="w-3 h-3" />
+          <span>Theory</span>
         </button>
         <button
           onClick={() => onSelectView('questions_graph')}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+          title="Socratic Question Graph: 50 Inquiries"
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium cursor-pointer ${
             activeView === 'questions_graph'
               ? 'bg-emerald-600 text-white font-bold shadow-2xs'
-              : 'text-emerald-600 dark:text-emerald-400 hover:text-emerald-700'
+              : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
           }`}
         >
-          <Network className="w-3 h-3 text-emerald-500" />
-          <span>Question Graph</span>
+          <Network className="w-3 h-3" />
+          <span>Q-Graph</span>
         </button>
         <button
           onClick={() => onSelectView('reality_graph')}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+          title="Substrate & Reality: From Quantum Wells to Python VMs"
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium cursor-pointer ${
             activeView === 'reality_graph'
               ? 'bg-cyan-600 text-white font-bold shadow-2xs'
-              : 'text-cyan-600 dark:text-cyan-400 hover:text-cyan-700'
+              : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
           }`}
         >
-          <Atom className="w-3 h-3 text-cyan-400" />
-          <span>Reality Graph</span>
+          <Atom className="w-3 h-3" />
+          <span>Reality</span>
         </button>
         <button
           onClick={() => onSelectView('robotics')}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium ${
+          title="Robotics & Physical Computing Lab"
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg shrink-0 transition-colors font-medium cursor-pointer ${
             activeView === 'robotics'
               ? 'bg-indigo-600 text-white font-bold shadow-2xs'
-              : 'text-indigo-600 dark:text-indigo-400 hover:text-indigo-700'
+              : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
           }`}
         >
-          <Bot className="w-3 h-3 text-indigo-400" />
+          <Bot className="w-3 h-3" />
           <span>Robotics</span>
         </button>
       </nav>

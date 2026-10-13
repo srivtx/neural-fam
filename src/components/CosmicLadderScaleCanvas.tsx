@@ -189,6 +189,7 @@ export const CosmicLadderScaleCanvas: React.FC = () => {
   const animationFrameRef = useRef<number | null>(null);
   const tourTimerRef = useRef<number | null>(null);
   const lastSoundExpRef = useRef<number>(0);
+  const touchStartYRef = useRef<number | null>(null);
 
   // Find nearest discrete rung based on scaleExp
   const currentRung = useMemo(() => {
@@ -310,6 +311,31 @@ export const CosmicLadderScaleCanvas: React.FC = () => {
     setIsPlayingTour(false);
     const delta = e.deltaY > 0 ? 0.2 : -0.2;
     setScaleExp((prev) => Math.max(0, Math.min(9, prev + delta)));
+  };
+
+  // Vertical touch drag gesture handlers for mobile screens
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartYRef.current = e.touches[0].clientY;
+      setIsPlayingTour(false);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartYRef.current === null || e.touches.length !== 1) return;
+    const currentY = e.touches[0].clientY;
+    const diffY = currentY - touchStartYRef.current;
+    const delta = -diffY * 0.015;
+    setScaleExp((prev) => Math.max(0, Math.min(9, prev + delta)));
+    touchStartYRef.current = currentY;
+  };
+
+  const handleTouchEnd = () => {
+    touchStartYRef.current = null;
+  };
+
+  const handleTouchCancel = () => {
+    touchStartYRef.current = null;
   };
 
   // Canvas drawing loop: procedural multi-scale renderer
@@ -987,8 +1013,12 @@ export const CosmicLadderScaleCanvas: React.FC = () => {
       <div
         className="relative w-full h-72 sm:h-96 rounded-2xl border border-white/10 overflow-hidden bg-black shadow-inner touch-none cursor-crosshair group"
         onWheel={handleWheelZoom}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
       >
-        <canvas ref={canvasRef} className="w-full h-full block" />
+        <canvas ref={canvasRef} className="w-full h-full block touch-none" />
 
         {/* Live Overlay HUD Telemetry */}
         <div className="absolute top-3 left-3 bg-black/75 backdrop-blur-md border border-white/10 rounded-xl p-3 font-mono text-[11px] space-y-1 shadow-lg pointer-events-none">

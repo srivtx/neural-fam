@@ -808,6 +808,7 @@ void loop() {
     oscilloscopeChannels: [
       { id: 'ch_hall_sig', name: 'Hall Digital Output (Pin 2)', color: '#38bdf8', unit: 'V', rangeMin: 0, rangeMax: 5, description: '5V idle (pull-up), sharp 0V pulse when magnet passes' },
       { id: 'ch_rpm', name: 'Calculated Spindle RPM', color: '#10b981', unit: 'RPM', rangeMin: 0, rangeMax: 6000, description: 'Shaft rotational speed' },
+      { id: 'ch_hall_pulse', name: 'Interrupt Edge Trigger', color: '#f59e0b', unit: 'V', rangeMin: 0, rangeMax: 5, description: 'Active falling edge pulse capture (0V active / 5V idle)' },
     ],
     arduinoCode: `// ====================================================================
 // Hall Effect High-Speed Magnetic Spindle Tachometer

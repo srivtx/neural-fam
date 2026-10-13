@@ -316,6 +316,45 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
     return () => clearInterval(interval);
   }, [station, isDraggingBead, isPlaying, latchNoiseAmplitude]);
 
+  // Interactive pointer dragging for Station 4: Bistable Latch bead
+  const updateLatchFromPointer = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const cx = rect.width / 2;
+    const halfW = rect.width < 440 ? 110 : rect.width < 600 ? 135 : 160;
+    const normX = (x - cx) / (halfW * 0.75);
+    const clampedNorm = Math.max(-1.0, Math.min(1.0, normX));
+    const newV = 0.375 + clampedNorm * 0.375;
+    setLatchVoltage(parseFloat(newV.toFixed(3)));
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (station !== 'bistable_latch') return;
+    setIsDraggingBead(true);
+    updateLatchFromPointer(e);
+    try {
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isDraggingBead || station !== 'bistable_latch') return;
+    updateLatchFromPointer(e);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    setIsDraggingBead(false);
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const handlePointerCancel = () => {
+    setIsDraggingBead(false);
+  };
+
   // ==========================================================
   // PROCEDURAL CANVAS RENDERERS
   // ==========================================================
@@ -1355,11 +1394,20 @@ export const SubstratePhysicsSimCanvas: React.FC<SubstratePhysicsSimCanvasProps>
       </div>
 
       {/* HTML5 Canvas Surface */}
-      <div ref={containerRef} className="w-full h-72 sm:h-80 rounded-xl overflow-hidden border border-white/10 relative bg-black">
+      <div
+        ref={containerRef}
+        className={`w-full h-72 sm:h-80 rounded-xl overflow-hidden border border-white/10 relative bg-black ${
+          station === 'bistable_latch' ? 'touch-none cursor-ew-resize' : 'touch-pan-y'
+        }`}
+      >
         <canvas
           ref={canvasRef}
           width={dimensions.width}
           height={dimensions.height}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
           className="w-full h-full block"
         />
       </div>

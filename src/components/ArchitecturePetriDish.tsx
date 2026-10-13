@@ -533,7 +533,7 @@ if __name__ == "__main__":
                 }`}
               >
                 <div className="truncate">{opt.name}</div>
-                <div className="text-[10px] text-ink-400 line-clamp-1 mt-0.5">{opt.physicalOrigin}</div>
+                <div className="text-[10px] text-ink-600 dark:text-ink-400 line-clamp-1 mt-0.5">{opt.physicalOrigin}</div>
               </button>
             ))}
           </div>
@@ -561,9 +561,9 @@ if __name__ == "__main__":
               >
                 <div className="flex items-center justify-between">
                   <span className="truncate">{opt.name}</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white/10">{opt.complexity}</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-ink-200/80 dark:bg-white/10 text-ink-700 dark:text-ink-300 font-semibold">{opt.complexity}</span>
                 </div>
-                <div className="text-[10px] text-ink-400 line-clamp-1 mt-0.5">{opt.tagline}</div>
+                <div className="text-[10px] text-ink-600 dark:text-ink-400 line-clamp-1 mt-0.5">{opt.tagline}</div>
               </button>
             ))}
           </div>
@@ -590,7 +590,7 @@ if __name__ == "__main__":
                 }`}
               >
                 <div className="truncate">{opt.name}</div>
-                <div className="text-[10px] text-ink-400 line-clamp-1 mt-0.5">{opt.conservedQuantity}</div>
+                <div className="text-[10px] text-ink-600 dark:text-ink-400 line-clamp-1 mt-0.5">{opt.conservedQuantity}</div>
               </button>
             ))}
           </div>
@@ -617,7 +617,7 @@ if __name__ == "__main__":
                 }`}
               >
                 <div className="truncate">{opt.name}</div>
-                <div className="text-[10px] text-ink-400 line-clamp-1 mt-0.5">{opt.memoryBandwidth}</div>
+                <div className="text-[10px] text-ink-600 dark:text-ink-400 line-clamp-1 mt-0.5">{opt.memoryBandwidth}</div>
               </button>
             ))}
           </div>

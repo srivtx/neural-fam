@@ -811,7 +811,7 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
               {historyTrail.slice(-4).map((id, idx) => {
                 const node = SOCRATIC_QUESTION_NODES.find((n) => n.id === id);
                 return (
-                  <React.Fragment key={idx}>
+                  <React.Fragment key={`${id}-${idx}`}>
                     {idx > 0 && <span className="shrink-0 text-ink-400">→</span>}
                     <button
                       onClick={() => handleSelectNode(id)}
@@ -880,7 +880,7 @@ export const SocraticQuestionGraphView: React.FC<SocraticQuestionGraphViewProps>
         </div>
 
         {/* Search Input */}
-        <div className="relative min-w-[220px]">
+        <div className="relative w-full sm:w-auto sm:min-w-[220px]">
           <Search className="w-3.5 h-3.5 text-ink-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"

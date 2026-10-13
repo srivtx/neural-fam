@@ -90,9 +90,9 @@ export const GlossaryModal: React.FC<GlossaryModalProps> = ({ isOpen, onClose })
               No matching terms found. Try searching for "residual", "attention", "mamba", or "gradient".
             </div>
           ) : (
-            filteredTerms.map((term, i) => (
+            filteredTerms.map((term) => (
               <div
-                key={i}
+                key={term.term}
                 className="p-4 bg-ink-50 dark:bg-ink-950 rounded-xl border border-ink-200/80 dark:border-white/5 space-y-2 hover:border-ink-300 dark:hover:border-white/15 transition-colors shadow-2xs"
               >
                 <div className="flex items-center justify-between">

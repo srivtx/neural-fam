@@ -70,10 +70,22 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         },
       },
       {
-        id: 'nav-matrix',
-        title: '3-Question Selection Matrix',
-        subtitle: 'Data structure, sequence length & compute requirements decision grid',
+        id: 'nav-labs',
+        title: 'Project Labs Hub',
+        subtitle: '10 progressive interactive neural architecture laboratories (Levels 0–9)',
         category: 'feature',
+        badge: 'Labs Hub',
+        action: () => {
+          onSelectView('labs');
+          onClose();
+        },
+      },
+      {
+        id: 'nav-matrix',
+        title: '3-Question Selection Matrix (Taxonomy)',
+        subtitle: 'Data structure, sequence length & compute requirements taxonomy decision grid',
+        category: 'feature',
+        badge: 'Taxonomy',
         action: () => {
           onSelectView('taxonomy');
           onClose();
@@ -322,14 +334,14 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   }, [onSelectLab, onSelectView, onOpenBadges, onOpenGlossary, onClose]);
 
   const filteredItems = useMemo(() => {
-    if (!query.trim()) return items.slice(0, 10);
+    if (!query.trim()) return items.slice(0, 16);
     const q = query.toLowerCase();
     return items.filter(
       (item) =>
         item.title.toLowerCase().includes(q) ||
         item.subtitle.toLowerCase().includes(q) ||
         (item.badge && item.badge.toLowerCase().includes(q))
-    ).slice(0, 12);
+    ).slice(0, 18);
   }, [items, query]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

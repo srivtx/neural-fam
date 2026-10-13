@@ -30,13 +30,17 @@ import {
   ChevronRight,
   Filter,
   Lightbulb,
+  Bot,
+  Atom,
+  Scale,
+  Flame,
 } from 'lucide-react';
 import { getProgress, resetProgress, LearningProgress } from '../utils/progressStore';
 import { CheckpointQuiz, QuizQuestion } from './CheckpointQuiz';
 import { soundFX } from '../utils/audio';
 
 interface HomePageProps {
-  onSelectView: (view: 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph') => void;
+  onSelectView: (view: 'home' | 'atlas' | 'labs' | 'taxonomy' | 'code' | 'synthesis' | 'epistemology' | 'questions_graph' | 'reality_graph' | 'robotics') => void;
   onSelectLab: (labId: string) => void;
   onOpenGlossary: () => void;
   onOpenBadges?: () => void;
@@ -153,6 +157,17 @@ export const HomePage: React.FC<HomePageProps> = ({
       labId: 'ssm_mamba',
       color: '#8b5cf6',
     },
+    {
+      id: 'moe_mla',
+      year: '2024 / 2026',
+      name: 'Sparse MoE & Latent Attention',
+      author: 'DeepSeek / Mistral',
+      bottleneckSolved: 'Sparse expert routing activates only a subset of weights; MLA compresses KV cache by 93%.',
+      fatalBottleneck: 'Router load imbalances and high all-to-all communication latency across distributed clusters.',
+      inductiveBias: 'Modular task specialization & low-rank KV subspace',
+      labId: 'moe_mla',
+      color: '#ec4899',
+    },
   ];
 
   // 9 Progressive Hands-on Curriculum Levels
@@ -246,6 +261,16 @@ export const HomePage: React.FC<HomePageProps> = ({
       formula: 'dh(t)/dt = f(h, t, θ)',
       analogy: 'Gliding down a smooth continuous water slide with no discrete floors.',
       color: '#84cc16',
+    },
+    {
+      id: 'moe_mla',
+      level: 9,
+      title: 'MoE & MLA Frontiers (DeepSeek & Mixtral)',
+      family: 'Frontiers',
+      duration: '25 min',
+      formula: 'y = \\sum g_i(x)E_i(x) + c_t^{KV} W^{UK}',
+      analogy: 'Dynamic specialist routing office with hyper-compressed shared filing cabinets.',
+      color: '#ec4899',
     },
   ];
 
@@ -395,17 +420,37 @@ export const HomePage: React.FC<HomePageProps> = ({
             <button
               onClick={() => onSelectView('epistemology')}
               className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-amber-900 dark:text-amber-200 bg-amber-100/80 hover:bg-amber-200/90 dark:bg-amber-500/20 dark:hover:bg-amber-500/30 rounded-xl border border-amber-300 dark:border-amber-500/40 transition-all cursor-pointer shadow-xs active:scale-95"
+              title="Theory Thinking: Cosmic Ladder, 3D Loss Landscape, Superposition & 5 Gedankenexperiments"
             >
               <Lightbulb className="w-4 h-4 text-amber-500 fill-amber-500/20" />
-              <span>Theory Thinking: How Breakthroughs Are Made</span>
+              <span>Theory Thinking Sanctuary</span>
             </button>
 
             <button
               onClick={() => onSelectView('questions_graph')}
               className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-emerald-900 dark:text-emerald-200 bg-emerald-100/80 hover:bg-emerald-200/90 dark:bg-emerald-500/20 dark:hover:bg-emerald-500/30 rounded-xl border border-emerald-300 dark:border-emerald-500/40 transition-all cursor-pointer shadow-xs active:scale-95"
+              title="Socratic Question Graph: 50 inquiries with in-browser Python Wasm proofs"
             >
               <Network className="w-4 h-4 text-emerald-500" />
-              <span>Socratic Question Graph (50 Inquiries)</span>
+              <span>Socratic Question Graph (50 Inquiries + Wasm Proofs)</span>
+            </button>
+
+            <button
+              onClick={() => onSelectView('reality_graph')}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-cyan-900 dark:text-cyan-200 bg-cyan-100/80 hover:bg-cyan-200/90 dark:bg-cyan-500/20 dark:hover:bg-cyan-500/30 rounded-xl border border-cyan-300 dark:border-cyan-500/40 transition-all cursor-pointer shadow-xs active:scale-95"
+              title="Substrate & Reality: 46 nodes from quantum bandgaps to logic gates and Python VMs"
+            >
+              <Atom className="w-4 h-4 text-cyan-500" />
+              <span>Substrate & Reality Graph (46 Nodes)</span>
+            </button>
+
+            <button
+              onClick={() => onSelectView('robotics')}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-indigo-900 dark:text-indigo-200 bg-indigo-100/80 hover:bg-indigo-200/90 dark:bg-indigo-500/20 dark:hover:bg-indigo-500/30 rounded-xl border border-indigo-300 dark:border-indigo-500/40 transition-all cursor-pointer shadow-xs active:scale-95"
+              title="Robotics Lab: 8 canonical hardware experiments, 60 FPS simulations, oscilloscope & Arduino firmware"
+            >
+              <Bot className="w-4 h-4 text-indigo-500" />
+              <span>Robotics & Physical Computing Lab (8 Hardware Labs)</span>
             </button>
 
             <button
@@ -431,17 +476,17 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="space-y-1">
             <span className="text-ink-500 uppercase text-[10px]">Curriculum Path</span>
             <div className="text-ink-900 dark:text-white text-base font-bold font-sans">
-              9 Hands-on Labs
+              10 DL Labs + 8 Hardware Labs
             </div>
-            <div className="text-ink-500 text-[11px]">Levels 0 through 8</div>
+            <div className="text-ink-500 text-[11px]">Pure Math & Physical Transduction</div>
           </div>
 
           <div className="space-y-1">
-            <span className="text-ink-500 uppercase text-[10px]">Taxonomy Coverage</span>
+            <span className="text-ink-500 uppercase text-[10px]">Epistemic Graphs</span>
             <div className="text-brand-600 dark:text-brand-400 text-base font-bold font-sans">
-              7 Major Families
+              96 Connected Nodes
             </div>
-            <div className="text-ink-500 text-[11px]">+ Continuous dynamical systems</div>
+            <div className="text-ink-500 text-[11px]">46 Substrate + 50 Socratic Wasm</div>
           </div>
 
           <div className="space-y-1">
@@ -499,6 +544,230 @@ export const HomePage: React.FC<HomePageProps> = ({
               <span>Reset</span>
             </button>
           )}
+        </div>
+      </div>
+
+      {/* Premier Research & Exploration Laboratories Spotlight */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/25 text-brand-700 dark:text-brand-300 text-[11px] font-mono font-semibold">
+              <Sparkles className="w-3 h-3" />
+              <span>Premier Research Suite</span>
+            </div>
+            <h2 className="text-xl font-bold font-display text-ink-900 dark:text-white mt-1">
+              First-Principles Scientific & Engineering Laboratories
+            </h2>
+            <p className="text-xs text-ink-600 dark:text-ink-300 mt-0.5">
+              Explore beyond classical neural architectures into physical computing, quantum substrates, Socratic inquiry webs, and breakthrough theory synthesis.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* 1. Theory Thinking Sanctuary */}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => onSelectView('epistemology')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelectView('epistemology');
+              }
+            }}
+            className="p-5 rounded-2xl bg-surface dark:bg-ink-900 border border-amber-200 dark:border-amber-500/20 hover:border-amber-500 dark:hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between group shadow-xs lift"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform">
+                  <Lightbulb className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                  Epistemology
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-ink-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                  Theory Thinking Sanctuary
+                </h3>
+                <p className="text-xs text-ink-600 dark:text-ink-300 mt-1 leading-relaxed">
+                  How non-linear cognitive leaps produce scientific breakthroughs from physics to AI.
+                </p>
+              </div>
+              <div className="space-y-1.5 pt-1 text-[11px] text-ink-600 dark:text-ink-300">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>3D Loss Landscape & Superposition sim</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>5 interactive Gedankenexperiments</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>Paper deconstructions & invention gym</span>
+                </div>
+              </div>
+            </div>
+            <div className="pt-4 mt-3 border-t border-ink-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400 group-hover:text-amber-600 dark:group-hover:text-amber-300">
+              <span>Enter Sanctuary</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+
+          {/* 2. Socratic Question Graph */}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => onSelectView('questions_graph')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelectView('questions_graph');
+              }
+            }}
+            className="p-5 rounded-2xl bg-surface dark:bg-ink-900 border border-emerald-200 dark:border-emerald-500/20 hover:border-emerald-500 dark:hover:border-emerald-400 hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between group shadow-xs lift"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
+                  <Network className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                  50 Inquiries
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-ink-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                  Socratic Question Graph
+                </h3>
+                <p className="text-xs text-ink-600 dark:text-ink-300 mt-1 leading-relaxed">
+                  First-principles ontological inquiry web linking electrons, manifolds, and modern AI.
+                </p>
+              </div>
+              <div className="space-y-1.5 pt-1 text-[11px] text-ink-600 dark:text-ink-300">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>In-browser Python Wasm mathematical proofs</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>7 ontological knowledge realms</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Deep chain-of-thought derivations</span>
+                </div>
+              </div>
+            </div>
+            <div className="pt-4 mt-3 border-t border-ink-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-emerald-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-300">
+              <span>Open Inquiry Web</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+
+          {/* 3. Substrate & Reality Graph */}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => onSelectView('reality_graph')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelectView('reality_graph');
+              }
+            }}
+            className="p-5 rounded-2xl bg-surface dark:bg-ink-900 border border-cyan-200 dark:border-cyan-500/20 hover:border-cyan-500 dark:hover:border-cyan-400 hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between group shadow-xs lift"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-9 h-9 rounded-xl bg-cyan-500/10 dark:bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 group-hover:scale-105 transition-transform">
+                  <Atom className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/80 text-cyan-800 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800/60">
+                  46 Nodes
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-ink-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+                  Substrate & Reality Graph
+                </h3>
+                <p className="text-xs text-ink-600 dark:text-ink-300 mt-1 leading-relaxed">
+                  How quantum bandgaps and moving charges become registers, microcontrollers, and Python VMs.
+                </p>
+              </div>
+              <div className="space-y-1.5 pt-1 text-[11px] text-ink-600 dark:text-ink-300">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
+                  <span>Electrons, PN junctions & metal vs clay</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
+                  <span>Capacitor charge wells & DRAM refresh</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
+                  <span>Cosmic Ladder of Scale (10⁰ m → 10⁻⁹ m)</span>
+                </div>
+              </div>
+            </div>
+            <div className="pt-4 mt-3 border-t border-ink-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-cyan-700 dark:text-cyan-400 group-hover:text-cyan-600 dark:group-hover:text-cyan-300">
+              <span>Explore Reality Graph</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+
+          {/* 4. Robotics & Physical Computing Lab */}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => onSelectView('robotics')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelectView('robotics');
+              }
+            }}
+            className="p-5 rounded-2xl bg-surface dark:bg-ink-900 border border-indigo-200 dark:border-indigo-500/20 hover:border-indigo-500 dark:hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between group shadow-xs lift"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-9 h-9 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform">
+                  <Bot className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
+                  8 Experiments
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-ink-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  Robotics & Physical Computing Lab
+                </h3>
+                <p className="text-xs text-ink-600 dark:text-ink-300 mt-1 leading-relaxed">
+                  PIR, Ultrasonic ToF, Inverted Pendulum LQR, Quadrature Encoders, Hall Effect, and Load Cells.
+                </p>
+              </div>
+              <div className="space-y-1.5 pt-1 text-[11px] text-ink-600 dark:text-ink-300">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                  <span>60 FPS real-time physics simulations</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                  <span>Live digital pin oscilloscope</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                  <span>Hardware traps & Arduino C++ code</span>
+                </div>
+              </div>
+            </div>
+            <div className="pt-4 mt-3 border-t border-ink-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-indigo-700 dark:text-indigo-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-300">
+              <span>Launch Hardware Lab</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -726,12 +995,12 @@ export const HomePage: React.FC<HomePageProps> = ({
         />
       </div>
 
-      {/* Curriculum Roadmap: Level 0 to Level 8 */}
+      {/* Curriculum Roadmap: Level 0 to Level 9 */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold font-display text-ink-900 dark:text-white">
-              The 9 Progressive Hands-on Laboratories
+              The 10 Progressive Hands-on Laboratories
             </h2>
             <p className="text-xs text-ink-500 mt-0.5">
               Each lab includes real mathematical calculations, interactive visualizers, physical analogies, and runnable PyTorch code.

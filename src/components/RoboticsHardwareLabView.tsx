@@ -166,7 +166,7 @@ export const RoboticsHardwareLabView: React.FC = () => {
               onClick={() => handleSelectExperiment(exp)}
               className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                 isSelected
-                  ? 'bg-brand-500/20 border-brand-400 text-white shadow-md ring-2 ring-brand-500/30 scale-[1.02]'
+                  ? 'bg-brand-50 dark:bg-brand-500/20 border-brand-500 dark:border-brand-400 text-brand-950 dark:text-white shadow-md ring-2 ring-brand-500/30 scale-[1.02]'
                   : 'bg-surface dark:bg-ink-900 border-ink-200 dark:border-white/10 text-ink-700 dark:text-ink-400 hover:border-brand-500/40 hover:bg-ink-50 dark:hover:bg-ink-800/60'
               }`}
             >
@@ -174,12 +174,12 @@ export const RoboticsHardwareLabView: React.FC = () => {
                 <span className="text-[10px] font-mono font-bold text-brand-600 dark:text-brand-400">
                   0{exp.order}
                 </span>
-                <div className={isSelected ? 'text-brand-400' : 'text-ink-400'}>
+                <div className={isSelected ? 'text-brand-600 dark:text-brand-400' : 'text-ink-500 dark:text-ink-400'}>
                   {renderIcon(exp.iconName, 'w-4 h-4')}
                 </div>
               </div>
               <h3 className="text-xs font-bold line-clamp-2 leading-tight text-ink-900 dark:text-white">
-                {exp.title.split(' ')[0]} {exp.title.split(' ')[1]}
+                {exp.title}
               </h3>
             </button>
           );
@@ -241,6 +241,63 @@ export const RoboticsHardwareLabView: React.FC = () => {
         {activeTab === 'simulation' && (
           <div className="space-y-6 animate-fade-in">
             <RoboticsHardwareSimCanvas experiment={activeExp} />
+
+            {/* Live Oscilloscope Probe & Channel Inspector */}
+            <div className="p-6 rounded-3xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 space-y-4 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-ink-200/60 dark:border-white/10 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-brand-500/10 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 flex items-center justify-center">
+                    <Activity className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider block">
+                      Microcontroller Signal Acquisition
+                    </span>
+                    <h3 className="text-sm sm:text-base font-bold text-ink-900 dark:text-white">
+                      Digital Storage Oscilloscope (DSO) Probe Channels
+                    </h3>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Auto-Triggered · 60 Hz Sample Stream</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {activeExp.oscilloscopeChannels.map((ch, idx) => (
+                  <div
+                    key={ch.id}
+                    className="p-4 rounded-2xl bg-ink-50 dark:bg-ink-950 border border-ink-200/60 dark:border-white/5 space-y-2 flex flex-col justify-between"
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md text-white shadow-xs" style={{ backgroundColor: ch.color }}>
+                          CH {idx + 1}
+                        </span>
+                        <span className="text-[11px] font-mono text-ink-500 dark:text-ink-400 font-medium">
+                          [{ch.rangeMin} → {ch.rangeMax} {ch.unit}]
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-bold text-ink-900 dark:text-white">{ch.name}</h4>
+                      <p className="text-xs text-ink-600 dark:text-ink-300 leading-relaxed">{ch.description}</p>
+                    </div>
+
+                    <div className="pt-2 border-t border-ink-200/40 dark:border-white/5 flex items-center justify-between text-[10px] font-mono text-ink-500 dark:text-ink-400">
+                      <span>Probe Impedance: 10 MΩ</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Synced with HUD</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-brand-500/5 dark:bg-brand-500/10 border border-brand-500/15 text-xs text-brand-900 dark:text-brand-200">
+                <Info className="w-4 h-4 shrink-0 text-brand-500" />
+                <span>
+                  <strong>Oscilloscope HUD Guide:</strong> The real-time waveform display at the bottom of the canvas renders a circular rolling buffer of the past 180 frames. Use the <strong>1x / 2x / 4x timebase selector</strong> on the canvas to adjust horizontal sweep frequency.
+                </span>
+              </div>
+            </div>
 
             {/* Live Transduction Summary Bar */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -341,12 +398,12 @@ export const RoboticsHardwareLabView: React.FC = () => {
                       <tr key={idx} className="hover:bg-ink-50 dark:hover:bg-white/5 transition-colors">
                         <td className="p-3 font-bold text-ink-900 dark:text-white">{c.name}</td>
                         <td className="p-3">
-                          <span className="px-2 py-0.5 rounded bg-white/10 text-[10px] uppercase font-bold">
+                          <span className="px-2 py-0.5 rounded bg-ink-200/80 dark:bg-white/10 text-ink-700 dark:text-ink-300 text-[10px] uppercase font-bold">
                             {c.type}
                           </span>
                         </td>
                         <td className="p-3 text-brand-600 dark:text-brand-400">{c.pinConnection}</td>
-                        <td className="p-3 text-ink-500">{c.notes || '—'}</td>
+                        <td className="p-3 text-ink-600 dark:text-ink-400">{c.notes || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

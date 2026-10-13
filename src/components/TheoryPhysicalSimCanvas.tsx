@@ -3300,8 +3300,14 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
       <div className="relative rounded-2xl overflow-hidden border border-ink-200 dark:border-white/10 bg-ink-950 shadow-inner">
         <canvas
           ref={canvasRef}
-          className="w-full h-80 sm:h-96 block cursor-crosshair touch-none select-none"
-          title="Interactive Physical Simulation Canvas - Drag to rotate 3D view"
+          className={`w-full h-80 sm:h-96 block cursor-crosshair select-none ${
+            mode === 'geometry' || mode === 'saddle_escape' || mode === 'superposition' ? 'touch-none' : 'touch-pan-y'
+          }`}
+          title={
+            mode === 'geometry' || mode === 'saddle_escape' || mode === 'superposition'
+              ? 'Interactive Physical Simulation Canvas - Drag to rotate 3D view'
+              : 'Interactive Physical Simulation Canvas'
+          }
           onMouseDown={(e) => {
             isDraggingCanvasRef.current = true;
             dragStartCanvasRef.current = { x: e.clientX, y: e.clientY };
@@ -3353,6 +3359,9 @@ export const TheoryPhysicalSimCanvas: React.FC = () => {
             }
           }}
           onTouchEnd={() => {
+            isDraggingCanvasRef.current = false;
+          }}
+          onTouchCancel={() => {
             isDraggingCanvasRef.current = false;
           }}
         />
