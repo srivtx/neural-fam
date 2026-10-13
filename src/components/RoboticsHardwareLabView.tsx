@@ -9,7 +9,7 @@
  * DSO oscilloscope, production-grade non-blocking C++ firmware studio, and fault injection matrix.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Bot,
   Cpu,
@@ -43,6 +43,9 @@ import {
   ShieldCheck,
   Split,
   Monitor,
+  Maximize2,
+  Minimize2,
+  X,
 } from 'lucide-react';
 import {
   ROBOTICS_EXPERIMENTS,
@@ -82,6 +85,31 @@ export const RoboticsHardwareLabView: React.FC = () => {
     thermalDrift: false,
   });
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [workbenchLayout, setWorkbenchLayout] = useState<'split' | 'stacked'>('split');
+  const [isStudioMaximized, setIsStudioMaximized] = useState<boolean>(false);
+
+  // Listen for Escape key to close maximized studio view cleanly
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isStudioMaximized) {
+        setIsStudioMaximized(false);
+        soundFX.playTap();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isStudioMaximized]);
+
+  // Lock background body scroll when studio is maximized
+  useEffect(() => {
+    if (isStudioMaximized) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [isStudioMaximized]);
 
   const activeExp = useMemo(() => {
     return ROBOTICS_EXPERIMENTS.find((e) => e.id === selectedExpId) || ROBOTICS_EXPERIMENTS[0];
@@ -436,60 +464,143 @@ export const RoboticsHardwareLabView: React.FC = () => {
         {/* MODE 1: VIRTUAL BREADBOARD & GUIDED WIRE-BY-WIRE BUILD */}
         {/* ================================================================= */}
         {studioMode === 'breadboard_build' && (
-          <div className="space-y-6 animate-fade-in">
-            {/* Breadboard Visual Studio Card */}
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 text-xs shadow-xs">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center">
-                    <Layers className="w-4 h-4" />
-                  </div>
-                  <div>
+          <div className="space-y-5 animate-fade-in">
+            {/* Workbench Controls Toolbar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 text-xs shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center shrink-0">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono font-bold text-brand-500 uppercase tracking-wider block">
                       Wokwi-Class Interactive Physical Electronics
                     </span>
-                    <strong className="text-sm font-bold text-ink-900 dark:text-white">
-                      Photorealistic Solderless Breadboard &amp; ATmega328P Uno
-                    </strong>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                      Step #{currentWiringStep} Active
+                    </span>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-mono text-ink-500 dark:text-ink-400 bg-ink-100 dark:bg-ink-950 px-3 py-1.5 rounded-xl border border-ink-200 dark:border-white/10">
-                    Wiring Step: <strong>#{currentWiringStep}</strong> Active
-                  </span>
-                  <button
-                    onClick={() => {
-                      setStudioMode('physics_sim');
-                      soundFX.playTap();
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-brand-500 hover:bg-brand-400 text-white shadow-xs cursor-pointer transition-colors"
-                  >
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>Run Physics Sim →</span>
-                  </button>
+                  <strong className="text-sm font-bold text-ink-900 dark:text-white block mt-0.5">
+                    Photorealistic Solderless Breadboard &amp; Wire Sequencer
+                  </strong>
                 </div>
               </div>
 
-              {/* Live Wokwi Virtual Breadboard Component */}
-              <WokwiVirtualBreadboard
-                experimentId={activeExp.id}
-                activeWiringStep={currentWiringStep}
-                onStepChange={(step) => setCurrentWiringStep(step)}
-                interactive={true}
-                showControls={true}
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Layout Toggle Buttons: Split vs Stacked */}
+                <div className="flex items-center p-1 bg-ink-100 dark:bg-ink-950 rounded-xl border border-ink-200 dark:border-white/10 text-xs font-mono">
+                  <button
+                    onClick={() => {
+                      setWorkbenchLayout('split');
+                      soundFX.playTap();
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                      workbenchLayout === 'split'
+                        ? 'bg-brand-500 text-white shadow-xs'
+                        : 'text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+                    }`}
+                    title="Split View (Side-by-Side): 60% Breadboard on left + 40% Wire Sequencer on right with zero vertical scrolling"
+                  >
+                    <Split className="w-3.5 h-3.5" />
+                    <span>Split View (Side-by-Side)</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setWorkbenchLayout('stacked');
+                      soundFX.playTap();
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                      workbenchLayout === 'stacked'
+                        ? 'bg-brand-500 text-white shadow-xs'
+                        : 'text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
+                    }`}
+                    title="Stacked View: Full width breadboard canvas + Full width project builder below"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>Stacked View</span>
+                  </button>
+                </div>
+
+                {/* Maximize Studio / Fullscreen Button */}
+                <button
+                  onClick={() => {
+                    setIsStudioMaximized(true);
+                    soundFX.playTap();
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono font-bold bg-ink-100 dark:bg-ink-950 hover:bg-ink-200 dark:hover:bg-ink-800 text-ink-700 dark:text-ink-200 border border-ink-200 dark:border-white/10 shadow-xs cursor-pointer transition-colors"
+                  title="Maximize studio: Edge-to-edge immersive workspace (Esc to exit)"
+                >
+                  <Maximize2 className="w-3.5 h-3.5 text-brand-500" />
+                  <span className="hidden sm:inline">Maximize Studio</span>
+                  <span className="sm:hidden">Maximize</span>
+                </button>
+
+                {/* Physics Sim Quick Jump */}
+                <button
+                  onClick={() => {
+                    setStudioMode('physics_sim');
+                    soundFX.playTap();
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono font-bold bg-brand-500 hover:bg-brand-400 text-white shadow-xs cursor-pointer transition-colors"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Run Physics Sim →</span>
+                </button>
+              </div>
             </div>
 
-            {/* Wire-By-Wire Project Sequencer */}
-            <WokwiProjectBuilder
-              experimentId={activeExp.id}
-              currentWiringStep={currentWiringStep}
-              onWiringStepChange={(step) => setCurrentWiringStep(step)}
-              onExperimentChange={(id) => {
-                setSelectedExpId(id);
-                setCurrentWiringStep(1);
-              }}
-            />
+            {/* Build Area: Split Side-by-Side or Stacked */}
+            {workbenchLayout === 'split' ? (
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+                {/* 60% Breadboard on Left (xl:col-span-7) */}
+                <div className="xl:col-span-7 space-y-3">
+                  <WokwiVirtualBreadboard
+                    experimentId={activeExp.id}
+                    activeWiringStep={currentWiringStep}
+                    onStepChange={(step) => setCurrentWiringStep(step)}
+                    interactive={true}
+                    showControls={true}
+                    className="w-full shadow-2xl"
+                  />
+                </div>
+
+                {/* 40% Wire Sequencer on Right (xl:col-span-5) */}
+                <div className="xl:col-span-5">
+                  <WokwiProjectBuilder
+                    experimentId={activeExp.id}
+                    currentWiringStep={currentWiringStep}
+                    onWiringStepChange={(step) => setCurrentWiringStep(step)}
+                    onExperimentChange={(id) => {
+                      setSelectedExpId(id);
+                      setCurrentWiringStep(1);
+                    }}
+                    layout="split"
+                    className="h-full"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <WokwiVirtualBreadboard
+                  experimentId={activeExp.id}
+                  activeWiringStep={currentWiringStep}
+                  onStepChange={(step) => setCurrentWiringStep(step)}
+                  interactive={true}
+                  showControls={true}
+                  className="w-full shadow-2xl"
+                />
+                <WokwiProjectBuilder
+                  experimentId={activeExp.id}
+                  currentWiringStep={currentWiringStep}
+                  onWiringStepChange={(step) => setCurrentWiringStep(step)}
+                  onExperimentChange={(id) => {
+                    setSelectedExpId(id);
+                    setCurrentWiringStep(1);
+                  }}
+                  layout="stacked"
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -1093,6 +1204,172 @@ export const RoboticsHardwareLabView: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* ================================================================= */}
+      {/* IMMERSIVE FULL-SCREEN MAXIMIZED STUDIO MODAL */}
+      {/* ================================================================= */}
+      {isStudioMaximized && (
+        <div className="fixed inset-0 z-50 bg-[#090d16] flex flex-col p-4 sm:p-6 backdrop-blur-2xl overflow-hidden text-ink-100 animate-fade-in">
+          {/* Top Bar: Experiment Title, Category Badge, Wiring Step Pill, Close / Minimize */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-white/10 shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-2xl bg-brand-500/20 text-brand-400 border border-brand-500/30 flex items-center justify-center shrink-0">
+                {renderIcon(activeExp.iconName, 'w-5 h-5 text-brand-400')}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/20">
+                    {activeExp.category.toUpperCase()}
+                  </span>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    Wiring Step #{currentWiringStep} Active
+                  </span>
+                  <span className="text-[10px] font-mono text-ink-400 hidden lg:inline">
+                    ATmega328P (16 MHz) • 5.0V DC Rail
+                  </span>
+                </div>
+                <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-white truncate mt-0.5" title={activeExp.title}>
+                  {activeExp.title}
+                </h2>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* Layout Toggle inside Maximized Studio */}
+              <div className="flex items-center p-1 bg-ink-950/80 rounded-xl border border-white/10 text-xs font-mono">
+                <button
+                  onClick={() => {
+                    setWorkbenchLayout('split');
+                    soundFX.playTap();
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    workbenchLayout === 'split'
+                      ? 'bg-brand-500 text-white shadow-xs'
+                      : 'text-ink-400 hover:text-white'
+                  }`}
+                  title="Split View (Side-by-Side)"
+                >
+                  <Split className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Split View</span>
+                  <span className="sm:hidden">Split</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setWorkbenchLayout('stacked');
+                    soundFX.playTap();
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    workbenchLayout === 'stacked'
+                      ? 'bg-brand-500 text-white shadow-xs'
+                      : 'text-ink-400 hover:text-white'
+                  }`}
+                  title="Stacked View (Full width)"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Stacked View</span>
+                  <span className="sm:hidden">Stacked</span>
+                </button>
+              </div>
+
+              {/* Prev / Next Experiment Switcher */}
+              <div className="hidden lg:flex items-center gap-1 bg-ink-950/80 p-1 rounded-xl border border-white/10">
+                <button
+                  onClick={handlePrevExperiment}
+                  disabled={currentExpIndex === 0}
+                  className="p-1.5 rounded-lg text-ink-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  title="Previous Experiment"
+                  aria-label="Previous Experiment"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-[11px] font-mono px-2 text-ink-300">
+                  {currentExpIndex + 1} / {ROBOTICS_EXPERIMENTS.length}
+                </span>
+                <button
+                  onClick={handleNextExperiment}
+                  disabled={currentExpIndex === ROBOTICS_EXPERIMENTS.length - 1}
+                  className="p-1.5 rounded-lg text-ink-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  title="Next Experiment"
+                  aria-label="Next Experiment"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Close / Minimize Studio Button */}
+              <button
+                onClick={() => {
+                  setIsStudioMaximized(false);
+                  soundFX.playTap();
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all shadow-md cursor-pointer"
+                title="Minimize Studio (Esc)"
+              >
+                <Minimize2 className="w-4 h-4 text-amber-400" />
+                <span className="hidden sm:inline">Minimize Studio</span>
+                <span className="text-[10px] text-ink-400 font-normal hidden md:inline">(Esc)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Main Workspace Area: Side-by-side or Stacked taking full available height and width */}
+          <div className="flex-1 min-h-0 w-full overflow-hidden pt-3 sm:pt-4">
+            {workbenchLayout === 'split' ? (
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 h-full min-h-0">
+                {/* 60% Breadboard Canvas on Left (xl:col-span-7) */}
+                <div className="xl:col-span-7 h-full min-h-0 flex flex-col overflow-y-auto custom-scrollbar pr-1">
+                  <WokwiVirtualBreadboard
+                    experimentId={activeExp.id}
+                    activeWiringStep={currentWiringStep}
+                    onStepChange={(step) => setCurrentWiringStep(step)}
+                    interactive={true}
+                    showControls={true}
+                    className="w-full shadow-2xl shrink-0"
+                  />
+                </div>
+
+                {/* 40% Wire Sequencer on Right (xl:col-span-5) */}
+                <div className="xl:col-span-5 h-full min-h-0 flex flex-col overflow-hidden">
+                  <WokwiProjectBuilder
+                    experimentId={activeExp.id}
+                    currentWiringStep={currentWiringStep}
+                    onWiringStepChange={(step) => setCurrentWiringStep(step)}
+                    onExperimentChange={(id) => {
+                      setSelectedExpId(id);
+                      setCurrentWiringStep(1);
+                    }}
+                    layout="split"
+                    isMaximized={true}
+                    className="h-full flex flex-col min-h-0"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="h-full min-h-0 overflow-y-auto space-y-6 custom-scrollbar pr-2">
+                <WokwiVirtualBreadboard
+                  experimentId={activeExp.id}
+                  activeWiringStep={currentWiringStep}
+                  onStepChange={(step) => setCurrentWiringStep(step)}
+                  interactive={true}
+                  showControls={true}
+                  className="w-full shadow-2xl"
+                />
+                <WokwiProjectBuilder
+                  experimentId={activeExp.id}
+                  currentWiringStep={currentWiringStep}
+                  onWiringStepChange={(step) => setCurrentWiringStep(step)}
+                  onExperimentChange={(id) => {
+                    setSelectedExpId(id);
+                    setCurrentWiringStep(1);
+                  }}
+                  layout="stacked"
+                  isMaximized={true}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

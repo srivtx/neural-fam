@@ -71,62 +71,52 @@ function getPinCoordinates(
     const pinName = rest.join(':');
     const { x: ax, y: ay } = circuit.arduinoPosition;
 
-    // Female pin header geometry relative to Uno top-left (ax, ay)
-    // Board size: 340 x 240
-    // Digital upper header: Pins 8-13, GND, AREF, SDA, SCL (10 pins)
-    const upperHeaderX = ax + 140;
-    const upperHeaderY = ay + 15;
-    const pinSpacing = 11.5;
-
-    // Digital right header: Pins 0-7 (8 pins)
-    const upperRightHeaderX = upperHeaderX + 10 * pinSpacing + 12;
-
-    // Power header (bottom left): IOREF, RESET, 3.3V, 5V, GND, GND, VIN (8 pins)
-    const powerHeaderX = ax + 155;
-    const powerHeaderY = ay + 225;
-
-    // Analog header (bottom right): A0 to A5 (6 pins)
-    const analogHeaderX = powerHeaderX + 8 * pinSpacing + 18;
-
+    // Female pin header geometry strictly matching rendered SVG header positions:
+    // Upper Header Left (ax + 136, ay + 6): SCL, SDA, AREF, GND3, D13 - D8 (10 pins)
+    // Upper Header Right (ax + 268, ay + 6): D7 - D0 (8 pins)
+    // Lower Header Left / Power (ax + 150, ay + 216): IOREF, RST, 3.3V, 5V, GND1, GND2, VIN (7 pins)
+    // Lower Header Right / Analog (ax + 256, ay + 216): A0 - A5 (6 pins)
     switch (pinName) {
       // Power Pins
-      case 'IOREF': return { x: powerHeaderX, y: powerHeaderY };
-      case 'RESET': return { x: powerHeaderX + pinSpacing, y: powerHeaderY };
-      case '3.3V':  return { x: powerHeaderX + pinSpacing * 2, y: powerHeaderY };
-      case '5V':    return { x: powerHeaderX + pinSpacing * 3, y: powerHeaderY };
-      case 'GND1':  return { x: powerHeaderX + pinSpacing * 4, y: powerHeaderY };
-      case 'GND2':  return { x: powerHeaderX + pinSpacing * 5, y: powerHeaderY };
-      case 'VIN':   return { x: powerHeaderX + pinSpacing * 6, y: powerHeaderY };
+      case 'IOREF': return { x: ax + 158.5 + 0 * 12.5, y: ay + 224.5 };
+      case 'RESET':
+      case 'RST':   return { x: ax + 158.5 + 1 * 12.5, y: ay + 224.5 };
+      case '3.3V':  return { x: ax + 158.5 + 2 * 12.5, y: ay + 224.5 };
+      case '5V':    return { x: ax + 158.5 + 3 * 12.5, y: ay + 224.5 };
+      case 'GND':
+      case 'GND1':  return { x: ax + 158.5 + 4 * 12.5, y: ay + 224.5 };
+      case 'GND2':  return { x: ax + 158.5 + 5 * 12.5, y: ay + 224.5 };
+      case 'VIN':   return { x: ax + 158.5 + 6 * 12.5, y: ay + 224.5 };
 
       // Analog Pins A0 - A5
-      case 'A0': return { x: analogHeaderX, y: powerHeaderY };
-      case 'A1': return { x: analogHeaderX + pinSpacing, y: powerHeaderY };
-      case 'A2': return { x: analogHeaderX + pinSpacing * 2, y: powerHeaderY };
-      case 'A3': return { x: analogHeaderX + pinSpacing * 3, y: powerHeaderY };
-      case 'A4': return { x: analogHeaderX + pinSpacing * 4, y: powerHeaderY };
-      case 'A5': return { x: analogHeaderX + pinSpacing * 5, y: powerHeaderY };
+      case 'A0': return { x: ax + 265.5 + 0 * 11.5, y: ay + 224.5 };
+      case 'A1': return { x: ax + 265.5 + 1 * 11.5, y: ay + 224.5 };
+      case 'A2': return { x: ax + 265.5 + 2 * 11.5, y: ay + 224.5 };
+      case 'A3': return { x: ax + 265.5 + 3 * 11.5, y: ay + 224.5 };
+      case 'A4': return { x: ax + 265.5 + 4 * 11.5, y: ay + 224.5 };
+      case 'A5': return { x: ax + 265.5 + 5 * 11.5, y: ay + 224.5 };
 
-      // Digital 0 - 7
-      case 'D0': return { x: upperRightHeaderX + pinSpacing * 7, y: upperHeaderY };
-      case 'D1': return { x: upperRightHeaderX + pinSpacing * 6, y: upperHeaderY };
-      case 'D2': return { x: upperRightHeaderX + pinSpacing * 5, y: upperHeaderY };
-      case 'D3': return { x: upperRightHeaderX + pinSpacing * 4, y: upperHeaderY };
-      case 'D4': return { x: upperRightHeaderX + pinSpacing * 3, y: upperHeaderY };
-      case 'D5': return { x: upperRightHeaderX + pinSpacing * 2, y: upperHeaderY };
-      case 'D6': return { x: upperRightHeaderX + pinSpacing, y: upperHeaderY };
-      case 'D7': return { x: upperRightHeaderX, y: upperHeaderY };
+      // Digital 0 - 7 (Upper Right Header)
+      case 'D7': return { x: ax + 274.75 + 0 * 8, y: ay + 14.5 };
+      case 'D6': return { x: ax + 274.75 + 1 * 8, y: ay + 14.5 };
+      case 'D5': return { x: ax + 274.75 + 2 * 8, y: ay + 14.5 };
+      case 'D4': return { x: ax + 274.75 + 3 * 8, y: ay + 14.5 };
+      case 'D3': return { x: ax + 274.75 + 4 * 8, y: ay + 14.5 };
+      case 'D2': return { x: ax + 274.75 + 5 * 8, y: ay + 14.5 };
+      case 'D1': return { x: ax + 274.75 + 6 * 8, y: ay + 14.5 };
+      case 'D0': return { x: ax + 274.75 + 7 * 8, y: ay + 14.5 };
 
-      // Digital 8 - 13, GND, AREF, SDA, SCL
-      case 'D8':   return { x: upperHeaderX + pinSpacing * 9, y: upperHeaderY };
-      case 'D9':   return { x: upperHeaderX + pinSpacing * 8, y: upperHeaderY };
-      case 'D10':  return { x: upperHeaderX + pinSpacing * 7, y: upperHeaderY };
-      case 'D11':  return { x: upperHeaderX + pinSpacing * 6, y: upperHeaderY };
-      case 'D12':  return { x: upperHeaderX + pinSpacing * 5, y: upperHeaderY };
-      case 'D13':  return { x: upperHeaderX + pinSpacing * 4, y: upperHeaderY };
-      case 'GND3': return { x: upperHeaderX + pinSpacing * 3, y: upperHeaderY };
-      case 'AREF': return { x: upperHeaderX + pinSpacing * 2, y: upperHeaderY };
-      case 'SDA':  return { x: upperHeaderX + pinSpacing, y: upperHeaderY };
-      case 'SCL':  return { x: upperHeaderX, y: upperHeaderY };
+      // Digital 8 - 13, GND, AREF, SDA, SCL (Upper Left Header)
+      case 'SCL':  return { x: ax + 145.5 + 0 * 11.5, y: ay + 14.5 };
+      case 'SDA':  return { x: ax + 145.5 + 1 * 11.5, y: ay + 14.5 };
+      case 'AREF': return { x: ax + 145.5 + 2 * 11.5, y: ay + 14.5 };
+      case 'GND3': return { x: ax + 145.5 + 3 * 11.5, y: ay + 14.5 };
+      case 'D13':  return { x: ax + 145.5 + 4 * 11.5, y: ay + 14.5 };
+      case 'D12':  return { x: ax + 145.5 + 5 * 11.5, y: ay + 14.5 };
+      case 'D11':  return { x: ax + 145.5 + 6 * 11.5, y: ay + 14.5 };
+      case 'D10':  return { x: ax + 145.5 + 7 * 11.5, y: ay + 14.5 };
+      case 'D9':   return { x: ax + 145.5 + 8 * 11.5, y: ay + 14.5 };
+      case 'D8':   return { x: ax + 145.5 + 9 * 11.5, y: ay + 14.5 };
 
       default: return { x: ax + 170, y: ay + 120 };
     }
@@ -135,51 +125,65 @@ function getPinCoordinates(
   // 2. BREADBOARD PINS: bb:rail:top:red:5, bb:rail:bottom:blue:12, bb:15:c
   if (category === 'bb') {
     const { x: bx, y: by } = circuit.breadboardPosition;
-    const startX = bx + 36;
     const colPitch = 14.8;
-    const rowPitch = 12.0;
 
     if (rest[0] === 'rail') {
       const pos = rest[1]; // 'top' or 'bottom'
       const line = rest[2]; // 'red' or 'blue'
       const colIdx = parseInt(rest[3] || '1', 10);
-      const x = startX + (colIdx - 1) * colPitch;
+      const colX = bx + 36 + (colIdx - 1) * colPitch;
 
       if (pos === 'top') {
-        const y = line === 'blue' ? by + 22 : by + 36;
-        return { x, y };
+        const y = line === 'blue' ? by + 21.5 : by + 35.5;
+        return { x: colX, y };
       } else {
-        const y = line === 'red' ? by + 184 : by + 198;
-        return { x, y };
+        const y = line === 'red' ? by + 183.5 : by + 197.5;
+        return { x: colX, y };
       }
     } else {
       // e.g. bb:15:c
       const colIdx = parseInt(rest[0], 10);
       const rowLetter = rest[1] ? rest[1].toLowerCase() : 'a';
-      const x = startX + (colIdx - 1) * colPitch;
+      const colX = bx + 36 + (colIdx - 1) * colPitch;
 
       const letterMap: Record<string, number> = {
-        a: by + 58,
-        b: by + 58 + rowPitch,
-        c: by + 58 + rowPitch * 2,
-        d: by + 58 + rowPitch * 3,
-        e: by + 58 + rowPitch * 4,
+        a: by + 58.5,
+        b: by + 70.5,
+        c: by + 82.5,
+        d: by + 94.5,
+        e: by + 106.5,
         // center divider trough
-        f: by + 124,
-        g: by + 124 + rowPitch,
-        h: by + 124 + rowPitch * 2,
-        i: by + 124 + rowPitch * 3,
-        j: by + 124 + rowPitch * 4,
+        f: by + 124.5,
+        g: by + 136.5,
+        h: by + 148.5,
+        i: by + 160.5,
+        j: by + 172.5,
       };
-      return { x, y: letterMap[rowLetter] || by + 100 };
+      return { x: colX, y: letterMap[rowLetter] ?? by + 100 };
     }
   }
 
   // 3. ELECTRONIC MODULE BREAKOUT PINS
-  // Look up component by matching prefix in components array
-  const comp = components.find(
-    (c) => c.id.startsWith(category) || c.type.includes(category)
-  );
+  // Look up component by matching prefix or category in components array
+  const comp = components.find((c) => {
+    switch (category) {
+      case 'pir': return c.type === 'pir_hc_sr501' || c.id.startsWith('pir');
+      case 'sonar': return c.type === 'ultrasonic_hc_sr04' || c.id.startsWith('sonar');
+      case 'servo': return c.type === 'servo_sg90' || c.id.startsWith('servo');
+      case 'lcd': return c.type === 'lcd1602_i2c' || c.id.startsWith('lcd');
+      case 'buzzer': return c.type === 'piezo_buzzer' || c.id.startsWith('buzzer');
+      case 'ir':
+      case 'tcrt': return c.type === 'tcrt5000_ir' || c.id.startsWith('tcrt') || c.id.startsWith('ir');
+      case 'l298n': return c.type === 'l298n_motor_driver' || c.id.startsWith('l298n');
+      case 'mpu': return c.type === 'mpu6050_imu' || c.id.startsWith('mpu');
+      case 'ldr': return c.type === 'dual_ldr_tracker' || c.id.startsWith('ldr');
+      case 'encoder': return c.type === 'optical_encoder_motor' || c.id.startsWith('encoder');
+      case 'hall': return c.type === 'hall_effect_sensor' || c.id.startsWith('hall');
+      case 'hx711':
+      case 'loadcell': return c.type === 'loadcell_hx711_gripper' || c.id.startsWith('hx711') || c.id.startsWith('loadcell');
+      default: return c.id.startsWith(category) || c.type.includes(category);
+    }
+  });
 
   const cx = comp ? comp.x : 500;
   const cy = comp ? comp.y : 100;
@@ -188,62 +192,62 @@ function getPinCoordinates(
   if (category === 'pir') {
     // HC-SR501 pins: VCC, OUT, GND
     switch (pinName) {
-      case 'VCC': return { x: cx + 18, y: cy + 76 };
-      case 'OUT': return { x: cx + 30, y: cy + 76 };
-      case 'GND': return { x: cx + 42, y: cy + 76 };
-      default: return { x: cx + 30, y: cy + 76 };
+      case 'VCC': return { x: cx + 18, y: cy + 78 };
+      case 'OUT': return { x: cx + 30, y: cy + 78 };
+      case 'GND': return { x: cx + 42, y: cy + 78 };
+      default: return { x: cx + 30, y: cy + 78 };
     }
   }
 
   if (category === 'sonar') {
     // HC-SR04 pins: VCC, TRIG, ECHO, GND
     switch (pinName) {
-      case 'VCC':  return { x: cx + 32, y: cy + 82 };
-      case 'TRIG': return { x: cx + 47, y: cy + 82 };
-      case 'ECHO': return { x: cx + 62, y: cy + 82 };
-      case 'GND':  return { x: cx + 77, y: cy + 82 };
-      default: return { x: cx + 55, y: cy + 82 };
+      case 'VCC':  return { x: cx + 32, y: cy + 84 };
+      case 'TRIG': return { x: cx + 47, y: cy + 84 };
+      case 'ECHO': return { x: cx + 62, y: cy + 84 };
+      case 'GND':  return { x: cx + 77, y: cy + 84 };
+      default: return { x: cx + 55, y: cy + 84 };
     }
   }
 
   if (category === 'servo') {
     // SG90 3-pin cable: GND (Brown), VCC (Red), PWM (Orange)
     switch (pinName) {
-      case 'GND': return { x: cx + 38, y: cy + 78 };
-      case 'VCC': return { x: cx + 50, y: cy + 78 };
-      case 'PWM': return { x: cx + 62, y: cy + 78 };
-      default: return { x: cx + 50, y: cy + 78 };
+      case 'GND': return { x: cx + 24, y: cy + 74 };
+      case 'VCC': return { x: cx + 40, y: cy + 74 };
+      case 'PWM': return { x: cx + 56, y: cy + 74 };
+      default: return { x: cx + 40, y: cy + 74 };
     }
   }
 
   if (category === 'lcd') {
     // PCF8574 I2C Backpack pins: GND, VCC, SDA, SCL
     switch (pinName) {
-      case 'GND': return { x: cx + 14, y: cy + 60 };
-      case 'VCC': return { x: cx + 24, y: cy + 60 };
-      case 'SDA': return { x: cx + 34, y: cy + 60 };
-      case 'SCL': return { x: cx + 44, y: cy + 60 };
-      default: return { x: cx + 30, y: cy + 60 };
+      case 'GND': return { x: cx + 13, y: cy - 4 };
+      case 'VCC': return { x: cx + 23, y: cy - 4 };
+      case 'SDA': return { x: cx + 33, y: cy - 4 };
+      case 'SCL': return { x: cx + 43, y: cy - 4 };
+      default: return { x: cx + 28, y: cy - 4 };
     }
   }
 
   if (category === 'buzzer') {
     // Piezo Buzzer pins: POS, NEG
     switch (pinName) {
-      case 'POS': return { x: cx + 18, y: cy + 50 };
-      case 'NEG': return { x: cx + 38, y: cy + 50 };
-      default: return { x: cx + 28, y: cy + 50 };
+      case 'POS': return { x: cx + 17, y: cy + 51 };
+      case 'NEG': return { x: cx + 37, y: cy + 51 };
+      default: return { x: cx + 27, y: cy + 51 };
     }
   }
 
-  if (category === 'ir') {
+  if (category === 'ir' || category === 'tcrt') {
     // TCRT5000 pins: VCC, GND, D0, A0
     switch (pinName) {
-      case 'VCC': return { x: cx + 18, y: cy + 72 };
-      case 'GND': return { x: cx + 30, y: cy + 72 };
-      case 'D0':  return { x: cx + 42, y: cy + 72 };
-      case 'A0':  return { x: cx + 54, y: cy + 72 };
-      default: return { x: cx + 36, y: cy + 72 };
+      case 'VCC': return { x: cx + 18, y: cy + 74 };
+      case 'GND': return { x: cx + 30, y: cy + 74 };
+      case 'D0':  return { x: cx + 42, y: cy + 74 };
+      case 'A0':  return { x: cx + 54, y: cy + 74 };
+      default: return { x: cx + 36, y: cy + 74 };
     }
   }
 
@@ -265,28 +269,27 @@ function getPinCoordinates(
 
   if (category === 'mpu') {
     // MPU-6050 pins: VCC, GND, SCL, SDA, XDA, XCL, AD0, INT
-    const startMpuX = cx + 16;
-    const spacing = 9.5;
-    switch (pinName) {
-      case 'VCC': return { x: startMpuX, y: cy + 72 };
-      case 'GND': return { x: startMpuX + spacing, y: cy + 72 };
-      case 'SCL': return { x: startMpuX + spacing * 2, y: cy + 72 };
-      case 'SDA': return { x: startMpuX + spacing * 3, y: cy + 72 };
-      case 'XDA': return { x: startMpuX + spacing * 4, y: cy + 72 };
-      case 'XCL': return { x: startMpuX + spacing * 5, y: cy + 72 };
-      case 'AD0': return { x: startMpuX + spacing * 6, y: cy + 72 };
-      case 'INT': return { x: startMpuX + spacing * 7, y: cy + 72 };
-      default: return { x: cx + 40, y: cy + 72 };
-    }
+    const pinMap: Record<string, number> = {
+      VCC: 0,
+      GND: 1,
+      SCL: 2,
+      SDA: 3,
+      XDA: 4,
+      XCL: 5,
+      AD0: 6,
+      INT: 7,
+    };
+    const idx = pinMap[pinName] ?? 0;
+    return { x: cx + 14.5 + idx * 9, y: cy + 74 };
   }
 
   if (category === 'ldr') {
     switch (pinName) {
-      case 'VCC':   return { x: cx + 22, y: cy + 72 };
-      case 'GND':   return { x: cx + 36, y: cy + 72 };
-      case 'OUT_L': return { x: cx + 50, y: cy + 72 };
-      case 'OUT_R': return { x: cx + 64, y: cy + 72 };
-      default: return { x: cx + 43, y: cy + 72 };
+      case 'VCC':   return { x: cx + 22, y: cy + 74 };
+      case 'GND':   return { x: cx + 36, y: cy + 74 };
+      case 'OUT_L': return { x: cx + 50, y: cy + 74 };
+      case 'OUT_R': return { x: cx + 64, y: cy + 74 };
+      default: return { x: cx + 43, y: cy + 74 };
     }
   }
 
@@ -302,20 +305,20 @@ function getPinCoordinates(
 
   if (category === 'hall') {
     switch (pinName) {
-      case 'VCC': return { x: cx + 22, y: cy + 70 };
-      case 'GND': return { x: cx + 36, y: cy + 70 };
-      case 'OUT': return { x: cx + 50, y: cy + 70 };
-      default: return { x: cx + 36, y: cy + 70 };
+      case 'VCC': return { x: cx + 22, y: cy + 74 };
+      case 'GND': return { x: cx + 36, y: cy + 74 };
+      case 'OUT': return { x: cx + 50, y: cy + 74 };
+      default: return { x: cx + 36, y: cy + 74 };
     }
   }
 
-  if (category === 'hx711') {
+  if (category === 'hx711' || category === 'loadcell') {
     switch (pinName) {
-      case 'VCC': return { x: cx + 18, y: cy + 68 };
-      case 'GND': return { x: cx + 30, y: cy + 68 };
-      case 'DT':  return { x: cx + 42, y: cy + 68 };
-      case 'SCK': return { x: cx + 54, y: cy + 68 };
-      default: return { x: cx + 36, y: cy + 68 };
+      case 'VCC': return { x: cx + 97, y: cy + 70 };
+      case 'GND': return { x: cx + 107, y: cy + 70 };
+      case 'DT':  return { x: cx + 117, y: cy + 70 };
+      case 'SCK': return { x: cx + 127, y: cy + 70 };
+      default: return { x: cx + 112, y: cy + 70 };
     }
   }
 
@@ -1195,384 +1198,498 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
 
             {/* -------------------------------------------------------------- */}
             {/* ELECTRONIC MODULES (PER EXPERIMENT) */}
+            {/* Dynamic coordinate extraction from circuit.components */}
             {/* -------------------------------------------------------------- */}
+            {(() => {
+              const pirComp = circuit.components.find((c) => c.type === 'pir_hc_sr501' || c.id.startsWith('pir'));
+              const pirX = pirComp ? pirComp.x : 480;
+              const pirY = pirComp ? pirComp.y : 110;
 
-            {/* 1. PIR SENSOR (HC-SR501) */}
-            {circuit.components.some((c) => c.type === 'pir_hc_sr501') && (
-              <g transform="translate(480, 70)" filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
-                {/* Green PCB Base */}
-                <rect x="0" y="0" width="60" height="74" rx="4" fill="#15803d" stroke="#166534" strokeWidth="1.5" />
-                {/* White Faceted Fresnel Dome */}
-                <circle cx="30" cy="34" r="24" fill="url(#fresnelDomeGrad)" stroke="#cbd5e1" strokeWidth="1" />
-                {/* Honeycomb Facet Grid Silhouette */}
-                <circle cx="30" cy="34" r="16" fill="none" stroke="#94a3b8" strokeWidth="0.8" strokeDasharray="3 2" />
-                <circle cx="30" cy="34" r="8" fill="none" stroke="#94a3b8" strokeWidth="0.8" />
-                {/* Dual Trimpots (Sensitivity & Time Delay) */}
-                <circle cx="16" cy="62" r="5" fill="#f59e0b" stroke="#78350f" strokeWidth="0.8" />
-                <line x1="13" y1="62" x2="19" y2="62" stroke="#78350f" strokeWidth="1" />
-                <circle cx="44" cy="62" r="5" fill="#f59e0b" stroke="#78350f" strokeWidth="0.8" />
-                <line x1="41" y1="62" x2="47" y2="62" stroke="#78350f" strokeWidth="1" />
-                {/* 3 Header Pins at Bottom */}
-                {['VCC', 'OUT', 'GND'].map((p, idx) => (
-                  <g key={p} transform={`translate(${14 + idx * 12}, 74)`}>
-                    <rect x="0" y="0" width="8" height="8" fill="#111827" />
-                    <circle cx="4" cy="4" r="2" fill="#e2e8f0" />
-                  </g>
-                ))}
-                {/* Thermal trigger LED */}
-                <circle
-                  cx="50"
-                  cy="12"
-                  r="2.5"
-                  fill={stimulus.isPIRTriggered ? '#ef4444' : '#7f1d1d'}
-                  filter={stimulus.isPIRTriggered ? 'drop-shadow(0 0 4px #ef4444)' : undefined}
-                />
-                <text x="30" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
-                  HC-SR501 PIR
-                </text>
-              </g>
-            )}
+              const sonarComp = circuit.components.find((c) => c.type === 'ultrasonic_hc_sr04' || c.id.startsWith('sonar'));
+              const sonarX = sonarComp ? sonarComp.x : 540;
+              const sonarY = sonarComp ? sonarComp.y : 110;
 
-            {/* 2. ULTRASONIC SENSOR (HC-SR04) */}
-            {circuit.components.some((c) => c.type === 'ultrasonic_hc_sr04') && (
-              <g transform="translate(540, 70)" filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
-                {/* Blue PCB Breakout */}
-                <rect x="0" y="0" width="108" height="80" rx="4" fill="#1d4ed8" stroke="#1e40af" strokeWidth="1.5" />
-                {/* Left Transducer Can (T - Transmitter) */}
-                <circle cx="30" cy="38" r="22" fill="url(#sonarCanGrad)" stroke="#64748b" strokeWidth="1.5" />
-                <circle cx="30" cy="38" r="14" fill="#1e293b" opacity="0.6" />
-                <text x="30" y="42" fill="#ffffff" fontSize="11" fontFamily="sans-serif" textAnchor="middle" fontWeight="900">
-                  T
-                </text>
-                {/* Right Transducer Can (R - Receiver) */}
-                <circle cx="78" cy="38" r="22" fill="url(#sonarCanGrad)" stroke="#64748b" strokeWidth="1.5" />
-                <circle cx="78" cy="38" r="14" fill="#1e293b" opacity="0.6" />
-                <text x="78" y="42" fill="#ffffff" fontSize="11" fontFamily="sans-serif" textAnchor="middle" fontWeight="900">
-                  R
-                </text>
-                {/* 4 Header Pins at bottom */}
-                {['VCC', 'TRIG', 'ECHO', 'GND'].map((p, idx) => (
-                  <g key={p} transform={`translate(${28 + idx * 15}, 80)`}>
-                    <rect x="0" y="0" width="8" height="8" fill="#111827" />
-                    <circle cx="4" cy="4" r="2" fill="#e2e8f0" />
-                  </g>
-                ))}
-                {/* Emitted Sound Wave Cones (Animated) */}
-                <path
-                  d="M 30 16 A 28 28 0 0 0 10 0"
-                  fill="none"
-                  stroke="#38bdf8"
-                  strokeWidth="2"
-                  opacity="0.8"
-                  strokeDasharray="4 3"
-                />
-                <path
-                  d="M 30 10 A 38 38 0 0 0 2 -12"
-                  fill="none"
-                  stroke="#38bdf8"
-                  strokeWidth="1.5"
-                  opacity="0.5"
-                  strokeDasharray="5 3"
-                />
-                <text x="54" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
-                  HC-SR04 SONAR
-                </text>
-              </g>
-            )}
+              const servoComp = circuit.components.find((c) => c.type === 'servo_sg90' || c.id.startsWith('servo'));
+              const servoX = servoComp ? servoComp.x : 770;
+              const servoY = servoComp ? servoComp.y : 120;
 
-            {/* 3. MICRO SERVO MOTOR (SG90) */}
-            {circuit.components.some((c) => c.type === 'servo_sg90') && (
-              <g
-                transform={`translate(${circuit.experimentId === 'exp_ultrasonic_radar' ? 700 : 770}, 80)`}
-                filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))"
-              >
-                {/* Blue Translucent Plastic Casing */}
-                <rect x="0" y="0" width="80" height="74" rx="4" fill="url(#servoShellGrad)" stroke="#0284c7" strokeWidth="1.5" />
-                {/* Mounting Flanges */}
-                <rect x="-14" y="24" width="14" height="24" fill="#0284c7" />
-                <circle cx="-7" cy="36" r="3" fill="#ca8a04" />
-                <rect x="80" y="24" width="14" height="24" fill="#0284c7" />
-                <circle cx="87" cy="36" r="3" fill="#ca8a04" />
-                {/* Main Gear Axis & Spline */}
-                <circle cx="28" cy="36" r="18" fill="#0369a1" />
-                {/* Dynamic White Rotating Servo Horn */}
-                <g transform={`translate(28, 36) rotate(${stimulus.servoAngle - 90})`}>
-                  <path d="M -8 -8 L 48 -5 A 8 8 0 0 1 48 5 L -8 8 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1" />
-                  <circle cx="0" cy="0" r="7" fill="#cbd5e1" />
-                  <circle cx="0" cy="0" r="3" fill="#64748b" />
-                  <circle cx="16" cy="0" r="2" fill="#64748b" />
-                  <circle cx="28" cy="0" r="2" fill="#64748b" />
-                  <circle cx="40" cy="0" r="2" fill="#64748b" />
-                </g>
-                {/* Angle Badge */}
-                <rect x="44" y="52" width="32" height="16" rx="3" fill="#0f172a" opacity="0.8" />
-                <text x="60" y="63" fill="#38bdf8" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
-                  {stimulus.servoAngle}°
-                </text>
-                <text x="40" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
-                  SG90 SERVO
-                </text>
-              </g>
-            )}
+              const lcdComp = circuit.components.find((c) => c.type === 'lcd1602_i2c' || c.id.startsWith('lcd'));
+              const lcdX = lcdComp ? lcdComp.x : 980;
+              const lcdY = lcdComp ? lcdComp.y : 290;
 
-            {/* 4. 16x2 I2C LCD DISPLAY (HD44780 + PCF8574) */}
-            {circuit.components.some((c) => c.type === 'lcd1602_i2c') && (
-              <g transform="translate(980, 290)" filter="drop-shadow(0 12px 18px rgba(0,0,0,0.65))">
-                {/* PCB Carrier Board (Dark Emerald/Blue) */}
-                <rect x="0" y="0" width="220" height="110" rx="4" fill="#0f2b38" stroke="#164e63" strokeWidth="2" />
-                {/* 4 Corner Standoffs */}
-                {[
-                  { cx: 8, cy: 8 },
-                  { cx: 212, cy: 8 },
-                  { cx: 212, cy: 102 },
-                  { cx: 8, cy: 102 },
-                ].map((s, idx) => (
-                  <circle key={idx} cx={s.cx} cy={s.cy} r="4" fill="#ca8a04" />
-                ))}
-                {/* Golden Display Bezel Frame */}
-                <rect x="18" y="14" width="184" height="82" rx="2" fill="#020617" stroke="#334155" strokeWidth="1" />
-                {/* Active Blue Backlight Screen */}
-                <rect x="24" y="20" width="172" height="70" rx="1" fill="url(#lcdBacklightGrad)" />
-                {/* Live Dot-Matrix Character Display Rows */}
-                <g fontFamily="monospace" fontSize="11" fontWeight="bold" fill="#67e8f9">
-                  <text x="32" y="46" letterSpacing="1">
-                    {lcdTelemetry.line1}
-                  </text>
-                  <text x="32" y="72" letterSpacing="1">
-                    {lcdTelemetry.line2}
-                  </text>
-                </g>
-                {/* PCF8574 I2C Backpack Pins at left */}
-                {['GND', 'VCC', 'SDA', 'SCL'].map((p, idx) => (
-                  <g key={p} transform={`translate(10 + ${idx * 10}, 0)`}>
-                    <rect x="0" y="-8" width="6" height="8" fill="#1e293b" />
-                    <circle cx="3" cy="-4" r="1.5" fill="#e2e8f0" />
-                  </g>
-                ))}
-                <text x="110" y="104" fill="#94a3b8" fontSize="7" fontFamily="monospace" textAnchor="middle">
-                  16x2 I2C (0x27)
-                </text>
-              </g>
-            )}
+              const buzzerComp = circuit.components.find((c) => c.type === 'piezo_buzzer' || c.id.startsWith('buzzer'));
+              const buzzerX = buzzerComp ? buzzerComp.x : 770;
+              const buzzerY = buzzerComp ? buzzerComp.y : 160;
 
-            {/* 5. PIEZO BUZZER */}
-            {circuit.components.some((c) => c.type === 'piezo_buzzer') && (
-              <g
-                transform={`translate(${circuit.experimentId === 'exp_pir_servo_buzzer' ? 670 : 770}, 160)`}
-                filter="drop-shadow(0 8px 12px rgba(0,0,0,0.5))"
-              >
-                {/* Cylindrical Black Plastic Housing */}
-                <circle cx="28" cy="28" r="24" fill="#111827" stroke="#374151" strokeWidth="2" />
-                {/* Central Acoustic Aperture Hole */}
-                <circle cx="28" cy="28" r="7" fill="#030712" />
-                {/* Polarity (+) Indicator */}
-                <text x="14" y="20" fill="#ef4444" fontSize="10" fontWeight="bold" fontFamily="sans-serif">+</text>
-                {/* Pins */}
-                <rect x="14" y="48" width="6" height="6" fill="#111827" />
-                <rect x="34" y="48" width="6" height="6" fill="#111827" />
-                {/* Concentric Acoustic Ripple Rings (When Sounding) */}
-                {stimulus.buzzerActive && (
-                  <>
-                    <circle cx="28" cy="28" r="32" fill="none" stroke="#22c55e" strokeWidth="1.5" opacity="0.8" strokeDasharray="3 3" />
-                    <circle cx="28" cy="28" r="42" fill="none" stroke="#22c55e" strokeWidth="1.2" opacity="0.4" />
-                  </>
-                )}
-                <text x="28" y="-4" fill="#ffffff" fontSize="7" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
-                  PIEZO BUZZER
-                </text>
-              </g>
-            )}
+              const tcrtComp = circuit.components.find((c) => c.type === 'tcrt5000_ir' || c.id.startsWith('tcrt') || c.id.startsWith('ir'));
+              const tcrtX = tcrtComp ? tcrtComp.x : 480;
+              const tcrtY = tcrtComp ? tcrtComp.y : 110;
 
-            {/* 6. TCRT5000 DUAL IR SENSOR ARRAY */}
-            {circuit.components.some((c) => c.type === 'tcrt5000_ir') && (
-              <g transform="translate(480, 70)" filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
-                <rect x="0" y="0" width="72" height="74" rx="4" fill="#1e3a8a" stroke="#1d4ed8" strokeWidth="1.5" />
-                {/* Left Optical Sensor: Emitter (Clear Blue) + Detector (Black) */}
-                <rect x="10" y="16" width="22" height="26" rx="2" fill="#0f172a" />
-                <circle cx="16" cy="28" r="4" fill="#60a5fa" opacity="0.8" />
-                <circle cx="26" cy="28" r="4" fill="#020617" />
-                {/* Right Optical Sensor */}
-                <rect x="40" y="16" width="22" height="26" rx="2" fill="#0f172a" />
-                <circle cx="46" cy="28" r="4" fill="#60a5fa" opacity="0.8" />
-                <circle cx="56" cy="28" r="4" fill="#020617" />
-                {/* LM393 Dual Comparator IC */}
-                <rect x="22" y="48" width="28" height="16" rx="1" fill="#111827" />
-                {/* Indicator LEDs */}
-                <circle cx="14" cy="56" r="2" fill="#ef4444" />
-                <circle cx="58" cy="56" r="2" fill="#22c55e" />
-                <text x="36" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
-                  TCRT5000 IR
-                </text>
-              </g>
-            )}
+              const l298nComp = circuit.components.find((c) => c.type === 'l298n_motor_driver' || c.id.startsWith('l298n'));
+              const l298nX = l298nComp ? l298nComp.x : 820;
+              const l298nY = l298nComp ? l298nComp.y : 110;
 
-            {/* 7. L298N DUAL H-BRIDGE MOTOR DRIVER */}
-            {circuit.components.some((c) => c.type === 'l298n_motor_driver') && (
-              <g transform="translate(820, 110)" filter="drop-shadow(0 14px 20px rgba(0,0,0,0.6))">
-                {/* Red Heavy-Duty PCB */}
-                <rect x="0" y="0" width="140" height="120" rx="4" fill="#991b1b" stroke="#b91c1c" strokeWidth="2" />
-                {/* Large Black Finned Aluminum Heatsink */}
-                <rect x="30" y="16" width="80" height="42" rx="3" fill="#18181b" stroke="#27272a" strokeWidth="1" />
-                {/* Heat Sink Extrusion Fins */}
-                {[0, 1, 2, 3, 4, 5, 6].map((fin) => (
-                  <rect key={fin} x={36 + fin * 10} y="16" width="4" height="42" fill="#27272a" />
-                ))}
-                {/* Blue Screw Terminals for Motors & Power */}
-                <rect x="6" y="24" width="18" height="28" fill="#1d4ed8" rx="2" />
-                <rect x="116" y="24" width="18" height="28" fill="#1d4ed8" rx="2" />
-                <rect x="42" y="90" width="56" height="22" fill="#1d4ed8" rx="2" />
-                {/* Screw Heads */}
-                <circle cx="15" cy="32" r="3" fill="#94a3b8" />
-                <circle cx="15" cy="44" r="3" fill="#94a3b8" />
-                <circle cx="125" cy="32" r="3" fill="#94a3b8" />
-                <circle cx="125" cy="44" r="3" fill="#94a3b8" />
-                {/* TT DC Motor Wheels with Motion Blur */}
-                <g transform="translate(-50, 20)">
-                  <circle cx="15" cy="15" r="20" fill="#eab308" stroke="#ca8a04" strokeWidth="2" />
-                  <circle cx="15" cy="15" r="14" fill="#1f2937" />
-                  {/* Rotating Wheel Spokes */}
-                  <g transform={`rotate(${stimulus.motorRpm * 0.2}, 15, 15)`}>
-                    <line x1="15" y1="3" x2="15" y2="27" stroke="#eab308" strokeWidth="2" />
-                    <line x1="3" y1="15" x2="27" y2="15" stroke="#eab308" strokeWidth="2" />
-                  </g>
-                </g>
-                <text x="70" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
-                  L298N DUAL H-BRIDGE
-                </text>
-              </g>
-            )}
+              const mpuComp = circuit.components.find((c) => c.type === 'mpu6050_imu' || c.id.startsWith('mpu'));
+              const mpuX = mpuComp ? mpuComp.x : 540;
+              const mpuY = mpuComp ? mpuComp.y : 120;
 
-            {/* 8. MPU-6050 6-DOF IMU (GY-521) */}
-            {circuit.components.some((c) => c.type === 'mpu6050_imu') && (
-              <g transform="translate(540, 70)" filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
-                <rect x="0" y="0" width="88" height="74" rx="4" fill="#1e3a8a" stroke="#2563eb" strokeWidth="1.5" />
-                {/* InvenSense QFN MEMS Sensor Chip */}
-                <rect x="28" y="16" width="32" height="32" rx="2" fill="#090d16" stroke="#334155" strokeWidth="1" />
-                <text x="44" y="34" fill="#94a3b8" fontSize="6.5" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
-                  MPU6050
-                </text>
-                {/* 3D Attitude Pitch/Roll Gimbal Horizon Overlay */}
-                <g transform="translate(44, 32)">
-                  <circle cx="0" cy="0" r="12" fill="none" stroke="#38bdf8" strokeWidth="1.2" opacity="0.8" />
-                  <g transform={`rotate(${stimulus.imuRoll}) translate(0, ${stimulus.imuPitch * 0.4})`}>
-                    <line x1="-10" y1="0" x2="10" y2="0" stroke="#f59e0b" strokeWidth="1.5" />
-                  </g>
-                </g>
-                {/* 8 Header Pins */}
-                {['VCC', 'GND', 'SCL', 'SDA', 'XDA', 'XCL', 'AD0', 'INT'].map((p, idx) => (
-                  <g key={p} transform={`translate(${12 + idx * 8.5}, 74)`}>
-                    <rect x="0" y="0" width="6" height="8" fill="#111827" />
-                    <circle cx="3" cy="4" r="1.5" fill="#ca8a04" />
-                  </g>
-                ))}
-                <text x="44" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
-                  GY-521 IMU
-                </text>
-              </g>
-            )}
+              const ldrComp = circuit.components.find((c) => c.type === 'dual_ldr_tracker' || c.id.startsWith('ldr'));
+              const ldrX = ldrComp ? ldrComp.x : 520;
+              const ldrY = ldrComp ? ldrComp.y : 110;
 
-            {/* 9. DUAL CDS PHOTORESISTORS SOLAR TRACKER */}
-            {circuit.components.some((c) => c.type === 'dual_ldr_tracker') && (
-              <g transform="translate(520, 70)" filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
-                <rect x="0" y="0" width="86" height="74" rx="4" fill="#15803d" stroke="#166534" strokeWidth="1.5" />
-                {/* Left CdS Photoresistor */}
-                <circle cx="22" cy="34" r="14" fill="#fef08a" stroke="#ca8a04" strokeWidth="1.2" />
-                <path d="M 12 28 Q 22 24 32 28 T 12 36 T 32 40" fill="none" stroke="#dc2626" strokeWidth="1.2" />
-                {/* Right CdS Photoresistor */}
-                <circle cx="64" cy="34" r="14" fill="#fef08a" stroke="#ca8a04" strokeWidth="1.2" />
-                <path d="M 54 28 Q 64 24 74 28 T 54 36 T 74 40" fill="none" stroke="#dc2626" strokeWidth="1.2" />
-                {/* 3D Vertical Center Shadow Divider Fin (Baffle) */}
-                <rect x="41" y="10" width="4" height="48" fill="#0f172a" rx="1" />
-                {/* Directional Cast Shadow from Sun */}
-                <polygon
-                  points={`43,10 ${43 + (stimulus.sunPos.x - 560) * 0.15},58 43,58`}
-                  fill="#000000"
-                  opacity="0.45"
-                />
-                <text x="43" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
-                  DUAL-LDR HELIOSTAT
-                </text>
-              </g>
-            )}
+              const encoderComp = circuit.components.find((c) => c.type === 'optical_encoder_motor' || c.id.startsWith('encoder'));
+              const encoderX = encoderComp ? encoderComp.x : 520;
+              const encoderY = encoderComp ? encoderComp.y : 110;
 
-            {/* 10. ROTARY QUADRATURE ENCODER MOTOR */}
-            {circuit.components.some((c) => c.type === 'optical_encoder_motor') && (
-              <g transform="translate(520, 70)" filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
-                <rect x="0" y="0" width="90" height="74" rx="4" fill="#1f2937" stroke="#374151" strokeWidth="1.5" />
-                {/* Slotted Encoder Disc on Shaft */}
-                <g transform="translate(45, 36)">
-                  <circle cx="0" cy="0" r="26" fill="#475569" stroke="#94a3b8" strokeWidth="1.5" />
-                  {/* Radial Optical Slots */}
-                  {Array.from({ length: 16 }).map((_, i) => (
-                    <line
-                      key={i}
-                      x1="0"
-                      y1="0"
-                      x2="24"
-                      y2="0"
-                      stroke="#0f172a"
-                      strokeWidth="2.5"
-                      transform={`rotate(${i * 22.5 + stimulus.motorRpm * 0.1})`}
-                    />
-                  ))}
-                  <circle cx="0" cy="0" r="7" fill="#ca8a04" />
-                </g>
-                {/* U-Shaped Optical Interrupter Photogate */}
-                <rect x="58" y="24" width="16" height="24" fill="#030712" rx="2" />
-                <circle cx="66" cy="30" r="2" fill="#ef4444" />
-                <circle cx="66" cy="42" r="2" fill="#22c55e" />
-                <text x="45" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
-                  OPTICAL ENCODER
-                </text>
-              </g>
-            )}
+              const hx711Comp = circuit.components.find((c) => c.type === 'loadcell_hx711_gripper' || c.id.startsWith('hx711') || c.id.startsWith('loadcell'));
+              const hx711X = hx711Comp ? hx711Comp.x : 500;
+              const hx711Y = hx711Comp ? hx711Comp.y : 110;
 
-            {/* 11. LOAD CELL & HX711 + DELICATE EGG GRIPPER */}
-            {circuit.components.some((c) => c.type === 'loadcell_hx711_gripper') && (
-              <g transform="translate(500, 70)" filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
-                {/* Aluminum Shear Beam Load Cell */}
-                <rect x="0" y="10" width="80" height="24" rx="2" fill="url(#silverMetalGrad)" stroke="#64748b" strokeWidth="1.5" />
-                <circle cx="14" cy="22" r="4.5" fill="#334155" />
-                <circle cx="66" cy="22" r="4.5" fill="#334155" />
-                {/* Purple HX711 Breakout Board */}
-                <rect x="90" y="4" width="46" height="66" rx="3" fill="#581c87" stroke="#7e22ce" strokeWidth="1.5" />
-                <rect x="100" y="20" width="26" height="16" fill="#090d16" rx="1" />
-                {/* Gripper Jaws with Delicate Egg */}
-                <g transform="translate(24, 42)">
-                  {/* Left Jaw */}
-                  <path d="M 0 0 L 10 20 L 6 24 Z" fill="#475569" />
-                  {/* Right Jaw */}
-                  <path d="M 32 0 L 22 20 L 26 24 Z" fill="#475569" />
-                  {/* Speckled Test Egg */}
-                  <ellipse cx="16" cy="18" rx="9" ry="12" fill="#fed7aa" stroke="#fb923c" strokeWidth="1" />
-                  <circle cx="14" cy="14" r="0.8" fill="#c2410c" />
-                  <circle cx="18" cy="19" r="0.8" fill="#c2410c" />
-                </g>
-                <text x="65" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
-                  HX711 & LOAD CELL
-                </text>
-              </g>
-            )}
+              const hallComp = circuit.components.find((c) => c.type === 'hall_effect_sensor' || c.id.startsWith('hall'));
+              const hallX = hallComp ? hallComp.x : 520;
+              const hallY = hallComp ? hallComp.y : 110;
 
-            {/* 12. HALL EFFECT SENSOR (A3144) */}
-            {circuit.components.some((c) => c.type === 'hall_effect_sensor') && (
-              <g transform="translate(520, 70)" filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
-                <rect x="0" y="0" width="76" height="74" rx="4" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
-                {/* TO-92 Transistor Package */}
-                <path d="M 28 20 L 48 20 L 44 38 L 32 38 Z" fill="#030712" stroke="#475569" strokeWidth="1" />
-                {/* Rotating Flywheel Disc with Neodymium Magnets */}
-                <g transform="translate(38, 52)">
-                  <circle cx="0" cy="0" r="16" fill="#475569" />
-                  <rect x="-12" y="-3" width="8" height="6" fill="#dc2626" />
-                  <text x="-8" y="2" fill="#ffffff" fontSize="5" fontWeight="bold">N</text>
-                  <rect x="4" y="-3" width="8" height="6" fill="#2563eb" />
-                  <text x="8" y="2" fill="#ffffff" fontSize="5" fontWeight="bold">S</text>
-                </g>
-                <text x="38" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
-                  A3144 HALL SENSOR
-                </text>
-              </g>
-            )}
+              return (
+                <>
+                  {/* 1. PIR SENSOR (HC-SR501) */}
+                  {pirComp && (
+                    <g transform={`translate(${pirX}, ${pirY})`} filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
+                      {/* Green PCB Base */}
+                      <rect x="0" y="0" width="60" height="74" rx="4" fill="#15803d" stroke="#166534" strokeWidth="1.5" />
+                      {/* White Faceted Fresnel Dome */}
+                      <circle cx="30" cy="34" r="24" fill="url(#fresnelDomeGrad)" stroke="#cbd5e1" strokeWidth="1" />
+                      {/* Honeycomb Facet Grid Silhouette */}
+                      <circle cx="30" cy="34" r="16" fill="none" stroke="#94a3b8" strokeWidth="0.8" strokeDasharray="3 2" />
+                      <circle cx="30" cy="34" r="8" fill="none" stroke="#94a3b8" strokeWidth="0.8" />
+                      {/* Dual Trimpots (Sensitivity & Time Delay) */}
+                      <circle cx="16" cy="62" r="5" fill="#f59e0b" stroke="#78350f" strokeWidth="0.8" />
+                      <line x1="13" y1="62" x2="19" y2="62" stroke="#78350f" strokeWidth="1" />
+                      <circle cx="44" cy="62" r="5" fill="#f59e0b" stroke="#78350f" strokeWidth="0.8" />
+                      <line x1="41" y1="62" x2="47" y2="62" stroke="#78350f" strokeWidth="1" />
+                      {/* 3 Header Pins at Bottom: VCC(18,78), OUT(30,78), GND(42,78) */}
+                      {['VCC', 'OUT', 'GND'].map((p, idx) => (
+                        <g key={p} transform={`translate(${14 + idx * 12}, 74)`}>
+                          <rect x="0" y="0" width="8" height="8" fill="#111827" />
+                          <circle cx="4" cy="4" r="2" fill="#e2e8f0" />
+                        </g>
+                      ))}
+                      {/* Thermal trigger LED */}
+                      <circle
+                        cx="50"
+                        cy="12"
+                        r="2.5"
+                        fill={stimulus.isPIRTriggered ? '#ef4444' : '#7f1d1d'}
+                        filter={stimulus.isPIRTriggered ? 'drop-shadow(0 0 4px #ef4444)' : undefined}
+                      />
+                      <text x="30" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                        HC-SR501 PIR
+                      </text>
+                    </g>
+                  )}
+
+                  {/* 2. ULTRASONIC SENSOR (HC-SR04) */}
+                  {sonarComp && (
+                    <g transform={`translate(${sonarX}, ${sonarY})`} filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
+                      {/* Blue PCB Breakout */}
+                      <rect x="0" y="0" width="108" height="80" rx="4" fill="#1d4ed8" stroke="#1e40af" strokeWidth="1.5" />
+                      {/* Left Transducer Can (T - Transmitter) */}
+                      <circle cx="30" cy="38" r="22" fill="url(#sonarCanGrad)" stroke="#64748b" strokeWidth="1.5" />
+                      <circle cx="30" cy="38" r="14" fill="#1e293b" opacity="0.6" />
+                      <text x="30" y="42" fill="#ffffff" fontSize="11" fontFamily="sans-serif" textAnchor="middle" fontWeight="900">
+                        T
+                      </text>
+                      {/* Right Transducer Can (R - Receiver) */}
+                      <circle cx="78" cy="38" r="22" fill="url(#sonarCanGrad)" stroke="#64748b" strokeWidth="1.5" />
+                      <circle cx="78" cy="38" r="14" fill="#1e293b" opacity="0.6" />
+                      <text x="78" y="42" fill="#ffffff" fontSize="11" fontFamily="sans-serif" textAnchor="middle" fontWeight="900">
+                        R
+                      </text>
+                      {/* 4 Header Pins at bottom: VCC(32,84), TRIG(47,84), ECHO(62,84), GND(77,84) */}
+                      {['VCC', 'TRIG', 'ECHO', 'GND'].map((p, idx) => (
+                        <g key={p} transform={`translate(${28 + idx * 15}, 80)`}>
+                          <rect x="0" y="0" width="8" height="8" fill="#111827" />
+                          <circle cx="4" cy="4" r="2" fill="#e2e8f0" />
+                        </g>
+                      ))}
+                      {/* Emitted Sound Wave Cones (Animated) */}
+                      <path
+                        d="M 30 16 A 28 28 0 0 0 10 0"
+                        fill="none"
+                        stroke="#38bdf8"
+                        strokeWidth="2"
+                        opacity="0.8"
+                        strokeDasharray="4 3"
+                      />
+                      <path
+                        d="M 30 10 A 38 38 0 0 0 2 -12"
+                        fill="none"
+                        stroke="#38bdf8"
+                        strokeWidth="1.5"
+                        opacity="0.5"
+                        strokeDasharray="5 3"
+                      />
+                      <text x="54" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                        HC-SR04 SONAR
+                      </text>
+                    </g>
+                  )}
+
+                  {/* 3. MICRO SERVO MOTOR (SG90) */}
+                  {servoComp && (
+                    <g transform={`translate(${servoX}, ${servoY})`} filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
+                      {/* Blue Translucent Plastic Casing */}
+                      <rect x="0" y="0" width="80" height="74" rx="4" fill="url(#servoShellGrad)" stroke="#0284c7" strokeWidth="1.5" />
+                      {/* Mounting Flanges */}
+                      <rect x="-14" y="24" width="14" height="24" fill="#0284c7" />
+                      <circle cx="-7" cy="36" r="3" fill="#ca8a04" />
+                      <rect x="80" y="24" width="14" height="24" fill="#0284c7" />
+                      <circle cx="87" cy="36" r="3" fill="#ca8a04" />
+                      {/* Main Gear Axis & Spline */}
+                      <circle cx="28" cy="36" r="18" fill="#0369a1" />
+                      {/* Dynamic White Rotating Servo Horn */}
+                      <g transform={`translate(28, 36) rotate(${stimulus.servoAngle - 90})`}>
+                        <path d="M -8 -8 L 48 -5 A 8 8 0 0 1 48 5 L -8 8 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1" />
+                        <circle cx="0" cy="0" r="7" fill="#cbd5e1" />
+                        <circle cx="0" cy="0" r="3" fill="#64748b" />
+                        <circle cx="16" cy="0" r="2" fill="#64748b" />
+                        <circle cx="28" cy="0" r="2" fill="#64748b" />
+                        <circle cx="40" cy="0" r="2" fill="#64748b" />
+                      </g>
+                      {/* 3-Pin Cable Terminal Header at Bottom: GND(24,74), VCC(40,74), PWM(56,74) */}
+                      {[
+                        { name: 'GND', color: '#78350f', x: 24 },
+                        { name: 'VCC', color: '#ef4444', x: 40 },
+                        { name: 'PWM', color: '#f97316', x: 56 },
+                      ].map((pin) => (
+                        <g key={pin.name} transform={`translate(${pin.x - 4}, 70)`}>
+                          <rect x="0" y="0" width="8" height="8" rx="1" fill="#111827" />
+                          <circle cx="4" cy="4" r="2" fill={pin.color} />
+                        </g>
+                      ))}
+                      {/* Angle Badge */}
+                      <rect x="44" y="52" width="32" height="16" rx="3" fill="#0f172a" opacity="0.8" />
+                      <text x="60" y="63" fill="#38bdf8" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                        {stimulus.servoAngle}°
+                      </text>
+                      <text x="40" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                        SG90 SERVO
+                      </text>
+                    </g>
+                  )}
+
+                  {/* 4. 16x2 I2C LCD DISPLAY (HD44780 + PCF8574) */}
+                  {lcdComp && (
+                    <g transform={`translate(${lcdX}, ${lcdY})`} filter="drop-shadow(0 12px 18px rgba(0,0,0,0.65))">
+                      {/* PCB Carrier Board (Dark Emerald/Blue) */}
+                      <rect x="0" y="0" width="220" height="110" rx="4" fill="#0f2b38" stroke="#164e63" strokeWidth="2" />
+                      {/* 4 Corner Standoffs */}
+                      {[
+                        { cx: 8, cy: 8 },
+                        { cx: 212, cy: 8 },
+                        { cx: 212, cy: 102 },
+                        { cx: 8, cy: 102 },
+                      ].map((s, idx) => (
+                        <circle key={idx} cx={s.cx} cy={s.cy} r="4" fill="#ca8a04" />
+                      ))}
+                      {/* Golden Display Bezel Frame */}
+                      <rect x="18" y="14" width="184" height="82" rx="2" fill="#020617" stroke="#334155" strokeWidth="1" />
+                      {/* Active Blue Backlight Screen */}
+                      <rect x="24" y="20" width="172" height="70" rx="1" fill="url(#lcdBacklightGrad)" />
+                      {/* Live Dot-Matrix Character Display Rows */}
+                      <g fontFamily="monospace" fontSize="11" fontWeight="bold" fill="#67e8f9">
+                        <text x="32" y="46" letterSpacing="1">
+                          {lcdTelemetry.line1}
+                        </text>
+                        <text x="32" y="72" letterSpacing="1">
+                          {lcdTelemetry.line2}
+                        </text>
+                      </g>
+                      {/* PCF8574 I2C Backpack Pins at top left: GND(13,-4), VCC(23,-4), SDA(33,-4), SCL(43,-4) */}
+                      {['GND', 'VCC', 'SDA', 'SCL'].map((p, idx) => (
+                        <g key={p} transform={`translate(${10 + idx * 10}, 0)`}>
+                          <rect x="0" y="-8" width="6" height="8" fill="#1e293b" />
+                          <circle cx="3" cy="-4" r="1.5" fill="#e2e8f0" />
+                        </g>
+                      ))}
+                      <text x="110" y="104" fill="#94a3b8" fontSize="7" fontFamily="monospace" textAnchor="middle">
+                        16x2 I2C (0x27)
+                      </text>
+                    </g>
+                  )}
+
+                  {/* 5. PIEZO BUZZER */}
+                  {buzzerComp && (
+                    <g transform={`translate(${buzzerX}, ${buzzerY})`} filter="drop-shadow(0 8px 12px rgba(0,0,0,0.5))">
+                      {/* Cylindrical Black Plastic Housing */}
+                      <circle cx="28" cy="28" r="24" fill="#111827" stroke="#374151" strokeWidth="2" />
+                      {/* Central Acoustic Aperture Hole */}
+                      <circle cx="28" cy="28" r="7" fill="#030712" />
+                      {/* Polarity (+) Indicator */}
+                      <text x="14" y="20" fill="#ef4444" fontSize="10" fontWeight="bold" fontFamily="sans-serif">+</text>
+                      {/* Pins: POS at (17, 51), NEG at (37, 51) */}
+                      <rect x="14" y="48" width="6" height="6" fill="#111827" />
+                      <circle cx="17" cy="51" r="1.5" fill="#e2e8f0" />
+                      <rect x="34" y="48" width="6" height="6" fill="#111827" />
+                      <circle cx="37" cy="51" r="1.5" fill="#e2e8f0" />
+                      {/* Concentric Acoustic Ripple Rings (When Sounding) */}
+                      {stimulus.buzzerActive && (
+                        <>
+                          <circle cx="28" cy="28" r="32" fill="none" stroke="#22c55e" strokeWidth="1.5" opacity="0.8" strokeDasharray="3 3" />
+                          <circle cx="28" cy="28" r="42" fill="none" stroke="#22c55e" strokeWidth="1.2" opacity="0.4" />
+                        </>
+                      )}
+                      <text x="28" y="-4" fill="#ffffff" fontSize="7" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                        PIEZO BUZZER
+                      </text>
+                    </g>
+                  )}
+
+                  {/* 6. TCRT5000 DUAL IR SENSOR ARRAY */}
+                  {tcrtComp && (
+                    <g transform={`translate(${tcrtX}, ${tcrtY})`} filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
+                      <rect x="0" y="0" width="72" height="74" rx="4" fill="#1e3a8a" stroke="#1d4ed8" strokeWidth="1.5" />
+                      {/* Left Optical Sensor: Emitter (Clear Blue) + Detector (Black) */}
+                      <rect x="10" y="16" width="22" height="26" rx="2" fill="#0f172a" />
+                      <circle cx="16" cy="28" r="4" fill="#60a5fa" opacity="0.8" />
+                      <circle cx="26" cy="28" r="4" fill="#020617" />
+                      {/* Right Optical Sensor */}
+                      <rect x="40" y="16" width="22" height="26" rx="2" fill="#0f172a" />
+                      <circle cx="46" cy="28" r="4" fill="#60a5fa" opacity="0.8" />
+                      <circle cx="56" cy="28" r="4" fill="#020617" />
+                      {/* LM393 Dual Comparator IC */}
+                      <rect x="22" y="48" width="28" height="16" rx="1" fill="#111827" />
+                      {/* Indicator LEDs */}
+                      <circle cx="14" cy="56" r="2" fill="#ef4444" />
+                      <circle cx="58" cy="56" r="2" fill="#22c55e" />
+                      {/* 4 Header Pins at Bottom: VCC(18,74), GND(30,74), D0(42,74), A0(54,74) */}
+                      {['VCC', 'GND', 'D0', 'A0'].map((p, idx) => (
+                        <g key={p} transform={`translate(${14 + idx * 12}, 70)`}>
+                          <rect x="0" y="0" width="8" height="8" rx="1" fill="#111827" />
+                          <circle cx="4" cy="4" r="2" fill="#ca8a04" />
+                        </g>
+                      ))}
+                      <text x="36" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                        TCRT5000 IR
+                      </text>
+                    </g>
+                  )}
+
+                  {/* 7. L298N DUAL H-BRIDGE MOTOR DRIVER */}
+                  {l298nComp && (
+                    <g transform={`translate(${l298nX}, ${l298nY})`} filter="drop-shadow(0 14px 20px rgba(0,0,0,0.6))">
+                      {/* Red Heavy-Duty PCB */}
+                      <rect x="0" y="0" width="140" height="120" rx="4" fill="#991b1b" stroke="#b91c1c" strokeWidth="2" />
+                      {/* Large Black Finned Aluminum Heatsink */}
+                      <rect x="30" y="16" width="80" height="42" rx="3" fill="#18181b" stroke="#27272a" strokeWidth="1" />
+                      {/* Heat Sink Extrusion Fins */}
+                      {[0, 1, 2, 3, 4, 5, 6].map((fin) => (
+                        <rect key={fin} x={36 + fin * 10} y="16" width="4" height="42" fill="#27272a" />
+                      ))}
+                      {/* Blue Screw Terminals for Motors & Power */}
+                      <rect x="6" y="24" width="18" height="28" fill="#1d4ed8" rx="2" />
+                      <rect x="116" y="24" width="18" height="28" fill="#1d4ed8" rx="2" />
+                      <rect x="42" y="90" width="56" height="22" fill="#1d4ed8" rx="2" />
+                      {/* Screw Heads */}
+                      <circle cx="15" cy="32" r="3" fill="#94a3b8" />
+                      <circle cx="15" cy="44" r="3" fill="#94a3b8" />
+                      <circle cx="125" cy="32" r="3" fill="#94a3b8" />
+                      <circle cx="125" cy="44" r="3" fill="#94a3b8" />
+                      {/* TT DC Motor Wheels with Motion Blur */}
+                      <g transform="translate(-50, 20)">
+                        <circle cx="15" cy="15" r="20" fill="#eab308" stroke="#ca8a04" strokeWidth="2" />
+                        <circle cx="15" cy="15" r="14" fill="#1f2937" />
+                        {/* Rotating Wheel Spokes */}
+                        <g transform={`rotate(${stimulus.motorRpm * 0.2}, 15, 15)`}>
+                          <line x1="15" y1="3" x2="15" y2="27" stroke="#eab308" strokeWidth="2" />
+                          <line x1="3" y1="15" x2="27" y2="15" stroke="#eab308" strokeWidth="2" />
+                        </g>
+                      </g>
+                      {/* 6 Logic Pin Header: ENA(22,120), IN1(34,120), IN2(46,120), IN3(58,120), IN4(70,120), ENB(82,120) */}
+                      {['ENA', 'IN1', 'IN2', 'IN3', 'IN4', 'ENB'].map((p, idx) => (
+                        <g key={p} transform={`translate(${18 + idx * 12}, 116)`}>
+                          <rect x="0" y="0" width="8" height="8" rx="1" fill="#111827" />
+                          <circle cx="4" cy="4" r="1.5" fill="#ca8a04" />
+                        </g>
+                      ))}
+                      {/* 3 Power Screw Terminals at bottom right: VMS(105,120), GND(118,120), 5V(131,120) */}
+                      {[
+                        { name: 'VMS', x: 105 },
+                        { name: 'GND', x: 118 },
+                        { name: '5V', x: 131 },
+                      ].map((term) => (
+                        <g key={term.name} transform={`translate(${term.x - 4}, 116)`}>
+                          <rect x="0" y="0" width="8" height="8" rx="1" fill="#1e3a8a" />
+                          <circle cx="4" cy="4" r="2" fill="#94a3b8" />
+                        </g>
+                      ))}
+                      <text x="70" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                        L298N DUAL H-BRIDGE
+                      </text>
+                    </g>
+                  )}
+
+                  {/* 8. MPU-6050 6-DOF IMU (GY-521) */}
+                  {mpuComp && (
+                    <g transform={`translate(${mpuX}, ${mpuY})`} filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
+                      <rect x="0" y="0" width="88" height="74" rx="4" fill="#1e3a8a" stroke="#2563eb" strokeWidth="1.5" />
+                      {/* InvenSense QFN MEMS Sensor Chip */}
+                      <rect x="28" y="16" width="32" height="32" rx="2" fill="#090d16" stroke="#334155" strokeWidth="1" />
+                      <text x="44" y="34" fill="#94a3b8" fontSize="6.5" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                        MPU6050
+                      </text>
+                      {/* 3D Attitude Pitch/Roll Gimbal Horizon Overlay */}
+                      <g transform="translate(44, 32)">
+                        <circle cx="0" cy="0" r="12" fill="none" stroke="#38bdf8" strokeWidth="1.2" opacity="0.8" />
+                        <g transform={`rotate(${stimulus.imuRoll}) translate(0, ${stimulus.imuPitch * 0.4})`}>
+                          <line x1="-10" y1="0" x2="10" y2="0" stroke="#f59e0b" strokeWidth="1.5" />
+                        </g>
+                      </g>
+                      {/* 8 Header Pins: VCC(14.5,74), GND(23.5,74), SCL(32.5,74), SDA(41.5,74), XDA, XCL, AD0, INT(77.5,74) */}
+                      {['VCC', 'GND', 'SCL', 'SDA', 'XDA', 'XCL', 'AD0', 'INT'].map((p, idx) => (
+                        <g key={p} transform={`translate(${11 + idx * 9}, 70)`}>
+                          <rect x="0" y="0" width="7" height="8" rx="1" fill="#111827" />
+                          <circle cx="3.5" cy="4" r="1.5" fill="#ca8a04" />
+                        </g>
+                      ))}
+                      <text x="44" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                        GY-521 IMU
+                      </text>
+                    </g>
+                  )}
+
+                  {/* 9. DUAL CDS PHOTORESISTORS SOLAR TRACKER */}
+                  {ldrComp && (
+                    <g transform={`translate(${ldrX}, ${ldrY})`} filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
+                      <rect x="0" y="0" width="86" height="74" rx="4" fill="#15803d" stroke="#166534" strokeWidth="1.5" />
+                      {/* Left CdS Photoresistor */}
+                      <circle cx="22" cy="34" r="14" fill="#fef08a" stroke="#ca8a04" strokeWidth="1.2" />
+                      <path d="M 12 28 Q 22 24 32 28 T 12 36 T 32 40" fill="none" stroke="#dc2626" strokeWidth="1.2" />
+                      {/* Right CdS Photoresistor */}
+                      <circle cx="64" cy="34" r="14" fill="#fef08a" stroke="#ca8a04" strokeWidth="1.2" />
+                      <path d="M 54 28 Q 64 24 74 28 T 54 36 T 74 40" fill="none" stroke="#dc2626" strokeWidth="1.2" />
+                      {/* 3D Vertical Center Shadow Divider Fin (Baffle) */}
+                      <rect x="41" y="10" width="4" height="48" fill="#0f172a" rx="1" />
+                      {/* Directional Cast Shadow from Sun */}
+                      <polygon
+                        points={`43,10 ${43 + (stimulus.sunPos.x - 560) * 0.15},58 43,58`}
+                        fill="#000000"
+                        opacity="0.45"
+                      />
+                      {/* 4 Header Pins at Bottom: VCC(22,74), GND(36,74), OUT_L(50,74), OUT_R(64,74) */}
+                      {['VCC', 'GND', 'OUT_L', 'OUT_R'].map((p, idx) => (
+                        <g key={p} transform={`translate(${18 + idx * 14}, 70)`}>
+                          <rect x="0" y="0" width="8" height="8" rx="1" fill="#111827" />
+                          <circle cx="4" cy="4" r="2" fill="#ca8a04" />
+                        </g>
+                      ))}
+                      <text x="43" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                        DUAL-LDR HELIOSTAT
+                      </text>
+                    </g>
+                  )}
+
+                  {/* 10. ROTARY QUADRATURE ENCODER MOTOR */}
+                  {encoderComp && (
+                    <g transform={`translate(${encoderX}, ${encoderY})`} filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
+                      <rect x="0" y="0" width="90" height="74" rx="4" fill="#1f2937" stroke="#374151" strokeWidth="1.5" />
+                      {/* Slotted Encoder Disc on Shaft */}
+                      <g transform="translate(45, 36)">
+                        <circle cx="0" cy="0" r="26" fill="#475569" stroke="#94a3b8" strokeWidth="1.5" />
+                        {/* Radial Optical Slots */}
+                        {Array.from({ length: 16 }).map((_, i) => (
+                          <line
+                            key={i}
+                            x1="0"
+                            y1="0"
+                            x2="24"
+                            y2="0"
+                            stroke="#0f172a"
+                            strokeWidth="2.5"
+                            transform={`rotate(${i * 22.5 + stimulus.motorRpm * 0.1})`}
+                          />
+                        ))}
+                        <circle cx="0" cy="0" r="7" fill="#ca8a04" />
+                      </g>
+                      {/* U-Shaped Optical Interrupter Photogate */}
+                      <rect x="58" y="24" width="16" height="24" fill="#030712" rx="2" />
+                      <circle cx="66" cy="30" r="2" fill="#ef4444" />
+                      <circle cx="66" cy="42" r="2" fill="#22c55e" />
+                      {/* 4 Header Pins at Bottom: VCC(24,74), GND(38,74), SIG_A(52,74), SIG_B(66,74) */}
+                      {['VCC', 'GND', 'SIG_A', 'SIG_B'].map((p, idx) => (
+                        <g key={p} transform={`translate(${20 + idx * 14}, 70)`}>
+                          <rect x="0" y="0" width="8" height="8" rx="1" fill="#111827" />
+                          <circle cx="4" cy="4" r="2" fill="#ca8a04" />
+                        </g>
+                      ))}
+                      <text x="45" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                        OPTICAL ENCODER
+                      </text>
+                    </g>
+                  )}
+
+                  {/* 11. LOAD CELL & HX711 + DELICATE EGG GRIPPER */}
+                  {hx711Comp && (
+                    <g transform={`translate(${hx711X}, ${hx711Y})`} filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
+                      {/* Aluminum Shear Beam Load Cell */}
+                      <rect x="0" y="10" width="80" height="24" rx="2" fill="url(#silverMetalGrad)" stroke="#64748b" strokeWidth="1.5" />
+                      <circle cx="14" cy="22" r="4.5" fill="#334155" />
+                      <circle cx="66" cy="22" r="4.5" fill="#334155" />
+                      {/* Purple HX711 Breakout Board */}
+                      <rect x="90" y="4" width="46" height="66" rx="3" fill="#581c87" stroke="#7e22ce" strokeWidth="1.5" />
+                      <rect x="100" y="20" width="26" height="16" fill="#090d16" rx="1" />
+                      {/* HX711 4 Header Pins: VCC(97,70), GND(107,70), DT(117,70), SCK(127,70) */}
+                      {['VCC', 'GND', 'DT', 'SCK'].map((p, idx) => (
+                        <g key={p} transform={`translate(${93 + idx * 10}, 66)`}>
+                          <rect x="0" y="0" width="8" height="8" rx="1" fill="#111827" />
+                          <circle cx="4" cy="4" r="1.5" fill="#ca8a04" />
+                        </g>
+                      ))}
+                      {/* Gripper Jaws with Delicate Egg */}
+                      <g transform="translate(24, 42)">
+                        {/* Left Jaw */}
+                        <path d="M 0 0 L 10 20 L 6 24 Z" fill="#475569" />
+                        {/* Right Jaw */}
+                        <path d="M 32 0 L 22 20 L 26 24 Z" fill="#475569" />
+                        {/* Speckled Test Egg */}
+                        <ellipse cx="16" cy="18" rx="9" ry="12" fill="#fed7aa" stroke="#fb923c" strokeWidth="1" />
+                        <circle cx="14" cy="14" r="0.8" fill="#c2410c" />
+                        <circle cx="18" cy="19" r="0.8" fill="#c2410c" />
+                      </g>
+                      <text x="65" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                        HX711 & LOAD CELL
+                      </text>
+                    </g>
+                  )}
+
+                  {/* 12. HALL EFFECT SENSOR (A3144) */}
+                  {hallComp && (
+                    <g transform={`translate(${hallX}, ${hallY})`} filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
+                      <rect x="0" y="0" width="76" height="74" rx="4" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
+                      {/* TO-92 Transistor Package */}
+                      <path d="M 28 20 L 48 20 L 44 38 L 32 38 Z" fill="#030712" stroke="#475569" strokeWidth="1" />
+                      {/* Rotating Flywheel Disc with Neodymium Magnets */}
+                      <g transform="translate(38, 52)">
+                        <circle cx="0" cy="0" r="16" fill="#475569" />
+                        <rect x="-12" y="-3" width="8" height="6" fill="#dc2626" />
+                        <text x="-8" y="2" fill="#ffffff" fontSize="5" fontWeight="bold">N</text>
+                        <rect x="4" y="-3" width="8" height="6" fill="#2563eb" />
+                        <text x="8" y="2" fill="#ffffff" fontSize="5" fontWeight="bold">S</text>
+                      </g>
+                      {/* 3 Header Pins at Bottom: VCC(22,74), GND(36,74), OUT(50,74) */}
+                      {['VCC', 'GND', 'OUT'].map((p, idx) => (
+                        <g key={p} transform={`translate(${18 + idx * 14}, 70)`}>
+                          <rect x="0" y="0" width="8" height="8" rx="1" fill="#111827" />
+                          <circle cx="4" cy="4" r="2" fill="#ca8a04" />
+                        </g>
+                      ))}
+                      <text x="38" y="-4" fill="#ffffff" fontSize="8" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                        A3144 HALL SENSOR
+                      </text>
+                    </g>
+                  )}
+                </>
+              );
+            })()}
 
             {/* -------------------------------------------------------------- */}
             {/* JUMPER WIRES (LAYERED WITH DROP SHADOW & CURRENT PULSE) */}

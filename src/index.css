@@ -350,3 +350,24 @@ code::-webkit-scrollbar-thumb:hover,
     scroll-behavior: auto !important;
   }
 }
+
+/* Custom scrollbar utility for split view and studio modals */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(24, 24, 27, 0.4);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(82, 82, 91, 0.6);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(113, 113, 122, 0.85);
+}
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(82, 82, 91, 0.6) transparent;
+}

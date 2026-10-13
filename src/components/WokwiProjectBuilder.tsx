@@ -62,6 +62,8 @@ export interface WokwiProjectBuilderProps {
   currentWiringStep?: number;
   onWiringStepChange?: (step: number) => void;
   className?: string;
+  layout?: 'split' | 'stacked';
+  isMaximized?: boolean;
 }
 
 export type BuilderStage = 'bom_power' | 'wiring_sequencer' | 'netlist' | 'preflight';
@@ -72,6 +74,8 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
   currentWiringStep,
   onWiringStepChange,
   className = '',
+  layout = 'stacked',
+  isMaximized = false,
 }) => {
   // 1. Experiment Selection State
   const defaultExpId = 'exp_pir_servo_buzzer';
@@ -253,28 +257,32 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
       {/* =========================================================================
           TOP HEADER: Experiment Selector & Title
       ========================================================================= */}
-      <div className="bg-zinc-900/90 border-b border-zinc-800 p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-inner">
-            {renderExpIcon(activeExpId, 'w-6 h-6')}
+      <div
+        className={`bg-zinc-900/90 border-b border-zinc-800 p-3.5 sm:p-4 md:p-5 flex flex-col gap-3 backdrop-blur-md ${
+          layout === 'split' ? '' : 'md:flex-row md:items-center md:justify-between'
+        }`}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-inner shrink-0">
+            {renderExpIcon(activeExpId, 'w-5 h-5 sm:w-6 sm:h-6')}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-semibold uppercase tracking-wider text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/50">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] sm:text-xs font-mono font-semibold uppercase tracking-wider text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/50">
                 Wokwi Builder Lab
               </span>
-              <span className="text-xs text-zinc-400 font-mono">
+              <span className="text-[10px] sm:text-xs text-zinc-400 font-mono">
                 {activeGuide.wiringSequence.length} Wires • {activeGuide.bom.length} Parts
               </span>
             </div>
-            <h2 className="text-lg md:text-xl font-bold tracking-tight text-zinc-100 flex items-center gap-2 mt-0.5">
+            <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-zinc-100 truncate mt-0.5" title={activeGuide.title}>
               {activeGuide.title}
             </h2>
           </div>
         </div>
 
         {/* Experiment Selector Dropdown */}
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 shrink-0 ${layout === 'split' ? 'w-full justify-between' : ''}`}>
           <label className="text-xs text-zinc-400 font-medium whitespace-nowrap">Experiment:</label>
           <select
             value={activeExpId}
@@ -285,7 +293,7 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
               soundFX.playTap();
             }}
             aria-label="Select Robotics Experiment"
-            className="bg-zinc-800/90 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs rounded-lg px-3 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-colors cursor-pointer"
+            className="bg-zinc-800/90 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs rounded-lg px-2.5 py-1.5 font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-colors cursor-pointer max-w-[240px] truncate"
           >
             {ROBOTICS_EXPERIMENTS.map((exp) => (
               <option key={exp.id} value={exp.id}>
@@ -299,19 +307,23 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
       {/* =========================================================================
           STAGE NAVIGATION TABS (RESPONSIVE GRID)
       ========================================================================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 p-2 border-b border-zinc-800/80 bg-zinc-900/60 text-xs">
+      <div
+        className={`grid gap-1.5 p-2 border-b border-zinc-800/80 bg-zinc-900/60 text-xs ${
+          layout === 'split' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'
+        }`}
+      >
         <button
           onClick={() => {
             setActiveStage('bom_power');
             soundFX.playTap();
           }}
-          className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl font-medium transition-all ${
+          className={`flex items-center justify-between gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl font-medium transition-all ${
             activeStage === 'bom_power'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border border-transparent'
           }`}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <Package className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">1. BOM & Power</span>
           </div>
@@ -325,13 +337,13 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
             setActiveStage('wiring_sequencer');
             soundFX.playTap();
           }}
-          className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl font-medium transition-all ${
+          className={`flex items-center justify-between gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl font-medium transition-all ${
             activeStage === 'wiring_sequencer'
               ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border border-transparent'
           }`}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <Zap className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">2. Wiring Sequence</span>
           </div>
@@ -345,13 +357,13 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
             setActiveStage('netlist');
             soundFX.playTap();
           }}
-          className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl font-medium transition-all ${
+          className={`flex items-center justify-between gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl font-medium transition-all ${
             activeStage === 'netlist'
               ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border border-transparent'
           }`}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <ListTree className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">3. Netlist Table</span>
           </div>
@@ -365,13 +377,13 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
             setActiveStage('preflight');
             soundFX.playTap();
           }}
-          className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl font-medium transition-all ${
+          className={`flex items-center justify-between gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl font-medium transition-all ${
             activeStage === 'preflight'
               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border border-transparent'
           }`}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">4. Pre-Flight</span>
           </div>
@@ -390,7 +402,17 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
       {/* =========================================================================
           STAGE BODY
       ========================================================================= */}
-      <div className="p-4 md:p-6 overflow-y-auto max-h-[calc(100vh-250px)] space-y-6">
+      <div
+        className={`p-4 md:p-5 overflow-y-auto space-y-5 custom-scrollbar ${
+          layout === 'split'
+            ? isMaximized
+              ? 'flex-1 min-h-0 max-h-[calc(100vh-220px)]'
+              : 'max-h-[640px] xl:max-h-[680px]'
+            : isMaximized
+            ? 'max-h-[calc(100vh-230px)]'
+            : 'max-h-[calc(100vh-250px)]'
+        }`}
+      >
         {/* =====================================================================
             STAGE 1: BOM & POWER BUDGET
         ===================================================================== */}
@@ -412,7 +434,11 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
               </div>
 
               {/* Objectives List */}
-              <div className="mt-4 pt-4 border-t border-blue-900/30 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+              <div
+                className={`mt-4 pt-4 border-t border-blue-900/30 grid gap-2 text-xs ${
+                  layout === 'split' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'
+                }`}
+              >
                 {activeGuide.educationalObjectives.map((obj, i) => (
                   <div key={i} className="flex items-start gap-2 text-zinc-300">
                     <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 mt-0.5 shrink-0" />
@@ -599,7 +625,11 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div
+                className={`grid gap-3 ${
+                  layout === 'split' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'
+                }`}
+              >
                 {filteredBOM.map((comp: BOMComponent, idx: number) => (
                   <div
                     key={idx}
@@ -684,9 +714,9 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
         {activeStage === 'wiring_sequencer' && (
           <div className="space-y-6">
             {/* Progress Bar & Header Controls */}
-            <div className="bg-zinc-900/90 border border-zinc-800 rounded-xl p-4 md:p-5 space-y-4">
+            <div className="bg-zinc-900/90 border border-zinc-800 rounded-xl p-3.5 sm:p-4 md:p-5 space-y-3.5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800/80">
                       Wire {activeStep} of {totalWiringSteps}
@@ -695,26 +725,26 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
                       ({Math.round((activeStep / totalWiringSteps) * 100)}% Complete)
                     </span>
                   </div>
-                  <h3 className="text-base md:text-lg font-bold text-zinc-100 mt-1">
+                  <h3 className="text-sm sm:text-base md:text-lg font-bold text-zinc-100 mt-1 truncate" title={currentStepData?.title}>
                     {currentStepData?.title}
                   </h3>
                 </div>
 
                 {/* Interactive Controls */}
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="flex items-center gap-1.5 flex-wrap shrink-0">
                   <button
                     onClick={handlePrevWire}
                     disabled={activeStep <= 1}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:pointer-events-none text-zinc-200 text-xs font-medium border border-zinc-700 transition-colors"
+                    className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:pointer-events-none text-zinc-200 text-xs font-medium border border-zinc-700 transition-colors"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
-                    <span>Previous Wire</span>
+                    <span>Prev</span>
                   </button>
 
                   <button
                     onClick={handleNextWire}
                     disabled={activeStep >= totalWiringSteps}
-                    className="flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-semibold shadow-md transition-all"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-semibold shadow-md transition-all"
                   >
                     <span>Next Wire</span>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -726,7 +756,7 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
                     title="Skip to fully assembled circuit"
                   >
                     <FastForward className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Auto-Assemble All</span>
+                    <span className="hidden sm:inline">Auto-Assemble</span>
                   </button>
 
                   <button
@@ -741,7 +771,7 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
               </div>
 
               {/* Visual Percentage Progress Track */}
-              <div className="w-full h-2.5 bg-zinc-950 rounded-full border border-zinc-800 overflow-hidden">
+              <div className="w-full h-2 bg-zinc-950 rounded-full border border-zinc-800 overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-cyan-500 via-amber-500 to-emerald-400 rounded-full transition-all duration-300"
                   style={{ width: `${(activeStep / totalWiringSteps) * 100}%` }}
@@ -749,7 +779,7 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
               </div>
 
               {/* Scrollable Step Indicator Pills */}
-              <div className="flex gap-1.5 overflow-x-auto pb-1 pt-1">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 pt-1 custom-scrollbar">
                 {activeGuide.wiringSequence.map((step) => {
                   const isDone = step.stepNumber < activeStep;
                   const isCurrent = step.stepNumber === activeStep;
@@ -780,7 +810,7 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
 
             {/* Current Step Big Card */}
             {currentStepData && (
-              <div className="bg-zinc-900/95 border border-zinc-800 rounded-2xl p-6 space-y-6 shadow-xl relative overflow-hidden">
+              <div className="bg-zinc-900/95 border border-zinc-800 rounded-2xl p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5 shadow-xl relative overflow-hidden">
                 <div
                   className="absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl opacity-10 pointer-events-none"
                   style={{ backgroundColor: currentStepData.colorHex }}
@@ -808,39 +838,57 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
                 </div>
 
                 {/* FROM -> TO Big Connection Terminal Card */}
-                <div className="grid grid-cols-1 md:grid-cols-11 gap-3 items-center bg-zinc-950/80 border border-zinc-800 p-4 md:p-6 rounded-xl">
+                <div
+                  className={`grid gap-2.5 sm:gap-3 items-center bg-zinc-950/80 border border-zinc-800 p-3 sm:p-4 rounded-xl ${
+                    layout === 'split' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-11'
+                  }`}
+                >
                   {/* FROM Terminal */}
-                  <div className="md:col-span-5 bg-zinc-900 p-4 rounded-xl border border-zinc-800 space-y-1">
+                  <div
+                    className={`${
+                      layout === 'split' ? 'w-full' : 'md:col-span-5'
+                    } bg-zinc-900 p-3 sm:p-3.5 rounded-xl border border-zinc-800 space-y-1`}
+                  >
                     <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">
                       Connect Wire Lead 1 (FROM):
                     </span>
-                    <span className="text-base md:text-lg font-bold font-mono text-zinc-100 flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-                      {currentStepData.from}
+                    <span className="text-sm sm:text-base font-bold font-mono text-zinc-100 flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
+                      <span className="break-all">{currentStepData.from}</span>
                     </span>
                   </div>
 
                   {/* Flow Arrow */}
-                  <div className="md:col-span-1 flex justify-center py-2 md:py-0">
-                    <div className="p-2 rounded-full bg-zinc-800 text-cyan-400 border border-zinc-700">
-                      <ArrowRight className="w-5 h-5 rotate-90 md:rotate-0" />
+                  <div
+                    className={`${
+                      layout === 'split' ? 'w-full py-0.5' : 'md:col-span-1 py-2 md:py-0'
+                    } flex justify-center`}
+                  >
+                    <div className="p-1.5 rounded-full bg-zinc-800 text-cyan-400 border border-zinc-700">
+                      <ArrowRight
+                        className={`w-4 h-4 ${layout === 'split' ? 'rotate-90' : 'rotate-90 md:rotate-0'}`}
+                      />
                     </div>
                   </div>
 
                   {/* TO Terminal */}
-                  <div className="md:col-span-5 bg-zinc-900 p-4 rounded-xl border border-zinc-800 space-y-1">
+                  <div
+                    className={`${
+                      layout === 'split' ? 'w-full' : 'md:col-span-5'
+                    } bg-zinc-900 p-3 sm:p-3.5 rounded-xl border border-zinc-800 space-y-1`}
+                  >
                     <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">
                       Connect Wire Lead 2 (TO):
                     </span>
-                    <span className="text-base md:text-lg font-bold font-mono text-cyan-300 flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                      {currentStepData.to}
+                    <span className="text-sm sm:text-base font-bold font-mono text-cyan-300 flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                      <span className="break-all">{currentStepData.to}</span>
                     </span>
                   </div>
                 </div>
 
                 {/* Step Action Description */}
-                <div className="text-sm md:text-base text-zinc-200 leading-relaxed font-sans">
+                <div className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-sans">
                   {currentStepData.description}
                 </div>
 
@@ -1119,7 +1167,11 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
                     </div>
 
                     {/* Danger vs Verified Explanation */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-sans pl-8">
+                    <div
+                      className={`grid gap-2 text-xs font-sans ${
+                        layout === 'split' ? 'grid-cols-1 pl-0 sm:pl-8' : 'grid-cols-1 md:grid-cols-2 pl-8'
+                      }`}
+                    >
                       <div className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-900/60 text-rose-300">
                         <span className="font-semibold text-rose-400 block mb-0.5">
                           Potential Damage If Skipped:
