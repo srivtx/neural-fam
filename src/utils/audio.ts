@@ -444,6 +444,38 @@ class SoundFX {
       // ignore
     }
   }
+
+  // Cosmic Ladder Scale Sonification: sweeps from deep macro acoustic drone (65Hz) to pure quantum chime (2080Hz)
+  public playCosmicLadderScale(scaleExponent: number) {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const clampedExp = Math.max(0, Math.min(9, scaleExponent));
+      // 0 -> 65Hz, 9 -> 2080Hz (spanning 5 octaves of physical scale)
+      const targetFreq = 65 * Math.pow(2, (clampedExp / 9) * 5);
+
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = clampedExp < 2 ? 'triangle' : clampedExp < 6 ? 'sine' : 'sine';
+      osc.frequency.setValueAtTime(targetFreq, now);
+
+      const vol = 0.04;
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.0005, now + 0.16);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.18);
+    } catch {
+      // ignore
+    }
+  }
 }
 
 export const soundFX = new SoundFX();

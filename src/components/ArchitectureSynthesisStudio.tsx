@@ -36,7 +36,9 @@ import {
   Eye,
   FileCode2,
   Flame,
+  Sparkles,
 } from 'lucide-react';
+import { ArchitecturePetriDish } from './ArchitecturePetriDish';
 import {
   Design,
   Workload,
@@ -79,7 +81,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
   // Studio Composer State
   const [design, setDesign] = useState<Design>(() => cloneDesign(PRESETS[1].design)); // Start with Llama 3 8B
   const [workload, setWorkload] = useState<Workload>(() => ({ ...DEFAULT_WORKLOAD, seqLen: 4096 }));
-  const [activeTab, setActiveTab] = useState<'blueprint' | 'tensor_flow' | 'economics' | 'roofline' | 'code' | 'params' | 'first_principles'>('blueprint');
+  const [activeTab, setActiveTab] = useState<'blueprint' | 'tensor_flow' | 'economics' | 'roofline' | 'code' | 'params' | 'first_principles' | 'petri_dish'>('blueprint');
   const [codeFramework, setCodeFramework] = useState<'pytorch' | 'jax' | 'hf' | 'mermaid' | 'tikz' | 'latex' | 'bibtex'>('pytorch');
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const [copiedShareLink, setCopiedShareLink] = useState<boolean>(false);
@@ -1156,6 +1158,7 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
                   { id: 'code', label: 'Multi-Framework Code', icon: FileCode2 },
                   { id: 'params', label: 'Parameter Matrix', icon: Layers },
                   { id: 'first_principles', label: 'First Principles & Invariants', icon: Flame },
+                  { id: 'petri_dish', label: 'Petri Dish (Invention Sandbox)', icon: Sparkles },
                 ].map((t) => {
                   const Icon = t.icon;
                   const isActive = activeTab === t.id;
@@ -1727,6 +1730,13 @@ export const ArchitectureSynthesisStudio: React.FC = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* TAB 7: The Architecture Invention Sandbox ("The Petri Dish") */}
+            {activeTab === 'petri_dish' && (
+              <div className="py-2 animate-fade-in">
+                <ArchitecturePetriDish />
               </div>
             )}
           </div>

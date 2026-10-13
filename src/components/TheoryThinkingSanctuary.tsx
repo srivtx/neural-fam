@@ -44,10 +44,11 @@ import {
   THOUGHT_EXPERIMENTS,
 } from '../data/epistemologyData';
 import { TheoryPhysicalSimCanvas } from './TheoryPhysicalSimCanvas';
+import { CosmicLadderScaleCanvas } from './CosmicLadderScaleCanvas';
 import { MathView } from './MathView';
 import { soundFX } from '../utils/audio';
 
-type ActiveSection = 'continuum' | 'patterns' | 'deconstructions' | 'gym' | 'gedanken';
+type ActiveSection = 'cosmic_ladder' | 'continuum' | 'patterns' | 'deconstructions' | 'gym' | 'gedanken';
 
 export const TheoryThinkingSanctuary: React.FC = () => {
   const [activeSection, setActiveSection] = useState<ActiveSection>('continuum');
@@ -145,6 +146,17 @@ export const TheoryThinkingSanctuary: React.FC = () => {
           {/* Section Navigation Pills */}
           <div className="flex items-center gap-2 pt-2 overflow-x-auto no-scrollbar">
             <button
+              onClick={() => handleTabChange('cosmic_ladder')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
+                activeSection === 'cosmic_ladder'
+                  ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25 scale-[1.02]'
+                  : 'bg-white/5 hover:bg-white/10 text-ink-300 border border-white/5'
+              }`}
+            >
+              <Compass className="w-4 h-4" />
+              0. Cosmic Ladder of Scale (10⁰ → 10⁻⁹ m)
+            </button>
+            <button
               onClick={() => handleTabChange('continuum')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
                 activeSection === 'continuum'
@@ -203,8 +215,15 @@ export const TheoryThinkingSanctuary: React.FC = () => {
         </div>
       </div>
 
-      {/* Interactive Invariant Canvas */}
-      <TheoryPhysicalSimCanvas />
+      {/* SECTION 0: THE COSMIC LADDER OF SCALE */}
+      {activeSection === 'cosmic_ladder' && (
+        <div className="space-y-6 animate-fade-in">
+          <CosmicLadderScaleCanvas />
+        </div>
+      )}
+
+      {/* Interactive Invariant Canvas (Displayed on Continuum and other theory tabs) */}
+      {activeSection !== 'cosmic_ladder' && <TheoryPhysicalSimCanvas />}
 
       {/* SECTION 1: THE PHYSICAL CONTINUUM */}
       {activeSection === 'continuum' && (
@@ -764,7 +783,7 @@ export const TheoryThinkingSanctuary: React.FC = () => {
       {activeSection === 'gedanken' && (
         <div className="space-y-6 animate-fade-in">
           {/* Gedankenexperiment Selector */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
             {THOUGHT_EXPERIMENTS.map((exp, idx) => {
               const isSelected = exp.id === selectedGedankenId;
               return (
