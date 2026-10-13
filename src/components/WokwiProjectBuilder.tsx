@@ -87,18 +87,41 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
     return WOKWI_PROJECT_GUIDES[activeExpId] || WOKWI_PROJECT_GUIDES[defaultExpId];
   }, [activeExpId]);
 
-  // 2. Active Stage State
-  const [activeStage, setActiveStage] = useState<BuilderStage>('bom_power');
+  // 2. Active Stage State (Defaults to 'wiring_sequencer' in split or maximized view)
+  const [activeStage, setActiveStage] = useState<BuilderStage>(() =>
+    layout === 'split' || isMaximized ? 'wiring_sequencer' : 'bom_power'
+  );
+
+  const prevLayoutRef = React.useRef(layout);
+  const prevMaximizedRef = React.useRef(isMaximized);
+
+  useEffect(() => {
+    const enteredSplitOrMax =
+      (layout === 'split' && prevLayoutRef.current !== 'split') ||
+      (isMaximized && !prevMaximizedRef.current);
+    if (enteredSplitOrMax) {
+      setActiveStage('wiring_sequencer');
+    }
+    prevLayoutRef.current = layout;
+    prevMaximizedRef.current = isMaximized;
+  }, [layout, isMaximized]);
 
   // 3. Wire-by-Wire Assembly State
   const [internalWiringStep, setInternalWiringStep] = useState<number>(
     currentWiringStep !== undefined ? currentWiringStep : 1
   );
 
-  const activeStep = currentWiringStep !== undefined ? currentWiringStep : internalWiringStep;
+  // Normalize activeStep to totalWiringSteps when circuit is complete (-1)
+  const isCircuitComplete =
+    currentWiringStep === -1 || (currentWiringStep === undefined && internalWiringStep === -1);
   const totalWiringSteps = activeGuide.wiringSequence.length;
+  const activeStep = isCircuitComplete
+    ? totalWiringSteps
+    : currentWiringStep !== undefined
+      ? currentWiringStep
+      : internalWiringStep;
 
-  // Sync internal wiring step when experiment or prop changes
+  // Sync internal wiring step when experiment changes
   useEffect(() => {
     if (currentWiringStep === undefined) {
       setInternalWiringStep(1);
@@ -107,6 +130,12 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
   }, [activeExpId]);
 
   const handleSetWiringStep = (step: number) => {
+    if (step === -1) {
+      setInternalWiringStep(-1);
+      onWiringStepChange?.(-1);
+      soundFX.playMilestone?.();
+      return;
+    }
     const clamped = Math.max(1, Math.min(totalWiringSteps, step));
     setInternalWiringStep(clamped);
     onWiringStepChange?.(clamped);
@@ -114,19 +143,26 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
   };
 
   const handleNextWire = () => {
-    if (activeStep < totalWiringSteps) {
+    if (isCircuitComplete) return;
+    if (activeStep >= totalWiringSteps) {
+      // Complete circuit / Energize
+      handleSetWiringStep(-1);
+    } else {
       handleSetWiringStep(activeStep + 1);
     }
   };
 
   const handlePrevWire = () => {
-    if (activeStep > 1) {
+    if (isCircuitComplete) {
+      // When circuit complete: step back to Wire totalWiringSteps - 1
+      handleSetWiringStep(Math.max(1, totalWiringSteps - 1));
+    } else if (activeStep > 1) {
       handleSetWiringStep(activeStep - 1);
     }
   };
 
   const handleAutoAssembleAll = () => {
-    handleSetWiringStep(totalWiringSteps);
+    handleSetWiringStep(-1);
     soundFX.playSuccess();
   };
 
@@ -348,7 +384,7 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
             <span className="truncate">2. Wiring Sequence</span>
           </div>
           <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-400 border border-amber-800/60 shrink-0">
-            {activeStep}/{totalWiringSteps}
+            {isCircuitComplete ? `${totalWiringSteps}/${totalWiringSteps}` : `${activeStep}/${totalWiringSteps}`}
           </span>
         </button>
 
@@ -403,14 +439,14 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
           STAGE BODY
       ========================================================================= */}
       <div
-        className={`p-4 md:p-5 overflow-y-auto space-y-5 custom-scrollbar ${
+        className={`p-3.5 sm:p-4 md:p-5 space-y-5 custom-scrollbar ${
           layout === 'split'
             ? isMaximized
-              ? 'flex-1 min-h-0 max-h-[calc(100vh-220px)]'
-              : 'max-h-[640px] xl:max-h-[680px]'
+              ? 'flex-1 min-h-0 overflow-y-auto'
+              : 'max-h-[640px] lg:max-h-[680px] overflow-y-auto'
             : isMaximized
-            ? 'max-h-[calc(100vh-230px)]'
-            : 'max-h-[calc(100vh-250px)]'
+              ? 'max-h-[calc(100vh-230px)] overflow-y-auto'
+              : 'max-h-[calc(100vh-250px)] overflow-y-auto'
         }`}
       >
         {/* =====================================================================
@@ -717,78 +753,111 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
             <div className="bg-zinc-900/90 border border-zinc-800 rounded-xl p-3.5 sm:p-4 md:p-5 space-y-3.5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800/80">
-                      Wire {activeStep} of {totalWiringSteps}
-                    </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {isCircuitComplete ? (
+                      <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-300 bg-emerald-950/90 px-2.5 py-0.5 rounded-full border border-emerald-700/80 flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        All {totalWiringSteps} Wires Connected
+                      </span>
+                    ) : (
+                      <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800/80">
+                        Wire {activeStep} of {totalWiringSteps}
+                      </span>
+                    )}
                     <span className="text-xs text-zinc-400 font-mono">
-                      ({Math.round((activeStep / totalWiringSteps) * 100)}% Complete)
+                      ({isCircuitComplete ? 100 : Math.round((activeStep / totalWiringSteps) * 100)}% Complete)
                     </span>
                   </div>
-                  <h3 className="text-sm sm:text-base md:text-lg font-bold text-zinc-100 mt-1 truncate" title={currentStepData?.title}>
-                    {currentStepData?.title}
+                  <h3
+                    className="text-sm sm:text-base md:text-lg font-bold text-zinc-100 mt-1 truncate"
+                    title={isCircuitComplete ? 'Circuit Fully Assembled & Energized' : currentStepData?.title}
+                  >
+                    {isCircuitComplete ? 'Circuit Fully Assembled & Energized' : currentStepData?.title}
                   </h3>
                 </div>
 
                 {/* Interactive Controls */}
-                <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+                <div className="flex items-center gap-2 flex-wrap shrink-0">
                   <button
                     onClick={handlePrevWire}
-                    disabled={activeStep <= 1}
-                    className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:pointer-events-none text-zinc-200 text-xs font-medium border border-zinc-700 transition-colors"
+                    disabled={!isCircuitComplete && activeStep <= 1}
+                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:scale-95 disabled:opacity-40 disabled:pointer-events-none text-zinc-200 text-xs sm:text-sm font-semibold border border-zinc-700 shadow-sm transition-all cursor-pointer"
                   >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                    <span>Prev</span>
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Prev Wire</span>
                   </button>
 
-                  <button
-                    onClick={handleNextWire}
-                    disabled={activeStep >= totalWiringSteps}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-semibold shadow-md transition-all"
-                  >
-                    <span>Next Wire</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
+                  {isCircuitComplete ? (
+                    <button
+                      disabled
+                      className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-emerald-950/80 text-emerald-300 text-xs sm:text-sm font-bold border border-emerald-700/80 shadow-inner opacity-90 cursor-default"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span>Circuit Energized</span>
+                    </button>
+                  ) : activeStep >= totalWiringSteps ? (
+                    <button
+                      onClick={handleNextWire}
+                      className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs sm:text-sm font-bold shadow-lg shadow-emerald-900/60 border border-emerald-400/60 ring-2 ring-emerald-400/40 animate-pulse transition-all active:scale-95 cursor-pointer"
+                    >
+                      <Zap className="w-4 h-4 text-emerald-200" />
+                      <span>Finish Circuit (Energize)</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleNextWire}
+                      className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs sm:text-sm font-bold shadow-md shadow-cyan-950/50 transition-all active:scale-95 cursor-pointer"
+                    >
+                      <span>Next Wire</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  )}
 
                   <button
                     onClick={handleAutoAssembleAll}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-emerald-400 text-xs font-medium border border-zinc-700 transition-colors"
+                    disabled={isCircuitComplete}
+                    className="flex items-center gap-1 px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:pointer-events-none text-emerald-400 text-xs sm:text-sm font-medium border border-zinc-700 transition-colors cursor-pointer"
                     title="Skip to fully assembled circuit"
                   >
-                    <FastForward className="w-3.5 h-3.5" />
+                    <FastForward className="w-4 h-4" />
                     <span className="hidden sm:inline">Auto-Assemble</span>
                   </button>
 
                   <button
                     onClick={handleResetWiring}
-                    className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 border border-zinc-700 transition-colors"
+                    className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 border border-zinc-700 transition-colors cursor-pointer"
                     title="Reset to Step 1"
                     aria-label="Reset Wiring to Step 1"
                   >
-                    <RotateCcw className="w-3.5 h-3.5" />
+                    <RotateCcw className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
               {/* Visual Percentage Progress Track */}
-              <div className="w-full h-2 bg-zinc-950 rounded-full border border-zinc-800 overflow-hidden">
+              <div className="w-full h-2.5 bg-zinc-950 rounded-full border border-zinc-800 overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-cyan-500 via-amber-500 to-emerald-400 rounded-full transition-all duration-300"
-                  style={{ width: `${(activeStep / totalWiringSteps) * 100}%` }}
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    isCircuitComplete
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-400 w-full'
+                      : 'bg-gradient-to-r from-cyan-500 via-amber-500 to-emerald-400'
+                  }`}
+                  style={{ width: `${isCircuitComplete ? 100 : (activeStep / totalWiringSteps) * 100}%` }}
                 />
               </div>
 
               {/* Scrollable Step Indicator Pills */}
               <div className="flex gap-1.5 overflow-x-auto pb-1 pt-1 custom-scrollbar">
                 {activeGuide.wiringSequence.map((step) => {
-                  const isDone = step.stepNumber < activeStep;
-                  const isCurrent = step.stepNumber === activeStep;
+                  const isDone = isCircuitComplete || step.stepNumber < activeStep;
+                  const isCurrent = !isCircuitComplete && step.stepNumber === activeStep;
                   return (
                     <button
                       key={step.stepNumber}
                       onClick={() => handleSetWiringStep(step.stepNumber)}
                       title={`Wire ${step.stepNumber}: ${step.title}`}
-                      className={`h-7 px-2.5 rounded-md font-mono text-xs flex items-center gap-1.5 shrink-0 transition-all ${
+                      className={`h-7 px-2.5 rounded-md font-mono text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                         isCurrent
                           ? 'bg-amber-500 text-zinc-950 font-bold ring-2 ring-amber-400/50'
                           : isDone
@@ -805,8 +874,102 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
                     </button>
                   );
                 })}
+
+                {/* Complete Pill */}
+                <button
+                  onClick={() => handleSetWiringStep(-1)}
+                  title="Circuit Fully Assembled & Energized"
+                  className={`h-7 px-2.5 rounded-md font-mono text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                    isCircuitComplete
+                      ? 'bg-emerald-500 text-zinc-950 font-bold ring-2 ring-emerald-400/50'
+                      : 'bg-zinc-900/60 hover:bg-zinc-800 text-zinc-400 border border-zinc-800/80'
+                  }`}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Complete</span>
+                </button>
               </div>
             </div>
+
+            {/* Prominent Celebratory Card when Circuit is Complete */}
+            {isCircuitComplete && (
+              <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-emerald-950/90 via-teal-950/80 to-zinc-900 border-2 border-emerald-500/80 shadow-2xl space-y-4 relative overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-start sm:items-center gap-3.5">
+                    <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-inner shrink-0">
+                      <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-500 text-zinc-950 text-xs font-bold font-mono uppercase tracking-wider">
+                          All Systems Wired & Checked
+                        </span>
+                        <span className="text-xs text-emerald-400 font-mono font-semibold">
+                          100% Assembled
+                        </span>
+                      </div>
+                      <h3 className="text-base sm:text-lg md:text-xl font-bold text-white">
+                        Circuit Fully Assembled (All {totalWiringSteps} Wires Connected & Energized)
+                      </h3>
+                      <p className="text-xs sm:text-sm text-zinc-300 font-sans leading-relaxed">
+                        All point-to-point connections have been placed according to the electrical schematic. The circuit netlist is fully closed and ready for safety verification.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Progress bar at 100% */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex justify-between text-xs font-mono text-emerald-300">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Assembly Progress:</span>
+                    </span>
+                    <span className="font-bold">{totalWiringSteps} of {totalWiringSteps} Wires Placed (100%)</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-zinc-950 rounded-full border border-emerald-900/60 overflow-hidden">
+                    <div className="w-full h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full" />
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex flex-wrap items-center gap-2.5 pt-2">
+                  <button
+                    onClick={() => {
+                      setActiveStage('netlist');
+                      soundFX.playTap();
+                    }}
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs sm:text-sm font-semibold border border-purple-400/50 shadow-md shadow-purple-950/50 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <ListTree className="w-4 h-4 text-purple-200" />
+                    <span>Inspect Netlist Table</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActiveStage('preflight');
+                      soundFX.playTap();
+                    }}
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold border border-emerald-400/50 shadow-md shadow-emerald-950/50 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-emerald-200" />
+                    <span>Run Hardware Pre-Flight</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleSetWiringStep(1);
+                    }}
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs sm:text-sm font-medium border border-zinc-700 shadow-sm transition-all active:scale-95 cursor-pointer"
+                  >
+                    <RotateCcw className="w-4 h-4 text-cyan-400" />
+                    <span>Step-by-Step Replay (Wire 1)</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Current Step Big Card */}
             {currentStepData && (
@@ -818,6 +981,13 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
 
                 {/* Step Metadata Badges */}
                 <div className="flex flex-wrap items-center gap-2">
+                  {isCircuitComplete && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-700/80 text-emerald-300 text-xs font-mono font-bold">
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Final Wire #{currentStepData.stepNumber}</span>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/90 border border-zinc-700/80 text-xs font-mono">
                     <span
                       className="w-3.5 h-3.5 rounded-full border border-white/20 shadow-sm"
@@ -840,33 +1010,33 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
                 {/* FROM -> TO Big Connection Terminal Card */}
                 <div
                   className={`grid gap-2.5 sm:gap-3 items-center bg-zinc-950/80 border border-zinc-800 p-3 sm:p-4 rounded-xl ${
-                    layout === 'split' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-11'
+                    layout === 'split' ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-11'
                   }`}
                 >
                   {/* FROM Terminal */}
                   <div
                     className={`${
-                      layout === 'split' ? 'w-full' : 'md:col-span-5'
-                    } bg-zinc-900 p-3 sm:p-3.5 rounded-xl border border-zinc-800 space-y-1`}
+                      layout === 'split' ? 'w-full' : 'lg:col-span-5'
+                    } bg-zinc-900 p-3 sm:p-3.5 rounded-xl border border-zinc-800 space-y-1 min-w-0`}
                   >
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block truncate">
                       Connect Wire Lead 1 (FROM):
                     </span>
-                    <span className="text-sm sm:text-base font-bold font-mono text-zinc-100 flex items-center gap-2">
+                    <div className="text-xs sm:text-sm md:text-base font-bold font-mono text-zinc-100 flex items-center gap-2 min-w-0">
                       <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
-                      <span className="break-all">{currentStepData.from}</span>
-                    </span>
+                      <span className="break-words font-semibold text-zinc-100">{currentStepData.from}</span>
+                    </div>
                   </div>
 
                   {/* Flow Arrow */}
                   <div
                     className={`${
-                      layout === 'split' ? 'w-full py-0.5' : 'md:col-span-1 py-2 md:py-0'
-                    } flex justify-center`}
+                      layout === 'split' ? 'w-full py-0.5' : 'lg:col-span-1 py-1 lg:py-0'
+                    } flex justify-center shrink-0`}
                   >
-                    <div className="p-1.5 rounded-full bg-zinc-800 text-cyan-400 border border-zinc-700">
+                    <div className="p-1.5 rounded-full bg-zinc-800 text-cyan-400 border border-zinc-700 shadow-sm">
                       <ArrowRight
-                        className={`w-4 h-4 ${layout === 'split' ? 'rotate-90' : 'rotate-90 md:rotate-0'}`}
+                        className={`w-4 h-4 ${layout === 'split' ? 'rotate-90' : 'rotate-90 lg:rotate-0'}`}
                       />
                     </div>
                   </div>
@@ -874,16 +1044,16 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
                   {/* TO Terminal */}
                   <div
                     className={`${
-                      layout === 'split' ? 'w-full' : 'md:col-span-5'
-                    } bg-zinc-900 p-3 sm:p-3.5 rounded-xl border border-zinc-800 space-y-1`}
+                      layout === 'split' ? 'w-full' : 'lg:col-span-5'
+                    } bg-zinc-900 p-3 sm:p-3.5 rounded-xl border border-zinc-800 space-y-1 min-w-0`}
                   >
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block truncate">
                       Connect Wire Lead 2 (TO):
                     </span>
-                    <span className="text-sm sm:text-base font-bold font-mono text-cyan-300 flex items-center gap-2">
+                    <div className="text-xs sm:text-sm md:text-base font-bold font-mono text-cyan-300 flex items-center gap-2 min-w-0">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
-                      <span className="break-all">{currentStepData.to}</span>
-                    </span>
+                      <span className="break-words font-semibold text-cyan-300">{currentStepData.to}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -1199,10 +1369,14 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
       ========================================================================= */}
       <div className="bg-zinc-900/90 border-t border-zinc-800 p-3.5 px-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-400 font-mono">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className={`w-2 h-2 rounded-full ${isCircuitComplete ? 'bg-emerald-400 animate-pulse' : 'bg-cyan-400'}`} />
           <span>Experiment: {activeGuide.experimentId}</span>
           <span>•</span>
-          <span>{totalWiringSteps} Total Wire Steps</span>
+          <span>
+            {isCircuitComplete
+              ? `All ${totalWiringSteps} Wires Active (Circuit Energized)`
+              : `Wire ${activeStep} of ${totalWiringSteps}`}
+          </span>
         </div>
         <div className="flex items-center gap-3">
           <span>Wokwi Virtual Breadboard Sync Active</span>

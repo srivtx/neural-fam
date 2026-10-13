@@ -8,7 +8,7 @@
  * modules, cubic bezier jumper wires, active current flow glow pulses, and live stimuli.
  */
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, useId } from 'react';
 import {
   ZoomIn,
   ZoomOut,
@@ -52,6 +52,8 @@ export interface WokwiVirtualBreadboardProps {
   className?: string;
   interactive?: boolean;
   showControls?: boolean;
+  isMaximized?: boolean;
+  fitHeight?: boolean;
   onStimulusChange?: (stimulus: InteractiveStimulusState) => void;
 }
 
@@ -359,8 +361,19 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
   className = '',
   interactive = true,
   showControls = true,
+  isMaximized = false,
+  fitHeight = false,
   onStimulusChange,
 }) => {
+  // Unique sanitized ID prefix for SVG defs to avoid collisions across multiple instances
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
+
+  // Dedicated interactive stimulus controls state
+  const [frictionLoad, setFrictionLoad] = useState<boolean>(false);
+  const [targetRpm, setTargetRpm] = useState<number>(1850);
+  const [magnetDistanceMm, setMagnetDistanceMm] = useState<number>(10);
+  const [southPolePulse, setSouthPolePulse] = useState<boolean>(false);
+
   // Circuit configuration
   const circuit = useMemo(() => {
     return WOKWI_CIRCUITS[experimentId] || WOKWI_CIRCUITS['exp_pir_servo_buzzer'];
@@ -450,11 +463,11 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
       setStimulus((prev) => {
         let next = { ...prev };
 
-        // 1. PIR Simulation
+        // 1. PIR Simulation (Dynamic component coordinates)
         if (circuit.experimentId === 'exp_pir_servo_buzzer') {
-          // Distance between PIR and target hand
-          const pirX = 480;
-          const pirY = 110;
+          const pirComp = circuit.components.find((c) => c.type === 'pir_hc_sr501' || c.id.startsWith('pir'));
+          const pirX = pirComp?.x || 480;
+          const pirY = pirComp?.y || 110;
           const dist = Math.hypot(prev.targetPos.x - pirX, prev.targetPos.y - pirY);
           const triggered = dist < 160;
 
@@ -470,13 +483,14 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
           }
         }
 
-        // 2. Ultrasonic Sonar Simulation
+        // 2. Ultrasonic Sonar Simulation (Dynamic component coordinates)
         if (circuit.experimentId === 'exp_ultrasonic_radar') {
-          // Obstacle target distance
-          const sonarX = 540;
+          const sonarComp = circuit.components.find((c) => c.type === 'ultrasonic_hc_sr04' || c.id.startsWith('sonar'));
+          const sonarX = sonarComp?.x || 500;
+          const sonarY = sonarComp?.y || 110;
           const dist = Math.max(
             3,
-            Math.min(180, Math.hypot(prev.targetPos.x - sonarX, prev.targetPos.y - 110) * 0.35)
+            Math.min(180, Math.hypot(prev.targetPos.x - sonarX, prev.targetPos.y - sonarY) * 0.35)
           );
           next.distanceCm = parseFloat(dist.toFixed(1));
           next.obstacleDetected = dist < 20;
@@ -492,21 +506,24 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
 
         // 3. Dual IR Line Follower
         if (circuit.experimentId === 'exp_ir_line_follower') {
-          const offset = Math.sin(frame * 0.05) * 45;
-          next.lineTrackOffset = offset;
+          // Reflect line track offset with micro-surface vibration
+          const microJitter = Math.sin(frame * 0.15) * 0.2;
+          next.lineTrackOffset = parseFloat((prev.lineTrackOffset + microJitter * 0.02).toFixed(1));
         }
 
         // 4. MPU-6050 Balancing Robot
         if (circuit.experimentId === 'exp_mpu6050_balancing') {
-          const wobble = Math.sin(frame * 0.08) * 8.5;
-          next.imuPitch = parseFloat((wobble).toFixed(2));
-          next.imuRoll = parseFloat((Math.cos(frame * 0.06) * 4.2).toFixed(2));
+          // Micro gyro vibrations around user tilt angles
+          const gyroNoise = Math.sin(frame * 0.2) * 0.1;
+          next.imuPitch = parseFloat((prev.imuPitch + gyroNoise * 0.02).toFixed(2));
+          next.imuRoll = parseFloat((prev.imuRoll + Math.cos(frame * 0.15) * 0.02).toFixed(2));
         }
 
-        // 5. Dual LDR Solar Tracker
+        // 5. Dual LDR Solar Tracker (Dynamic component coordinates)
         if (circuit.experimentId === 'exp_ldr_solar_tracker') {
+          const ldrComp = circuit.components.find((c) => c.type === 'dual_ldr_tracker' || c.id.startsWith('ldr'));
+          const trackerX = ldrComp?.x || 520;
           const sunX = prev.sunPos.x;
-          const trackerX = 520;
           const deltaX = sunX - trackerX;
           const targetAngle = Math.max(15, Math.min(165, 90 + deltaX * 0.35));
           const angleDelta = (targetAngle - prev.servoAngle) * 0.08;
@@ -515,14 +532,19 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
 
         // 6. Optical Encoder PID Motor
         if (circuit.experimentId === 'exp_encoder_motor_pid') {
-          const jitter = (Math.random() - 0.5) * 20;
-          next.motorRpm = Math.round(1800 + jitter);
+          const effectiveTarget = frictionLoad ? Math.round(targetRpm * 0.65) : targetRpm;
+          const diff = effectiveTarget - prev.motorRpm;
+          const jitter = prev.motorRpm > 0 ? (Math.random() - 0.5) * (frictionLoad ? 35 : 12) : 0;
+          next.motorRpm = Math.max(0, Math.min(3000, Math.round(prev.motorRpm + diff * 0.12 + jitter)));
         }
 
         // 7. Hall Effect Tachometer
         if (circuit.experimentId === 'exp_hall_effect_tachometer') {
-          next.hallTriggered = frame % 12 < 3;
-          if (next.hallTriggered && frame % 12 === 0) {
+          const isClose = magnetDistanceMm <= 6;
+          const isPassing = southPolePulse || (magnetDistanceMm <= 16 && frame % 24 < 4);
+          const triggered = isClose || isPassing;
+          next.hallTriggered = triggered;
+          if (triggered && frame % 24 === 0) {
             playTone(850, 20);
           }
         }
@@ -542,7 +564,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [circuit.experimentId, playTone]);
+  }, [circuit.components, circuit.experimentId, frictionLoad, magnetDistanceMm, playTone, southPolePulse, targetRpm]);
 
   // Step change navigation
   const handleStepSelect = (step: number) => {
@@ -573,15 +595,21 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
     }
   };
 
-  // Pan handlers
-  const handleMouseDownSvg = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).tagName === 'svg' || (e.target as HTMLElement).id === 'workbench-bg') {
+  // Robust pointer events with pointer capture for slip-free canvas panning
+  const handlePointerDownSvg = (e: React.PointerEvent<SVGSVGElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'svg' || target.id === 'workbench-bg') {
       setIsPanning(true);
       panStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        // pointer capture fallback
+      }
     }
   };
 
-  const handleMouseMoveSvg = (e: React.MouseEvent) => {
+  const handlePointerMoveSvg = (e: React.PointerEvent<SVGSVGElement>) => {
     if (isPanning) {
       setPan({
         x: e.clientX - panStartRef.current.x,
@@ -609,8 +637,17 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
     }
   };
 
-  const handleMouseUpSvg = () => {
-    setIsPanning(false);
+  const handlePointerUpSvg = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (isPanning) {
+      setIsPanning(false);
+      try {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+      } catch {
+        // fallback
+      }
+    }
     setDraggingTarget(null);
   };
 
@@ -678,7 +715,11 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
   }, [circuit.experimentId, stimulus]);
 
   return (
-    <div className={`relative flex flex-col w-full rounded-3xl overflow-hidden bg-ink-950 border border-ink-800 shadow-2xl select-none ${className}`}>
+    <div
+      className={`relative ${
+        fitHeight || isMaximized ? 'h-full flex flex-col min-h-0' : 'flex flex-col'
+      } w-full rounded-3xl overflow-hidden bg-ink-950 border border-ink-800 shadow-2xl select-none ${className}`}
+    >
       {/* -------------------------------------------------------------------- */}
       {/* HEADER CONTROL BAR */}
       {/* -------------------------------------------------------------------- */}
@@ -760,13 +801,14 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
             <div className="flex flex-wrap items-center gap-1 bg-ink-950 p-1 rounded-xl border border-ink-800">
               <button
                 onClick={() => handleStepSelect(-1)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
                   activeWiringStep === -1
-                    ? 'bg-brand-500 text-white shadow-xs'
+                    ? 'bg-emerald-500 text-white shadow-xs'
                     : 'text-ink-400 hover:text-white'
                 }`}
               >
-                Complete Circuit
+                {activeWiringStep === -1 && <CheckCircle2 className="w-3.5 h-3.5" />}
+                <span>Complete Circuit</span>
               </button>
               {circuit.wiringSteps.map((step) => (
                 <button
@@ -800,7 +842,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
               onClick={handleNextStep}
               className="flex items-center gap-1 px-3 py-1 rounded-xl bg-brand-500 hover:bg-brand-400 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
             >
-              <span>{activeWiringStep === circuit.wiringSteps.length - 1 ? 'Finish' : 'Next Step'}</span>
+              <span>{activeWiringStep === -1 ? 'Step 1' : activeWiringStep === circuit.wiringSteps.length - 1 ? 'Finish' : 'Next Step'}</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -810,7 +852,23 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
       {/* -------------------------------------------------------------------- */}
       {/* ACTIVE STEP TIP CARD (FLOATING BANNER) */}
       {/* -------------------------------------------------------------------- */}
-      {activeStepDetails && (
+      {activeWiringStep === -1 ? (
+        <div className="mx-4 mt-3 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs z-10 animate-fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div>
+              <span className="font-bold text-white text-sm">Circuit Fully Wired & Operational</span>
+              <p className="text-emerald-300/80 text-xs font-mono">
+                All {circuit.wires.length} jumper connections active. 60 FPS real-time simulation running.
+              </p>
+            </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-ink-950/80 border border-emerald-500/20 text-[11px] font-mono text-emerald-300">
+            <Sparkles className="w-3 h-3 text-emerald-400" />
+            <span>Ready for Stimulus Testing</span>
+          </div>
+        </div>
+      ) : activeStepDetails ? (
         <div className="mx-4 mt-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-brand-500/10 to-transparent border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs z-10 animate-fade-in">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -832,32 +890,38 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
             </p>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* -------------------------------------------------------------------- */}
       {/* INTERACTIVE WORKBENCH SVG CANVAS */}
       {/* -------------------------------------------------------------------- */}
-      <div className="relative w-full h-[480px] sm:h-[580px] lg:h-[640px] overflow-hidden bg-[#0d1117] cursor-grab active:cursor-grabbing">
+      <div
+        className={`relative w-full ${
+          fitHeight || isMaximized
+            ? 'flex-1 min-h-[360px] h-full'
+            : 'h-[480px] sm:h-[580px] lg:h-[640px]'
+        } overflow-hidden bg-[#0d1117] cursor-grab active:cursor-grabbing touch-none`}
+      >
         <svg
           ref={svgRef}
           width="100%"
           height="100%"
-          className="w-full h-full block"
-          onMouseDown={handleMouseDownSvg}
-          onMouseMove={handleMouseMoveSvg}
-          onMouseUp={handleMouseUpSvg}
-          onMouseLeave={handleMouseUpSvg}
+          className="w-full h-full block touch-none"
+          onPointerDown={handlePointerDownSvg}
+          onPointerMove={handlePointerMoveSvg}
+          onPointerUp={handlePointerUpSvg}
+          onPointerCancel={handlePointerUpSvg}
         >
           {/* DEFINITIONS & FILTERS */}
           <defs>
             {/* ESD Mat Grid Pattern */}
-            <pattern id="workbenchGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <pattern id={`workbenchGrid_${uid}`} width="40" height="40" patternUnits="userSpaceOnUse">
               <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1f293d" strokeWidth="0.8" opacity="0.6" />
               <circle cx="20" cy="20" r="0.8" fill="#334155" opacity="0.4" />
             </pattern>
 
             {/* Neon Glow Filter for Active Current Pulsing Wires */}
-            <filter id="neonPulseGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <filter id={`neonPulseGlow_${uid}`} x="-30%" y="-30%" width="160%" height="160%">
               <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur1" />
               <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur2" />
               <feMerge>
@@ -868,54 +932,54 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
             </filter>
 
             {/* Wire Shadow Filter */}
-            <filter id="wireDropShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <filter id={`wireDropShadow_${uid}`} x="-20%" y="-20%" width="140%" height="140%">
               <feDropShadow dx="3" dy="4" stdDeviation="3.5" floodColor="#000000" floodOpacity="0.75" />
             </filter>
 
             {/* Arduino Uno PCB Gradient (Authentic Teal) */}
-            <linearGradient id="arduinoPcbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id={`arduinoPcbGrad_${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#00646e" />
               <stop offset="40%" stopColor="#005a63" />
               <stop offset="100%" stopColor="#00474e" />
             </linearGradient>
 
             {/* Metallic Silver Header Shield */}
-            <linearGradient id="silverMetalGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient id={`silverMetalGrad_${uid}`} x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#e2e8f0" />
               <stop offset="50%" stopColor="#94a3b8" />
               <stop offset="100%" stopColor="#cbd5e1" />
             </linearGradient>
 
             {/* Breadboard Off-White Body Gradient */}
-            <linearGradient id="breadboardBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient id={`breadboardBodyGrad_${uid}`} x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#f8fafc" />
               <stop offset="50%" stopColor="#f1f5f9" />
               <stop offset="100%" stopColor="#e2e8f0" />
             </linearGradient>
 
             {/* LCD Backlight Blue Glow */}
-            <radialGradient id="lcdBacklightGrad" cx="50%" cy="50%" r="60%">
+            <radialGradient id={`lcdBacklightGrad_${uid}`} cx="50%" cy="50%" r="60%">
               <stop offset="0%" stopColor="#1e40af" />
               <stop offset="70%" stopColor="#1d4ed8" />
               <stop offset="100%" stopColor="#172554" />
             </radialGradient>
 
             {/* Fresnel Dome Gradient (PIR) */}
-            <radialGradient id="fresnelDomeGrad" cx="40%" cy="35%" r="65%">
+            <radialGradient id={`fresnelDomeGrad_${uid}`} cx="40%" cy="35%" r="65%">
               <stop offset="0%" stopColor="#ffffff" />
               <stop offset="60%" stopColor="#e2e8f0" />
               <stop offset="100%" stopColor="#94a3b8" />
             </radialGradient>
 
             {/* Ultrasonic Aluminum Transducer Cans */}
-            <radialGradient id="sonarCanGrad" cx="35%" cy="35%" r="65%">
+            <radialGradient id={`sonarCanGrad_${uid}`} cx="35%" cy="35%" r="65%">
               <stop offset="0%" stopColor="#ffffff" />
               <stop offset="45%" stopColor="#cbd5e1" />
               <stop offset="100%" stopColor="#475569" />
             </radialGradient>
 
             {/* SG90 Servo Blue Plastic Shell */}
-            <linearGradient id="servoShellGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id={`servoShellGrad_${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.85" />
               <stop offset="100%" stopColor="#0284c7" stopOpacity="0.95" />
             </linearGradient>
@@ -928,7 +992,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
             y="0"
             width="100%"
             height="100%"
-            fill="url(#workbenchGrid)"
+            fill={`url(#workbenchGrid_${uid})`}
           />
 
           {/* MAIN TRANSFORM CONTAINER (ZOOM & PAN) */}
@@ -943,7 +1007,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
               {/* PCB Base Outline (Authentic Contour with USB notch) */}
               <path
                 d="M 12 0 L 328 0 A 12 12 0 0 1 340 12 L 340 228 A 12 12 0 0 1 328 240 L 12 240 A 12 12 0 0 1 0 228 L 0 12 A 12 12 0 0 1 12 0 Z"
-                fill="url(#arduinoPcbGrad)"
+                fill={`url(#arduinoPcbGrad_${uid})`}
                 stroke="#00878a"
                 strokeWidth="1.5"
               />
@@ -962,7 +1026,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
               ))}
 
               {/* USB-B Metal Socket */}
-              <rect x="-8" y="18" width="58" height="42" rx="4" fill="url(#silverMetalGrad)" stroke="#475569" strokeWidth="1.2" />
+              <rect x="-8" y="18" width="58" height="42" rx="4" fill={`url(#silverMetalGrad_${uid})`} stroke="#475569" strokeWidth="1.2" />
               <rect x="0" y="24" width="38" height="30" rx="2" fill="#0f172a" />
               <rect x="10" y="32" width="18" height="14" rx="1" fill="#0284c7" />
 
@@ -972,7 +1036,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
               <circle cx="18" cy="180" r="4.5" fill="#94a3b8" />
 
               {/* 16 MHz Quartz Crystal (HC-49 Silver Can) */}
-              <rect x="74" y="98" width="36" height="16" rx="8" fill="url(#silverMetalGrad)" stroke="#64748b" strokeWidth="1" />
+              <rect x="74" y="98" width="36" height="16" rx="8" fill={`url(#silverMetalGrad_${uid})`} stroke="#64748b" strokeWidth="1" />
               <text x="92" y="109" fill="#334155" fontSize="7" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
                 16.000
               </text>
@@ -1113,7 +1177,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                 width="480"
                 height="220"
                 rx="8"
-                fill="url(#breadboardBodyGrad)"
+                fill={`url(#breadboardBodyGrad_${uid})`}
                 stroke="#cbd5e1"
                 strokeWidth="1.5"
               />
@@ -1257,7 +1321,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                       {/* Green PCB Base */}
                       <rect x="0" y="0" width="60" height="74" rx="4" fill="#15803d" stroke="#166534" strokeWidth="1.5" />
                       {/* White Faceted Fresnel Dome */}
-                      <circle cx="30" cy="34" r="24" fill="url(#fresnelDomeGrad)" stroke="#cbd5e1" strokeWidth="1" />
+                      <circle cx="30" cy="34" r="24" fill={`url(#fresnelDomeGrad_${uid})`} stroke="#cbd5e1" strokeWidth="1" />
                       {/* Honeycomb Facet Grid Silhouette */}
                       <circle cx="30" cy="34" r="16" fill="none" stroke="#94a3b8" strokeWidth="0.8" strokeDasharray="3 2" />
                       <circle cx="30" cy="34" r="8" fill="none" stroke="#94a3b8" strokeWidth="0.8" />
@@ -1293,13 +1357,13 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                       {/* Blue PCB Breakout */}
                       <rect x="0" y="0" width="108" height="80" rx="4" fill="#1d4ed8" stroke="#1e40af" strokeWidth="1.5" />
                       {/* Left Transducer Can (T - Transmitter) */}
-                      <circle cx="30" cy="38" r="22" fill="url(#sonarCanGrad)" stroke="#64748b" strokeWidth="1.5" />
+                      <circle cx="30" cy="38" r="22" fill={`url(#sonarCanGrad_${uid})`} stroke="#64748b" strokeWidth="1.5" />
                       <circle cx="30" cy="38" r="14" fill="#1e293b" opacity="0.6" />
                       <text x="30" y="42" fill="#ffffff" fontSize="11" fontFamily="sans-serif" textAnchor="middle" fontWeight="900">
                         T
                       </text>
                       {/* Right Transducer Can (R - Receiver) */}
-                      <circle cx="78" cy="38" r="22" fill="url(#sonarCanGrad)" stroke="#64748b" strokeWidth="1.5" />
+                      <circle cx="78" cy="38" r="22" fill={`url(#sonarCanGrad_${uid})`} stroke="#64748b" strokeWidth="1.5" />
                       <circle cx="78" cy="38" r="14" fill="#1e293b" opacity="0.6" />
                       <text x="78" y="42" fill="#ffffff" fontSize="11" fontFamily="sans-serif" textAnchor="middle" fontWeight="900">
                         R
@@ -1338,7 +1402,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                   {servoComp && (
                     <g transform={`translate(${servoX}, ${servoY})`} filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
                       {/* Blue Translucent Plastic Casing */}
-                      <rect x="0" y="0" width="80" height="74" rx="4" fill="url(#servoShellGrad)" stroke="#0284c7" strokeWidth="1.5" />
+                      <rect x="0" y="0" width="80" height="74" rx="4" fill={`url(#servoShellGrad_${uid})`} stroke="#0284c7" strokeWidth="1.5" />
                       {/* Mounting Flanges */}
                       <rect x="-14" y="24" width="14" height="24" fill="#0284c7" />
                       <circle cx="-7" cy="36" r="3" fill="#ca8a04" />
@@ -1394,7 +1458,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                       {/* Golden Display Bezel Frame */}
                       <rect x="18" y="14" width="184" height="82" rx="2" fill="#020617" stroke="#334155" strokeWidth="1" />
                       {/* Active Blue Backlight Screen */}
-                      <rect x="24" y="20" width="172" height="70" rx="1" fill="url(#lcdBacklightGrad)" />
+                      <rect x="24" y="20" width="172" height="70" rx="1" fill={`url(#lcdBacklightGrad_${uid})`} />
                       {/* Live Dot-Matrix Character Display Rows */}
                       <g fontFamily="monospace" fontSize="11" fontWeight="bold" fill="#67e8f9">
                         <text x="32" y="46" letterSpacing="1">
@@ -1631,7 +1695,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                   {hx711Comp && (
                     <g transform={`translate(${hx711X}, ${hx711Y})`} filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))">
                       {/* Aluminum Shear Beam Load Cell */}
-                      <rect x="0" y="10" width="80" height="24" rx="2" fill="url(#silverMetalGrad)" stroke="#64748b" strokeWidth="1.5" />
+                      <rect x="0" y="10" width="80" height="24" rx="2" fill={`url(#silverMetalGrad_${uid})`} stroke="#64748b" strokeWidth="1.5" />
                       <circle cx="14" cy="22" r="4.5" fill="#334155" />
                       <circle cx="66" cy="22" r="4.5" fill="#334155" />
                       {/* Purple HX711 Breakout Board */}
@@ -1744,7 +1808,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                       stroke="#ffffff"
                       strokeWidth="3.8"
                       strokeDasharray="10 8"
-                      filter="url(#neonPulseGlow)"
+                      filter={`url(#neonPulseGlow_${uid})`}
                       className="animate-pulse"
                     >
                       <animate
@@ -1773,14 +1837,15 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
             {circuit.experimentId === 'exp_pir_servo_buzzer' && (
               <g
                 transform={`translate(${stimulus.targetPos.x}, ${stimulus.targetPos.y})`}
-                className="cursor-grab active:cursor-grabbing"
-                onMouseDown={(e) => {
+                className="cursor-grab active:cursor-grabbing touch-none"
+                onPointerDown={(e) => {
                   e.stopPropagation();
                   setDraggingTarget('stimulus_target');
+                  (e.currentTarget as any).setPointerCapture?.(e.pointerId);
                 }}
               >
                 {/* Thermal Radiation Glow */}
-                <circle cx="0" cy="0" r="38" fill="#f97316" opacity="0.25" filter="url(#neonPulseGlow)" />
+                <circle cx="0" cy="0" r="38" fill="#f97316" opacity="0.25" filter={`url(#neonPulseGlow_${uid})`} />
                 <circle cx="0" cy="0" r="22" fill="#ea580c" opacity="0.8" stroke="#fdba74" strokeWidth="2" />
                 <Flame className="w-6 h-6 -translate-x-3 -translate-y-3 text-white pointer-events-none" />
                 <rect x="-40" y="26" width="80" height="18" rx="4" fill="#0f172a" opacity="0.85" />
@@ -1794,10 +1859,11 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
             {circuit.experimentId === 'exp_ultrasonic_radar' && (
               <g
                 transform={`translate(${stimulus.targetPos.x}, ${stimulus.targetPos.y})`}
-                className="cursor-grab active:cursor-grabbing"
-                onMouseDown={(e) => {
+                className="cursor-grab active:cursor-grabbing touch-none"
+                onPointerDown={(e) => {
                   e.stopPropagation();
                   setDraggingTarget('stimulus_target');
+                  (e.currentTarget as any).setPointerCapture?.(e.pointerId);
                 }}
               >
                 {/* Acoustic Target Echo Box */}
@@ -1816,14 +1882,15 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
             {circuit.experimentId === 'exp_ldr_solar_tracker' && (
               <g
                 transform={`translate(${stimulus.sunPos.x}, ${stimulus.sunPos.y})`}
-                className="cursor-grab active:cursor-grabbing"
-                onMouseDown={(e) => {
+                className="cursor-grab active:cursor-grabbing touch-none"
+                onPointerDown={(e) => {
                   e.stopPropagation();
                   setDraggingTarget('sun_target');
+                  (e.currentTarget as any).setPointerCapture?.(e.pointerId);
                 }}
               >
                 {/* Radiant Sun Corona */}
-                <circle cx="0" cy="0" r="32" fill="#facc15" opacity="0.3" filter="url(#neonPulseGlow)" />
+                <circle cx="0" cy="0" r="32" fill="#facc15" opacity="0.3" filter={`url(#neonPulseGlow_${uid})`} />
                 <circle cx="0" cy="0" r="18" fill="#eab308" stroke="#fef08a" strokeWidth="2" />
                 <Sun className="w-6 h-6 -translate-x-3 -translate-y-3 text-white pointer-events-none" />
                 <rect x="-35" y="24" width="70" height="18" rx="4" fill="#0f172a" opacity="0.85" />
@@ -1838,9 +1905,9 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
         {/* BOTTOM HUD FLOATING SLIDERS FOR DIRECT CONTROL */}
         {interactive && (
           <div className="absolute bottom-3 left-4 right-4 flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-ink-950/85 backdrop-blur-md border border-ink-800 text-xs font-mono z-20">
-            {/* PIR Sensitivity / Target Distance */}
+            {/* 1. PIR Sensitivity / Target Distance + Motion Pulse */}
             {circuit.experimentId === 'exp_pir_servo_buzzer' && (
-              <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                 <span className="text-ink-400 font-bold shrink-0">PIR Proximity:</span>
                 <input
                   type="range"
@@ -1855,38 +1922,171 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                   }
                   className="w-32 accent-brand-500 cursor-pointer"
                 />
-                <span className={`font-bold ${stimulus.isPIRTriggered ? 'text-emerald-400' : 'text-ink-400'}`}>
+                <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                  stimulus.isPIRTriggered ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-ink-800 text-ink-400'
+                }`}>
                   {stimulus.isPIRTriggered ? 'IN SENSING CONE' : 'OUT OF RANGE'}
                 </span>
+                <button
+                  onClick={() => {
+                    const pirComp = circuit.components.find((c) => c.type === 'pir_hc_sr501' || c.id.startsWith('pir'));
+                    const pirX = pirComp?.x || 480;
+                    const pirY = pirComp?.y || 110;
+                    setStimulus((prev) => ({
+                      ...prev,
+                      targetPos: { x: pirX + 35, y: pirY + 20 },
+                      isPIRTriggered: true,
+                    }));
+                    playTone(1800, 100);
+                  }}
+                  className="px-2.5 py-1 rounded-xl bg-ink-800 hover:bg-ink-700 text-ink-200 text-xs font-bold transition-colors cursor-pointer border border-ink-700"
+                >
+                  Simulate Motion Pulse
+                </button>
               </div>
             )}
 
-            {/* Ultrasonic Distance Slider */}
+            {/* 2. Ultrasonic Distance Slider */}
             {circuit.experimentId === 'exp_ultrasonic_radar' && (
-              <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                 <span className="text-ink-400 font-bold shrink-0">Sonar Distance:</span>
                 <input
                   type="range"
                   min="4"
                   max="150"
                   value={stimulus.distanceCm}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const sonarComp = circuit.components.find((c) => c.type === 'ultrasonic_hc_sr04' || c.id.startsWith('sonar'));
+                    const sonarX = sonarComp?.x || 500;
+                    const d = parseFloat(e.target.value);
                     setStimulus((prev) => ({
                       ...prev,
-                      distanceCm: parseFloat(e.target.value),
-                    }))
-                  }
+                      distanceCm: d,
+                      targetPos: { x: sonarX + d / 0.35, y: 110 },
+                    }));
+                  }}
                   className="w-36 accent-brand-500 cursor-pointer"
                 />
                 <span className="text-brand-300 font-bold font-mono">
                   {stimulus.distanceCm.toFixed(1)} cm
                 </span>
+                {stimulus.distanceCm < 20 && (
+                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
+                    OBSTACLE NEAR
+                  </span>
+                )}
               </div>
             )}
 
-            {/* Solar Sun Azimuth Slider */}
+            {/* 3. Dual IR Line Follower Track Offset Slider + Center Line */}
+            {circuit.experimentId === 'exp_ir_line_follower' && (
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <span className="text-ink-400 font-bold shrink-0">Track Offset:</span>
+                <input
+                  type="range"
+                  min="-45"
+                  max="45"
+                  step="1"
+                  value={stimulus.lineTrackOffset}
+                  onChange={(e) =>
+                    setStimulus((prev) => ({
+                      ...prev,
+                      lineTrackOffset: parseFloat(e.target.value),
+                    }))
+                  }
+                  className="w-36 accent-brand-500 cursor-pointer"
+                />
+                <span className="text-brand-300 font-mono font-bold">
+                  {stimulus.lineTrackOffset > 0 ? `+${stimulus.lineTrackOffset}` : stimulus.lineTrackOffset} px
+                </span>
+                <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                  stimulus.lineTrackOffset < -5
+                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                    : stimulus.lineTrackOffset > 5
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                }`}>
+                  {stimulus.lineTrackOffset < -5
+                    ? 'LEFT TAPE REFLECTION'
+                    : stimulus.lineTrackOffset > 5
+                    ? 'RIGHT TAPE REFLECTION'
+                    : 'LINE CENTERED'}
+                </span>
+                <button
+                  onClick={() =>
+                    setStimulus((prev) => ({
+                      ...prev,
+                      lineTrackOffset: 0,
+                    }))
+                  }
+                  className="px-2.5 py-1 rounded-xl bg-ink-800 hover:bg-ink-700 text-ink-200 text-xs font-bold transition-colors cursor-pointer border border-ink-700"
+                >
+                  Center Line
+                </button>
+              </div>
+            )}
+
+            {/* 4. MPU-6050 Pitch & Roll Sliders + Level Robot */}
+            {circuit.experimentId === 'exp_mpu6050_balancing' && (
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <div className="flex items-center gap-2">
+                  <span className="text-ink-400 font-bold shrink-0">Pitch:</span>
+                  <input
+                    type="range"
+                    min="-35"
+                    max="35"
+                    step="0.5"
+                    value={stimulus.imuPitch}
+                    onChange={(e) =>
+                      setStimulus((prev) => ({
+                        ...prev,
+                        imuPitch: parseFloat(e.target.value),
+                      }))
+                    }
+                    className="w-24 accent-brand-500 cursor-pointer"
+                  />
+                  <span className="text-brand-300 font-mono font-bold">
+                    {stimulus.imuPitch > 0 ? `+${stimulus.imuPitch.toFixed(1)}` : stimulus.imuPitch.toFixed(1)}°
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-ink-400 font-bold shrink-0">Roll:</span>
+                  <input
+                    type="range"
+                    min="-25"
+                    max="25"
+                    step="0.5"
+                    value={stimulus.imuRoll}
+                    onChange={(e) =>
+                      setStimulus((prev) => ({
+                        ...prev,
+                        imuRoll: parseFloat(e.target.value),
+                      }))
+                    }
+                    className="w-24 accent-cyan-500 cursor-pointer"
+                  />
+                  <span className="text-cyan-300 font-mono font-bold">
+                    {stimulus.imuRoll > 0 ? `+${stimulus.imuRoll.toFixed(1)}` : stimulus.imuRoll.toFixed(1)}°
+                  </span>
+                </div>
+                <button
+                  onClick={() =>
+                    setStimulus((prev) => ({
+                      ...prev,
+                      imuPitch: 0,
+                      imuRoll: 0,
+                    }))
+                  }
+                  className="px-2.5 py-1 rounded-xl bg-ink-800 hover:bg-ink-700 text-ink-200 text-xs font-bold transition-colors cursor-pointer border border-ink-700"
+                >
+                  Level Robot
+                </button>
+              </div>
+            )}
+
+            {/* 5. Solar Sun Azimuth Slider + Align Sun */}
             {circuit.experimentId === 'exp_ldr_solar_tracker' && (
-              <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                 <span className="text-ink-400 font-bold shrink-0">Sun Azimuth:</span>
                 <input
                   type="range"
@@ -1902,35 +2102,96 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                   className="w-36 accent-amber-500 cursor-pointer"
                 />
                 <span className="text-amber-400 font-bold">Heliostat: {stimulus.servoAngle}°</span>
+                <button
+                  onClick={() => {
+                    const ldrComp = circuit.components.find((c) => c.type === 'dual_ldr_tracker' || c.id.startsWith('ldr'));
+                    const trackerX = ldrComp?.x || 520;
+                    setStimulus((prev) => ({
+                      ...prev,
+                      sunPos: { ...prev.sunPos, x: trackerX },
+                    }));
+                  }}
+                  className="px-2.5 py-1 rounded-xl bg-ink-800 hover:bg-ink-700 text-ink-200 text-xs font-bold transition-colors cursor-pointer border border-ink-700"
+                >
+                  Align Sun
+                </button>
               </div>
             )}
 
-            {/* Motor RPM Slider */}
+            {/* 6. Motor RPM Slider + Friction Load Toggle */}
             {circuit.experimentId === 'exp_encoder_motor_pid' && (
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <span className="text-ink-400 font-bold shrink-0">Motor RPM:</span>
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <span className="text-ink-400 font-bold shrink-0">Motor Speed:</span>
                 <input
                   type="range"
                   min="0"
                   max="3000"
                   step="50"
-                  value={stimulus.motorRpm}
-                  onChange={(e) =>
+                  value={targetRpm}
+                  onChange={(e) => {
+                    const rpm = parseInt(e.target.value, 10);
+                    setTargetRpm(rpm);
                     setStimulus((prev) => ({
                       ...prev,
-                      motorRpm: parseInt(e.target.value, 10),
-                    }))
-                  }
+                      motorRpm: frictionLoad ? Math.round(rpm * 0.65) : rpm,
+                    }));
+                  }}
                   className="w-32 accent-brand-500 cursor-pointer"
                 />
-                <span className="text-brand-300 font-bold">{stimulus.motorRpm} RPM</span>
+                <span className="text-brand-300 font-bold font-mono">{stimulus.motorRpm} RPM</span>
+                <button
+                  onClick={() => setFrictionLoad((prev) => !prev)}
+                  className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-colors cursor-pointer border ${
+                    frictionLoad
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs'
+                      : 'bg-ink-800 hover:bg-ink-700 text-ink-300 border-ink-700'
+                  }`}
+                >
+                  {frictionLoad ? 'Friction Load: ON' : 'Friction Load: OFF'}
+                </button>
               </div>
             )}
 
-            {/* Load Cell Grip Force & Tare */}
+            {/* 7. Hall Effect Magnet Proximity + South Pole Pass Pulse */}
+            {circuit.experimentId === 'exp_hall_effect_tachometer' && (
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <span className="text-ink-400 font-bold shrink-0">Magnet Proximity:</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="25"
+                  step="1"
+                  value={magnetDistanceMm}
+                  onChange={(e) => setMagnetDistanceMm(parseInt(e.target.value, 10))}
+                  className="w-28 accent-purple-500 cursor-pointer"
+                />
+                <span className="text-purple-300 font-mono font-bold">{magnetDistanceMm} mm</span>
+                <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                  stimulus.hallTriggered
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    : 'bg-ink-800 text-ink-400'
+                }`}>
+                  {stimulus.hallTriggered ? 'MAGNET DETECTED' : 'IDLE HIGH'}
+                </span>
+                <button
+                  onClick={() => {
+                    setSouthPolePulse(true);
+                    playTone(950, 40);
+                    setTimeout(() => {
+                      setSouthPolePulse(false);
+                    }, 400);
+                  }}
+                  className="px-2.5 py-1 rounded-xl bg-ink-800 hover:bg-ink-700 text-ink-200 text-xs font-bold transition-colors cursor-pointer border border-ink-700"
+                >
+                  South Pole Pass
+                </button>
+              </div>
+            )}
+
+            {/* 8. Load Cell Gripper Force & Tare Scale */}
             {circuit.experimentId === 'exp_loadcell_smart_gripper' && (
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <span className="text-ink-400 font-bold shrink-0">Egg Load:</span>
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <span className="text-ink-400 font-bold shrink-0">Gripper Force:</span>
                 <input
                   type="range"
                   min="0"
@@ -1945,8 +2206,15 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                   }
                   className="w-28 accent-emerald-500 cursor-pointer"
                 />
-                <span className={`font-bold ${stimulus.eggPressure > 80 ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
+                <span className={`font-bold font-mono ${stimulus.eggPressure > 80 ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
                   {stimulus.eggPressure.toFixed(1)} g
+                </span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                  stimulus.eggPressure > 80
+                    ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                    : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                }`}>
+                  {stimulus.eggPressure > 80 ? 'CRACK WARNING!' : 'EGG SAFE'}
                 </span>
                 <button
                   onClick={() =>
@@ -1956,7 +2224,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                       eggPressure: 0,
                     }))
                   }
-                  className="px-2 py-0.5 rounded bg-ink-800 hover:bg-ink-700 text-ink-200 text-[10px] font-bold border border-ink-700"
+                  className="px-2.5 py-1 rounded-xl bg-ink-800 hover:bg-ink-700 text-ink-200 text-xs font-bold border border-ink-700 transition-colors cursor-pointer"
                 >
                   Tare Scale
                 </button>
@@ -1966,7 +2234,11 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
             {/* Reset Stimulus Button */}
             <div className="flex items-center gap-2">
               <button
-                onClick={() =>
+                onClick={() => {
+                  setFrictionLoad(false);
+                  setTargetRpm(1850);
+                  setMagnetDistanceMm(10);
+                  setSouthPolePulse(false);
                   setStimulus({
                     targetPos: { x: 380, y: 80 },
                     servoAngle: 0,
@@ -1985,8 +2257,8 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
                     hallTriggered: true,
                     buzzerActive: false,
                     buzzerFreq: 1000,
-                  })
-                }
+                  });
+                }}
                 className="px-2.5 py-1 rounded-xl bg-ink-800/80 hover:bg-ink-700 text-ink-300 text-xs font-bold transition-colors cursor-pointer border border-ink-700"
               >
                 Reset Stimulus
