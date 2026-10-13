@@ -31,6 +31,7 @@ import {
   Info,
   CheckCircle2,
   ChevronRight,
+  ChevronLeft,
   ArrowRight,
   ExternalLink,
   Terminal,
@@ -86,6 +87,10 @@ export const RoboticsHardwareLabView: React.FC = () => {
     return ROBOTICS_EXPERIMENTS.find((e) => e.id === selectedExpId) || ROBOTICS_EXPERIMENTS[0];
   }, [selectedExpId]);
 
+  const currentExpIndex = useMemo(() => {
+    return ROBOTICS_EXPERIMENTS.findIndex((e) => e.id === selectedExpId);
+  }, [selectedExpId]);
+
   const filteredExperiments = useMemo(() => {
     if (selectedCategory === 'all') return ROBOTICS_EXPERIMENTS;
     return ROBOTICS_EXPERIMENTS.filter((e) => e.category === selectedCategory);
@@ -95,6 +100,18 @@ export const RoboticsHardwareLabView: React.FC = () => {
     setSelectedExpId(exp.id);
     setCurrentWiringStep(1);
     soundFX.playTap();
+  };
+
+  const handlePrevExperiment = () => {
+    if (currentExpIndex > 0) {
+      handleSelectExperiment(ROBOTICS_EXPERIMENTS[currentExpIndex - 1]);
+    }
+  };
+
+  const handleNextExperiment = () => {
+    if (currentExpIndex < ROBOTICS_EXPERIMENTS.length - 1) {
+      handleSelectExperiment(ROBOTICS_EXPERIMENTS[currentExpIndex + 1]);
+    }
   };
 
   const handleCopyCode = async () => {
@@ -226,66 +243,141 @@ export const RoboticsHardwareLabView: React.FC = () => {
 
       {/* Active Experiment Main Workbench */}
       <div className="space-y-6">
-        {/* Active Experiment Header Strip */}
-        <div className="bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-3xl p-6 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">
-                Experiment 0{activeExp.order} · {activeExp.categoryLabel}
+        {/* Active Experiment Command Deck */}
+        <div className="bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
+          {/* Top Metadata Row: Category & Badges on Left, Prev/Next Stepper on Right */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-200/60 dark:border-white/10 pb-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-brand-500/15 text-brand-600 dark:text-brand-400 border border-brand-500/25 uppercase tracking-wider flex items-center gap-1.5">
+                {renderIcon(activeExp.iconName, 'w-3.5 h-3.5')}
+                <span>Experiment 0{activeExp.order} · {activeExp.categoryLabel}</span>
               </span>
-              {activeFaultCount > 0 && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse">
-                  <AlertTriangle className="w-3 h-3" />
-                  {activeFaultCount} Fault{activeFaultCount > 1 ? 's' : ''} Active
+
+              {activeFaultCount > 0 ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-500 dark:text-rose-400 border border-rose-500/30 animate-pulse">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>{activeFaultCount} Physical Fault{activeFaultCount > 1 ? 's' : ''} Injected</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Hardware State: Nominal</span>
                 </span>
               )}
             </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-ink-900 dark:text-white flex items-center gap-2">
-              {renderIcon(activeExp.iconName, 'w-6 h-6 text-brand-500')}
+
+            {/* Experiment Stepper Quick Navigation */}
+            <div className="flex items-center gap-1.5 bg-ink-100 dark:bg-ink-950 p-1 rounded-xl border border-ink-200 dark:border-white/10">
+              <button
+                onClick={handlePrevExperiment}
+                disabled={currentExpIndex === 0}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-ink-700 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white hover:bg-ink-200/60 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                title="Previous Experiment"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Prev</span>
+              </button>
+              <span className="px-2 text-xs font-mono font-bold text-ink-400">
+                0{activeExp.order} / 08
+              </span>
+              <button
+                onClick={handleNextExperiment}
+                disabled={currentExpIndex === ROBOTICS_EXPERIMENTS.length - 1}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-ink-700 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white hover:bg-ink-200/60 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                title="Next Experiment"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Title & Physical Premise */}
+          <div className="space-y-1.5">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-ink-900 dark:text-white tracking-tight flex items-center gap-3">
+              <span className="p-2.5 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 shrink-0">
+                {renderIcon(activeExp.iconName, 'w-6 h-6')}
+              </span>
               <span>{activeExp.title}</span>
             </h2>
-            <p className="text-xs sm:text-sm text-ink-500 dark:text-ink-300">
+            <p className="text-xs sm:text-sm md:text-base text-ink-600 dark:text-ink-300 leading-relaxed max-w-4xl pt-0.5">
               {activeExp.subtitle}
             </p>
           </div>
 
-          {/* Primary Studio Mode Selector (Top Workbench Toolbar) */}
-          <div className="flex items-center gap-1.5 bg-ink-100 dark:bg-ink-950 p-1.5 rounded-2xl border border-ink-200 dark:border-white/10 shrink-0 overflow-x-auto no-scrollbar shadow-inner">
+          {/* Silicon & Physical Specs Chip Row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-ink-200/40 dark:border-white/5">
+            <div className="p-2.5 rounded-xl bg-ink-50 dark:bg-ink-950/70 border border-ink-200/60 dark:border-white/5 space-y-0.5">
+              <span className="text-[10px] font-mono text-ink-500 dark:text-ink-400 uppercase tracking-wider block">Target MCU</span>
+              <span className="text-xs font-bold text-ink-900 dark:text-white font-mono">ATmega328P (16 MHz)</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-ink-50 dark:bg-ink-950/70 border border-ink-200/60 dark:border-white/5 space-y-0.5">
+              <span className="text-[10px] font-mono text-ink-500 dark:text-ink-400 uppercase tracking-wider block">Bus Voltage</span>
+              <span className="text-xs font-bold text-ink-900 dark:text-white font-mono">5.0V DC (Vcc Rail)</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-ink-50 dark:bg-ink-950/70 border border-ink-200/60 dark:border-white/5 space-y-0.5">
+              <span className="text-[10px] font-mono text-ink-500 dark:text-ink-400 uppercase tracking-wider block">Architecture</span>
+              <span className="text-xs font-bold text-ink-900 dark:text-white truncate block" title={activeExp.firmwareArchitecture.architecturePattern}>
+                {activeExp.firmwareArchitecture.architecturePattern.split('(')[0].trim()}
+              </span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-ink-50 dark:bg-ink-950/70 border border-ink-200/60 dark:border-white/5 space-y-0.5">
+              <span className="text-[10px] font-mono text-ink-500 dark:text-ink-400 uppercase tracking-wider block">Hardware Timer</span>
+              <span className="text-xs font-bold text-ink-900 dark:text-white truncate block" title={activeExp.firmwareArchitecture.timerUsage}>
+                {activeExp.firmwareArchitecture.timerUsage.split(';')[0].trim()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Primary Studio Workbench Mode Command Deck (5 Distinct Studio Modes) */}
+        <div className="p-2.5 sm:p-3 rounded-3xl bg-surface dark:bg-ink-900 border border-ink-200 dark:border-white/10 shadow-sm space-y-2.5">
+          <div className="px-2 pt-1 pb-0.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-ink-500 dark:text-ink-400 flex items-center gap-1.5">
+              <Gauge className="w-3.5 h-3.5 text-brand-500" />
+              <span>Interactive Engineering Workbench Modes</span>
+            </span>
+            <span className="text-[10px] font-mono text-ink-400">
+              Select mode to inspect circuit, kinematics, waveforms, firmware, or traps
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
             {[
               {
                 id: 'breadboard_build' as StudioMode,
-                label: 'Virtual Breadboard & Build',
-                short: 'Breadboard',
-                icon: Layers,
+                title: 'Virtual Breadboard & Build',
                 tag: 'Wokwi Build',
+                desc: 'Wire-by-wire circuit sequencer & photorealistic Uno layout',
+                icon: Layers,
               },
               {
                 id: 'physics_sim' as StudioMode,
-                label: '60 FPS Physics & Kinematics',
-                short: 'Physics Sim',
-                icon: Zap,
+                title: '60 FPS Physics & Kinematics',
                 tag: 'Live 60 FPS',
+                desc: 'Real-time 60 FPS physics engine & DSO analog oscilloscope',
+                icon: Zap,
               },
               {
                 id: 'instrument_bench' as StudioMode,
-                label: 'Virtual Instrument Bench',
-                short: 'Instruments',
-                icon: Activity,
+                title: 'Virtual Instrument Bench',
                 tag: 'Logic / DSO',
+                desc: '4-channel digital logic analyzer, microsecond cursors & decoders',
+                icon: Activity,
               },
               {
                 id: 'firmware_studio' as StudioMode,
-                label: 'Production Firmware Studio',
-                short: 'Firmware C++',
+                title: 'Production Firmware Studio',
+                tag: 'Non-Blocking C++',
+                desc: 'Non-blocking C++ state machines, Timer 1 registers & ISRs',
                 icon: Code2,
-                tag: 'Non-Blocking',
               },
               {
                 id: 'faults_matrix' as StudioMode,
-                label: 'Hardware Traps & Fault Matrix',
-                short: 'Traps & Faults',
+                title: 'Hardware Traps & Fault Matrix',
+                tag: activeFaultCount > 0 ? `${activeFaultCount} Faults Active` : 'Fault Injection',
+                desc: 'Silicon stress matrix, ground bounce & pre-flight checklist',
                 icon: AlertTriangle,
-                tag: 'Fault Injection',
               },
             ].map((mode) => {
               const Icon = mode.icon;
@@ -297,25 +389,43 @@ export const RoboticsHardwareLabView: React.FC = () => {
                     setStudioMode(mode.id);
                     soundFX.playTap();
                   }}
-                  className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  className={`group relative p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between overflow-hidden ${
                     isActive
-                      ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25 scale-[1.02]'
-                      : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white hover:bg-ink-200/50 dark:hover:bg-white/5'
+                      ? 'bg-brand-500 text-white border-brand-400 shadow-md shadow-brand-500/25 ring-2 ring-brand-500/30 scale-[1.01]'
+                      : 'bg-ink-50/70 dark:bg-ink-950/60 border-ink-200/60 dark:border-white/5 text-ink-700 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800/60 hover:border-brand-500/40'
                   }`}
-                  title={mode.label}
                 >
-                  <Icon className="w-4 h-4 shrink-0" />
-                  <span className="hidden md:inline">{mode.label}</span>
-                  <span className="md:hidden">{mode.short}</span>
-                  <span
-                    className={`hidden xl:inline text-[9px] font-mono px-1.5 py-0.2 rounded-md ${
-                      isActive
-                        ? 'bg-black/20 text-white'
-                        : 'bg-ink-200 dark:bg-white/10 text-ink-500 dark:text-ink-400'
-                    }`}
-                  >
-                    {mode.tag}
-                  </span>
+                  <div className="flex items-center justify-between w-full mb-2">
+                    <div
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : 'bg-brand-500/10 text-brand-600 dark:text-brand-400 group-hover:bg-brand-500/20'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <span
+                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                        isActive
+                          ? 'bg-black/25 text-white'
+                          : mode.id === 'faults_matrix' && activeFaultCount > 0
+                          ? 'bg-rose-500/20 text-rose-500 border border-rose-500/30 animate-pulse'
+                          : 'bg-ink-200/80 dark:bg-white/10 text-ink-600 dark:text-ink-400'
+                      }`}
+                    >
+                      {mode.tag}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className={`text-xs sm:text-sm font-bold tracking-tight ${isActive ? 'text-white' : 'text-ink-900 dark:text-white'}`}>
+                      {mode.title}
+                    </h3>
+                    <p className={`text-[11px] leading-snug line-clamp-2 ${isActive ? 'text-white/80' : 'text-ink-500 dark:text-ink-400'}`}>
+                      {mode.desc}
+                    </p>
+                  </div>
                 </button>
               );
             })}

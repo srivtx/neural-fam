@@ -752,9 +752,9 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
       {/* -------------------------------------------------------------------- */}
       {showControls && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-2.5 bg-ink-900/60 border-b border-ink-800/80 text-xs font-mono z-10">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-ink-400 font-semibold">Wiring Mode:</span>
-            <div className="flex items-center gap-1 bg-ink-950 p-1 rounded-xl border border-ink-800">
+            <div className="flex flex-wrap items-center gap-1 bg-ink-950 p-1 rounded-xl border border-ink-800">
               <button
                 onClick={() => handleStepSelect(-1)}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
@@ -834,7 +834,7 @@ export const WokwiVirtualBreadboard: React.FC<WokwiVirtualBreadboardProps> = ({
       {/* -------------------------------------------------------------------- */}
       {/* INTERACTIVE WORKBENCH SVG CANVAS */}
       {/* -------------------------------------------------------------------- */}
-      <div className="relative w-full h-[580px] overflow-hidden bg-[#0d1117] cursor-grab active:cursor-grabbing">
+      <div className="relative w-full h-[480px] sm:h-[580px] lg:h-[640px] overflow-hidden bg-[#0d1117] cursor-grab active:cursor-grabbing">
         <svg
           ref={svgRef}
           width="100%"

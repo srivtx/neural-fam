@@ -297,22 +297,27 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
       </div>
 
       {/* =========================================================================
-          STAGE NAVIGATION TABS
+          STAGE NAVIGATION TABS (RESPONSIVE GRID)
       ========================================================================= */}
-      <div className="flex border-b border-zinc-800/80 bg-zinc-900/40 p-1.5 overflow-x-auto gap-1 text-xs">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 p-2 border-b border-zinc-800/80 bg-zinc-900/60 text-xs">
         <button
           onClick={() => {
             setActiveStage('bom_power');
             soundFX.playTap();
           }}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+          className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl font-medium transition-all ${
             activeStage === 'bom_power'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border border-transparent'
           }`}
         >
-          <Package className="w-3.5 h-3.5" />
-          <span>1. BOM & Power Budget</span>
+          <div className="flex items-center gap-2">
+            <Package className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">1. BOM & Power</span>
+          </div>
+          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-900 text-zinc-400 border border-zinc-800 shrink-0">
+            {activeGuide.bom.length}
+          </span>
         </button>
 
         <button
@@ -320,15 +325,17 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
             setActiveStage('wiring_sequencer');
             soundFX.playTap();
           }}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+          className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl font-medium transition-all ${
             activeStage === 'wiring_sequencer'
               ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border border-transparent'
           }`}
         >
-          <Zap className="w-3.5 h-3.5" />
-          <span>2. Wire-by-Wire Assembly</span>
-          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-400 border border-amber-800/60">
+          <div className="flex items-center gap-2">
+            <Zap className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">2. Wiring Sequence</span>
+          </div>
+          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-400 border border-amber-800/60 shrink-0">
             {activeStep}/{totalWiringSteps}
           </span>
         </button>
@@ -338,16 +345,18 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
             setActiveStage('netlist');
             soundFX.playTap();
           }}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+          className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl font-medium transition-all ${
             activeStage === 'netlist'
               ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border border-transparent'
           }`}
         >
-          <ListTree className="w-3.5 h-3.5" />
-          <span>3. Schematic Netlist</span>
-          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-purple-950/80 text-purple-400 border border-purple-800/60">
-            {activeGuide.netlist.length} Nets
+          <div className="flex items-center gap-2">
+            <ListTree className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">3. Netlist Table</span>
+          </div>
+          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-purple-950/80 text-purple-400 border border-purple-800/60 shrink-0">
+            {activeGuide.netlist.length}
           </span>
         </button>
 
@@ -356,21 +365,23 @@ export const WokwiProjectBuilder: React.FC<WokwiProjectBuilderProps> = ({
             setActiveStage('preflight');
             soundFX.playTap();
           }}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+          className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl font-medium transition-all ${
             activeStage === 'preflight'
               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border border-transparent'
           }`}
         >
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span>4. Pre-Flight Checklist</span>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">4. Pre-Flight</span>
+          </div>
           {allVerified ? (
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-950/90 text-emerald-400 border border-emerald-700 flex items-center gap-1">
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-950/90 text-emerald-400 border border-emerald-700 flex items-center gap-1 shrink-0">
               <Check className="w-2.5 h-2.5" /> All Go
             </span>
           ) : (
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300">
-              {verifiedCount}/{totalChecks}
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-900 text-zinc-400 border border-zinc-800 shrink-0">
+              {Object.keys(checkedItems).length}/{activeGuide.preFlightChecklist.length}
             </span>
           )}
         </button>
