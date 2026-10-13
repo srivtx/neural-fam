@@ -24,6 +24,7 @@ import {
   Lightbulb,
   Atom,
   Bot,
+  GitFork,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useLearningProgress, USER_PROFILE } from '../utils/progressStore';
@@ -84,7 +85,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 dark:bg-ink-950/95 backdrop-blur-md border-b border-ink-200 dark:border-white/10 transition-colors shadow-2xs">
+    <header className="fixed top-0 left-0 right-0 z-40 w-full bg-white/95 dark:bg-ink-950/95 backdrop-blur-md border-b border-ink-200 dark:border-white/10 transition-colors shadow-2xs">
       <div className="max-w-7xl w-full mx-auto px-3 sm:px-4 lg:px-6 py-2 flex items-center justify-between gap-2 lg:gap-3 xl:gap-4 overflow-visible">
         {/* Zone 1: Brand wordmark & Quick Search */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
@@ -134,24 +135,26 @@ export const TopNav: React.FC<TopNavProps> = ({
           <button
             onClick={() => onSelectView('home')}
             title="Home Overview (Press 1)"
-            className={`px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-1 px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'home'
                 ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
-            Home
+            <Home className="w-3.5 h-3.5 text-brand-500" />
+            <span>Home</span>
           </button>
 
           <button
             onClick={() => onSelectView('atlas')}
             title="Tree Atlas: Evolutionary Lineage Graph (Press 2)"
-            className={`px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-1 px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'atlas'
                 ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
+            <GitFork className="w-3.5 h-3.5 text-fam-seq" />
             <span className="hidden 2xl:inline">Tree Atlas</span>
             <span className="2xl:hidden">Atlas</span>
           </button>
@@ -159,12 +162,13 @@ export const TopNav: React.FC<TopNavProps> = ({
           <button
             onClick={() => onSelectView('labs')}
             title="Project Labs: 9 Progressive Interactive Levels (Press 3)"
-            className={`px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-1 px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'labs'
                 ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
+            <Cpu className="w-3.5 h-3.5 text-fam-conv" />
             <span className="hidden 2xl:inline">Project Labs</span>
             <span className="2xl:hidden">Labs</span>
           </button>
@@ -172,12 +176,13 @@ export const TopNav: React.FC<TopNavProps> = ({
           <button
             onClick={() => onSelectView('taxonomy')}
             title="Taxonomy Matrix: 3-Question Selection Grid (Press 4)"
-            className={`px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-1 px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'taxonomy'
                 ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
+            <Sliders className="w-3.5 h-3.5 text-fam-attn" />
             <span className="hidden 2xl:inline">3-Question Matrix</span>
             <span className="2xl:hidden">Matrix</span>
           </button>
@@ -194,18 +199,19 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             <Compass className="w-3.5 h-3.5" />
             <span className="hidden 2xl:inline">Synthesis Studio</span>
-            <span className="hidden xl:inline 2xl:hidden">Synthesis</span>
+            <span className="2xl:hidden">Synthesis</span>
           </button>
 
           <button
             onClick={() => onSelectView('code')}
             title="Code Workshop: PyTorch & JAX Implementations (Press 6)"
-            className={`px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-1 px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeView === 'code'
                 ? 'bg-white dark:bg-ink-800 text-ink-900 dark:text-white font-bold shadow-xs'
                 : 'text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white'
             }`}
           >
+            <Code2 className="w-3.5 h-3.5 text-fam-graph" />
             <span className="hidden 2xl:inline">Code Workshop</span>
             <span className="2xl:hidden">Code</span>
           </button>
@@ -221,7 +227,7 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
             <span className="hidden 2xl:inline">Theory Thinking</span>
-            <span className="hidden xl:inline 2xl:hidden">Theory</span>
+            <span className="2xl:hidden">Theory</span>
           </button>
 
           <button
@@ -235,7 +241,7 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             <Network className="w-3.5 h-3.5 text-emerald-500" />
             <span className="hidden 2xl:inline">Question Graph</span>
-            <span className="hidden xl:inline 2xl:hidden">Q-Graph</span>
+            <span className="2xl:hidden">Q-Graph</span>
           </button>
 
           <button
@@ -249,7 +255,7 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             <Atom className="w-3.5 h-3.5 text-cyan-400" />
             <span className="hidden 2xl:inline">Reality Graph</span>
-            <span className="hidden xl:inline 2xl:hidden">Reality</span>
+            <span className="2xl:hidden">Reality</span>
           </button>
 
           <button
@@ -263,7 +269,7 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             <Bot className="w-3.5 h-3.5 text-indigo-400" />
             <span className="hidden 2xl:inline">Robotics Lab</span>
-            <span className="hidden xl:inline 2xl:hidden">Robotics</span>
+            <span className="2xl:hidden">Robotics</span>
           </button>
         </nav>
 
@@ -307,8 +313,8 @@ export const TopNav: React.FC<TopNavProps> = ({
           {/* Glossary Trigger */}
           <button
             onClick={onOpenGlossary}
-            title="Open Architectural Glossary"
-            className="hidden md:flex p-1.5 rounded-lg border border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors cursor-pointer shrink-0"
+            title="Open Architectural Glossary (?)"
+            className="hidden xl:flex p-1.5 rounded-lg border border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors cursor-pointer shrink-0"
           >
             <BookOpen className="w-4 h-4 text-amber-500" />
           </button>
@@ -329,7 +335,7 @@ export const TopNav: React.FC<TopNavProps> = ({
           <button
             onClick={onOpenShare}
             title="Share & Project Links"
-            className="p-1.5 rounded-lg border border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors cursor-pointer shrink-0"
+            className="hidden xl:flex p-1.5 rounded-lg border border-ink-200 dark:border-white/10 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors cursor-pointer shrink-0"
           >
             <Share2 className="w-4 h-4 text-ink-600 dark:text-ink-300" />
           </button>

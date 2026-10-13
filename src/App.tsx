@@ -141,24 +141,28 @@ export default function App() {
     <div className="min-h-screen w-full max-w-full overflow-x-clip bg-ink-50 dark:bg-ink-950 text-ink-800 dark:text-ink-100 flex flex-col font-sans transition-colors selection:bg-brand-500/20 selection:text-brand-800 dark:selection:text-brand-200">
       {/* Universal Top Bar - Can be toggled / hidden for desktop immersion */}
       {!isNavHidden && (
-        <TopNav
-          activeView={activeView}
-          onSelectView={(v) => {
-            setActiveView(v);
-            soundFX.playTap();
-          }}
-          activeLabId={activeLabId}
-          onSelectLab={handleOpenLab}
-          onOpenGlossary={() => setIsGlossaryOpen(true)}
-          onOpenShare={() => setIsShareOpen(true)}
-          onOpenBadges={() => setIsBadgesOpen(true)}
-          onOpenSearch={() => setIsSearchOpen(true)}
-          hideScrollbars={hideScrollbars}
-          onToggleHideScrollbars={handleToggleScrollbars}
-          onToggleHideNav={handleToggleHideNav}
-          isSoundMuted={isSoundMuted}
-          onToggleSound={handleToggleSound}
-        />
+        <>
+          <TopNav
+            activeView={activeView}
+            onSelectView={(v) => {
+              setActiveView(v);
+              soundFX.playTap();
+            }}
+            activeLabId={activeLabId}
+            onSelectLab={handleOpenLab}
+            onOpenGlossary={() => setIsGlossaryOpen(true)}
+            onOpenShare={() => setIsShareOpen(true)}
+            onOpenBadges={() => setIsBadgesOpen(true)}
+            onOpenSearch={() => setIsSearchOpen(true)}
+            hideScrollbars={hideScrollbars}
+            onToggleHideScrollbars={handleToggleScrollbars}
+            onToggleHideNav={handleToggleHideNav}
+            isSoundMuted={isSoundMuted}
+            onToggleSound={handleToggleSound}
+          />
+          {/* Fixed Nav Spacer: Reserves header space so page content is not occluded */}
+          <div className="h-[88px] lg:h-[54px] shrink-0 pointer-events-none" aria-hidden="true" />
+        </>
       )}
 
       {/* Floating Zen Mode Trigger when Nav is Hidden */}
