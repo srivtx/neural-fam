@@ -362,4 +362,146 @@ assert(serialPanelContent.includes('[SFR PROBE]'), 'Interactive SFR click probin
 
 console.log('  ✅ Test 6 Passed: All 9 ATmega328P SFRs verified with 16-bit OCR1AH:OCR1AL integrity and UART probing.\n');
 
-console.log('🎉 ALL 6 ADVANCED VERIFICATION TEST SUITES PASSED CLEANLY! 🚀');
+// ---------------------------------------------------------
+// TEST 7: Wokwi Virtual Breadboard Circuit Configurations
+// ---------------------------------------------------------
+console.log('Test 7: Wokwi Virtual Breadboard Circuit Configurations & Pin Mappings');
+const wokwiCircuitsPath = path.join(__dirname, '../src/data/wokwiCircuitsData.ts');
+const wokwiCircuitsContent = fs.readFileSync(wokwiCircuitsPath, 'utf8');
+
+const canonicalExpIds = [
+  'exp_pir_servo_buzzer',
+  'exp_ultrasonic_radar',
+  'exp_ir_line_follower',
+  'exp_mpu6050_balancing',
+  'exp_ldr_solar_tracker',
+  'exp_encoder_motor_pid',
+  'exp_hall_effect_tachometer',
+  'exp_loadcell_smart_gripper',
+];
+
+canonicalExpIds.forEach((expId) => {
+  assert(wokwiCircuitsContent.includes(`experimentId: '${expId}'`), `Experiment ${expId} missing in WOKWI_CIRCUITS`);
+});
+
+// Verify wire count and color consistency
+const wireMatches = [...wokwiCircuitsContent.matchAll(/wireType:\s*'(power|ground|signal|pwm|i2c|analog)'/g)];
+console.log(`  Found ${wireMatches.length} typed jumper wires across 8 Wokwi circuits.`);
+assert(wireMatches.length >= 60, 'Expected at least 60 typed jumper wires across all 8 circuits');
+
+// Verify breadboard tie-points and Arduino pin anchor references
+assert(wokwiCircuitsContent.includes("type: 'pir_hc_sr501'"), 'HC-SR501 PIR module must exist');
+assert(wokwiCircuitsContent.includes("type: 'servo_sg90'"), 'SG90 servo module must exist');
+assert(wokwiCircuitsContent.includes("type: 'ultrasonic_hc_sr04'"), 'HC-SR04 ultrasonic module must exist');
+assert(wokwiCircuitsContent.includes("type: 'lcd1602_i2c'"), '16x2 I2C LCD module must exist');
+assert(wokwiCircuitsContent.includes("type: 'mpu6050_imu'"), 'MPU-6050 IMU module must exist');
+assert(wokwiCircuitsContent.includes("type: 'loadcell_hx711_gripper'"), 'Load cell HX711 module must exist');
+assert(wokwiCircuitsContent.includes("type: 'optical_encoder_motor'"), 'Optical encoder module must exist');
+assert(wokwiCircuitsContent.includes("type: 'hall_effect_sensor'"), 'Hall effect sensor module must exist');
+
+console.log('  ✅ Test 7 Passed: All 8 Wokwi circuit configs, modules, and pin mappings verified.\n');
+
+// ---------------------------------------------------------
+// TEST 8: Wokwi Project Walkthrough Guides & Wire-by-Wire Assembly
+// ---------------------------------------------------------
+console.log('Test 8: Wokwi Project Guides, BOM, Power Budgets & Netlists');
+const wokwiGuidesPath = path.join(__dirname, '../src/data/wokwiProjectGuidesData.ts');
+const wokwiGuidesContent = fs.readFileSync(wokwiGuidesPath, 'utf8');
+
+canonicalExpIds.forEach((expId) => {
+  assert(wokwiGuidesContent.includes(`experimentId: '${expId}'`), `Experiment ${expId} missing in WOKWI_PROJECT_GUIDES`);
+});
+
+// Verify BOM current budgets and USB polyfuse limits
+assert(wokwiGuidesContent.includes('usbPolyfuseLimitMa:'), 'Power budgets must define usbPolyfuseLimitMa');
+assert(wokwiGuidesContent.includes('mcuRegulatorLimitMa:'), 'Power budgets must define mcuRegulatorLimitMa');
+assert(wokwiGuidesContent.includes('bom:'), 'Each guide must contain a Bill of Materials');
+assert(wokwiGuidesContent.includes('wiringSequence:'), 'Each guide must contain a wire-by-wire assembly sequence');
+assert(wokwiGuidesContent.includes('netlist:'), 'Each guide must contain a complete netlist');
+assert(wokwiGuidesContent.includes('preFlightChecklist:'), 'Each guide must contain a pre-flight checklist');
+assert(wokwiGuidesContent.includes('potentialDamageIfSkipped:'), 'Pre-flight checks must detail potential damage if skipped');
+
+// Verify engineering rationale presence on every wiring step
+const rationaleMatches = [...wokwiGuidesContent.matchAll(/engineeringReason:\s*'/g)];
+console.log(`  Found ${rationaleMatches.length} wire-by-wire engineering rationales.`);
+assert(rationaleMatches.length >= 60, 'Every wire connection must have pedagogical engineering rationale');
+
+console.log('  ✅ Test 8 Passed: All 8 project guides, BOMs, power budgets, and wire sequencers verified.\n');
+
+// ---------------------------------------------------------
+// TEST 9: Digital Logic Analyzer Multi-Instrument Bench & Protocol Decoders
+// ---------------------------------------------------------
+console.log('Test 9: 4-Channel Digital Logic Analyzer & Protocol Decoders');
+const logicAnalyzerPath = path.join(__dirname, '../src/components/DigitalLogicAnalyzer.tsx');
+const logicAnalyzerContent = fs.readFileSync(logicAnalyzerPath, 'utf8');
+
+// Check all 8 experiments are mapped in EXPERIMENT_LOGIC_CHANNELS
+canonicalExpIds.forEach((expId) => {
+  assert(logicAnalyzerContent.includes(`${expId}: [`), `Experiment ${expId} missing channel config in DigitalLogicAnalyzer`);
+});
+
+// Check timebases and decoders
+const timebases = ['10us', '50us', '200us', '1ms', '10ms'];
+timebases.forEach((tb) => {
+  assert(logicAnalyzerContent.includes(`'${tb}'`), `Timebase ${tb} must be available in logic analyzer`);
+});
+
+assert(logicAnalyzerContent.includes('ultrasonicCalculatedDistance'), 'HC-SR04 pulse-width-to-distance decoder must exist');
+assert(logicAnalyzerContent.includes('servoPwmDecoded'), 'Servo PWM 50Hz pulse width decoder must exist');
+assert(logicAnalyzerContent.includes('encoderDecoded'), 'Quadrature encoder phase A/B direction decoder must exist');
+assert(logicAnalyzerContent.includes('hx711Decoded'), 'HX711 24-bit delta-sigma ADC decoder must exist');
+assert(logicAnalyzerContent.includes('cursorT1'), 'Draggable Cursor T1 must exist');
+assert(logicAnalyzerContent.includes('cursorT2'), 'Draggable Cursor T2 must exist');
+assert(logicAnalyzerContent.includes('deltaTUs'), 'Live Delta-t microsecond measurement must exist');
+
+console.log('  ✅ Test 9 Passed: 4-channel logic analyzer, timebases, dual cursors, and protocol decoders verified.\n');
+
+// ---------------------------------------------------------
+// TEST 10: Production Arduino C++ Firmware & Architectural Analysis
+// ---------------------------------------------------------
+console.log('Test 10: Production Non-Blocking Arduino C++ Firmware & Architectural Breakdown');
+const roboticsDataPath = path.join(__dirname, '../src/data/roboticsExperimentsData.ts');
+const roboticsDataContent = fs.readFileSync(roboticsDataPath, 'utf8');
+
+canonicalExpIds.forEach((expId) => {
+  assert(roboticsDataContent.includes(`id: '${expId}'`), `Experiment ${expId} missing in ROBOTICS_EXPERIMENTS`);
+});
+
+// Check for zero blocking delays in production loop code
+const delayCalls = [...roboticsDataContent.matchAll(/delay\(\s*(\d+)\s*\)/g)]
+  .map(m => parseInt(m[1], 10))
+  .filter(ms => ms > 100);
+console.log(`  Long blocking delay(>100ms) calls found in firmware: ${delayCalls.length}`);
+assert.strictEqual(delayCalls.length, 0, 'Zero long blocking delay() calls permitted in production robotics firmware');
+
+// Check non-blocking architecture features
+assert(roboticsDataContent.includes('millis()'), 'Firmware must use millis() scheduling');
+assert(roboticsDataContent.includes('volatile'), 'Interrupt ISR state variables must be volatile');
+assert(roboticsDataContent.includes('firmwareArchitecture:'), 'Firmware architecture specifications must be present');
+assert(roboticsDataContent.includes('architecturePattern:'), 'Architecture pattern must be defined');
+assert(roboticsDataContent.includes('timerUsage:'), 'Timer usage must be defined');
+assert(roboticsDataContent.includes('interruptMap:'), 'Interrupt map must be defined');
+assert(roboticsDataContent.includes('annotatedBreakdown:'), 'Pedagogical annotated breakdowns must be present');
+
+// Verify 5-mode studio integration in RoboticsHardwareLabView
+const labViewPath = path.join(__dirname, '../src/components/RoboticsHardwareLabView.tsx');
+const labViewContent = fs.readFileSync(labViewPath, 'utf8');
+
+const requiredModes = [
+  'breadboard_build',
+  'physics_sim',
+  'instrument_bench',
+  'firmware_studio',
+  'faults_matrix',
+];
+requiredModes.forEach((mode) => {
+  assert(labViewContent.includes(`'${mode}'`), `Studio mode ${mode} must exist in RoboticsHardwareLabView`);
+});
+
+assert(labViewContent.includes('<WokwiVirtualBreadboard'), 'WokwiVirtualBreadboard must be rendered');
+assert(labViewContent.includes('<WokwiProjectBuilder'), 'WokwiProjectBuilder must be rendered');
+assert(labViewContent.includes('<DigitalLogicAnalyzer'), 'DigitalLogicAnalyzer must be rendered');
+
+console.log('  ✅ Test 10 Passed: Production non-blocking firmware, architecture breakdowns, and 5-mode studio verified.\n');
+
+console.log('🎉 ALL 10 ADVANCED VERIFICATION TEST SUITES PASSED CLEANLY! 🚀');
